@@ -5,17 +5,32 @@ import {
   MailIcon,
 } from "../../../../../../public/icons";
 import { Badge } from "@/components/ui/badge";
+import OrderItemCard from "@/components/order-item";
+import { Button } from "@/components/ui/button";
+interface iProps {
+  setClose: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-const OrderDetails: React.FC = () => {
+const OrderDetails: React.FC<iProps> = ({ setClose }) => {
+  const item = {
+    productName: "Mr. Rice. Foreign long rice (50kg)",
+    quantity: 20,
+    price: "55,000.00",
+    total: "1,750,800.00",
+    status: "Delivered",
+  };
+
   return (
-    <>
-      <Image
-        width={100}
-        height={100}
-        alt="Customer avatar"
-        src="/images/bladmin-login.jpg"
-        className="w-[100px] h-[100px] rounded-full"
-      />
+    <div>
+      <div>
+        <Image
+          width={100}
+          height={100}
+          alt="Customer avatar"
+          src="/images/bladmin-login.jpg"
+          className="w-[100px] h-[100px] rounded-full"
+        />
+      </div>
       <div className="mt-6">
         <div className="flex gap-6 items-center mb-2.5">
           <h5 className="text-[1.5rem] font-bold text-[#111827]">
@@ -63,8 +78,19 @@ const OrderDetails: React.FC = () => {
         <h5 className="text-[1rem] font-medium text-[#111827] mb-6">
           Order Details
         </h5>
+        <OrderItemCard item={item} />
+        <div className="mt-8 flex justify-end">
+          <Button
+            variant={"warning"}
+            size="xl"
+            className="py-4 px-[3.25rem] w-auto"
+            onClick={() => setClose(false)}
+          >
+            Close
+          </Button>
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

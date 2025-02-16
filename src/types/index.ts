@@ -52,6 +52,15 @@ export interface OrdersData extends DataItem {
   email: string;
 }
 
+export interface ProductData extends DataItem {
+  productname: string;
+  id?: string | number;
+  price: number | string;
+  quantity: number;
+  productid: string;
+  status: string;
+}
+
 export interface IReportCard {
   description: string;
   value: number | string;
@@ -59,4 +68,13 @@ export interface IReportCard {
   icon: ReactNode;
   count: number;
   title: string;
+}
+
+export interface IOrderItem {
+  productName: string;
+  url?: string;
+  quantity: number;
+  price: number | string;
+  total: number | string;
+  status: string;
 }

@@ -55,8 +55,11 @@ const formSchema = z.object({
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
+interface iProps {
+  setClose: () => void;
+}
 
-const CreateAdmin: React.FC = () => {
+const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -124,7 +127,11 @@ const CreateAdmin: React.FC = () => {
                 <FormItem className="w-full">
                   <FormLabel>Create Password</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="admin1524887" {...field} />
+                    <Input
+                      type="password"
+                      placeholder="admin1524887"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -167,7 +174,7 @@ const CreateAdmin: React.FC = () => {
               </FormItem>
             )}
           />
-          <div className="flex gap-6 mb-6">
+          <div className="flex gap-6 mb-14">
             <FormField
               control={form.control}
               name="dob"
@@ -232,6 +239,10 @@ const CreateAdmin: React.FC = () => {
               variant="outline"
               className="w-auto py-4 px-[3rem] font-bold text-base"
               size="xl"
+              onClick={(e) => {
+                e.preventDefault();
+                setClose();
+              }}
             >
               Cancel
             </Button>

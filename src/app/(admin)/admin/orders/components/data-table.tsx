@@ -169,16 +169,16 @@ const DataTable: React.FC = () => {
         />
       </CardContent>
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
-        <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen">
+        <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-scroll">
           <DialogHeader>
-            <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
-              <div onClick={() => setIsOpen(false)}>
+            <DialogTitle className="text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
+              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
                 <ChevronLeft size={24} />
               </div>
               Create new admin
             </DialogTitle>
           </DialogHeader>
-          <OrderDetails />
+          <OrderDetails setClose={setIsOpen} />
         </DialogContent>
       </Dialog>
     </Card>

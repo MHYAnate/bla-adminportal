@@ -131,7 +131,7 @@ const AdminSidebar: React.FC = () => {
                         <span
                           className={`${
                             path.startsWith(item?.href)
-                              ? "text-[#FFEDEC]"
+                              ? "text-[#FFEDEC] ps-2"
                               : "text-[#D0D0D0]"
                           }`}
                         >
