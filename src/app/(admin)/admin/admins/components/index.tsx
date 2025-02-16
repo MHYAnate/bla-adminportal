@@ -36,7 +36,7 @@ export default function Admins() {
       </Card>
       <DataTable />
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
-        <DialogContent className="right-0 p-8 max-w-[47.56rem]">
+        <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen">
           <DialogHeader>
             <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
               <div onClick={() => setIsOpen(false)}>

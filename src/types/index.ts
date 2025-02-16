@@ -31,3 +31,32 @@ export interface AdminsData extends DataItem {
   status: string;
   rolecount: number;
 }
+
+export interface ReportsData extends DataItem {
+  name: string;
+  customertype: string;
+  totalsales: number | string;
+  aov: number | string;
+  ordercount: number;
+  email: string;
+  id?: string | number;
+}
+
+export interface OrdersData extends DataItem {
+  name: string;
+  customertype: string;
+  orderid: string;
+  status: string;
+  amount: number | string;
+  id?: string | number;
+  email: string;
+}
+
+export interface IReportCard {
+  description: string;
+  value: number | string;
+  isProgressive: boolean;
+  icon: ReactNode;
+  count: number;
+  title: string;
+}
