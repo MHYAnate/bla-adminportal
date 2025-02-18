@@ -80,6 +80,10 @@ export default {
         sm: "4px",
         xl: "12px",
       },
+      fontFamily: {
+        manrope: "var(--font-manrope)",
+        dmsans: "var(--font-dmsans)",
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

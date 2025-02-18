@@ -23,17 +23,17 @@ import { Button } from "@/components/ui/button";
 import { useCallback, useState } from "react";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
-import { UploadIcon } from "../../../../../../public/icons";
+import { UploadIcon } from "../../../../../../../public/icons";
 
 const formSchema = z.object({
-  productname: z.string().min(5, "Name must be greater 4"),
-  brand: z.string(),
-  price: z.number(),
-  productcategory: z.string(),
-  quantity: z.string(),
-  discount: z.string(),
-  productid: z.string(),
-  productstatus: z.string(),
+  manufacturername: z.string().min(5, "Name must be greater 4"),
+  contactperson: z.string(),
+  email: z.string().email(),
+  phonenumber: z.string(),
+  status: z.string(),
+  country: z.string(),
+  totalproducts: z.number(),
+  address: z.string(),
   image: z
     .instanceof(File)
     .refine((file) => file.size !== 0, "Please upload an image"),
@@ -44,20 +44,20 @@ interface iProps {
   setClose: () => void;
 }
 
-const CreateProduct: React.FC<iProps> = ({ setClose }) => {
+const AddManufacturer: React.FC<iProps> = ({ setClose }) => {
   const [preview, setPreview] = useState<string | ArrayBuffer | null>("");
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      productname: "",
-      brand: "",
-      price: 0,
-      productcategory: "",
-      quantity: "",
-      discount: "",
-      productid: "",
-      productstatus: "",
+      manufacturername: "",
+      contactperson: "",
+      email: "",
+      phonenumber: "",
+      status: "",
+      country: "",
+      totalproducts: 0,
+      address: "",
       image: new File([""], "filename"),
     },
   });
@@ -98,16 +98,12 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
           <div className="flex gap-6 mb-6">
             <FormField
               control={form.control}
-              name="productname"
+              name="manufacturername"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Product Name</FormLabel>
+                  <FormLabel>Manufacturer Name</FormLabel>
                   <FormControl>
-                    <Input
-                      type="text"
-                      placeholder="Nescafe Classic Coffe"
-                      {...field}
-                    />
+                    <Input type="text" placeholder="Dangote" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -115,12 +111,12 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
             />
             <FormField
               control={form.control}
-              name="brand"
+              name="contactperson"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Product Name</FormLabel>
+                  <FormLabel>Contact Person</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Nestle" {...field} />
+                    <Input type="text" placeholder="Tman" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -130,12 +126,12 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
           <div className="flex gap-6 mb-6">
             <FormField
               control={form.control}
-              name="price"
+              name="email"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Price</FormLabel>
+                  <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="NGN 580" {...field} />
+                    <Input type="text" placeholder="sam@gmail.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -143,7 +139,22 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
             />
             <FormField
               control={form.control}
-              name="productcategory"
+              name="phonenumber"
+              render={({ field }) => (
+                <FormItem className="w-full">
+                  <FormLabel>Phone Number</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="+234" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="flex gap-6 mb-6">
+            <FormField
+              control={form.control}
+              name="status"
               render={({ field }) => (
                 <FormItem className="w-full">
                   <FormLabel>Product Category</FormLabel>
@@ -153,79 +164,36 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Admin role" />
+                        <SelectValue placeholder="Country" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="usdc">Cocoa</SelectItem>
-                      <SelectItem value="usdt">Textile</SelectItem>
+                      <SelectItem value="usdc">Active</SelectItem>
+                      <SelectItem value="usdt">In-active</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
-          <div className="flex gap-6 mb-6">
             <FormField
               control={form.control}
-              name="quantity"
+              name="country"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Product Name</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="120" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="discount"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel>Product Name</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="NGN 0" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="flex gap-6 mb-6">
-            <FormField
-              control={form.control}
-              name="productid"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel>Product ID</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="NGN 580" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="productstatus"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel>Product Status</FormLabel>
+                  <FormLabel>Product Category</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Available Option" />
+                        <SelectValue placeholder="Country" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="usdc">Cocoa</SelectItem>
-                      <SelectItem value="usdt">Textile</SelectItem>
+                      <SelectItem value="usdc">Nigeria</SelectItem>
+                      <SelectItem value="usdt">Botswana</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -233,6 +201,32 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
               )}
             />
           </div>
+          <FormField
+            control={form.control}
+            name="totalproducts"
+            render={({ field }) => (
+              <FormItem className="w-full mb-6">
+                <FormLabel>Total number of products</FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="234" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="address"
+            render={({ field }) => (
+              <FormItem className="w-full mb-6">
+                <FormLabel>Address</FormLabel>
+                <FormControl>
+                  <Input type="text" placeholder="Arifanla" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <div>
             <FormField
               control={form.control}
@@ -315,4 +309,4 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
   );
 };
 
-export default CreateProduct;
+export default AddManufacturer;

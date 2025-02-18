@@ -76,6 +76,21 @@ export const adminSidebarList = [
     ],
   },
   {
+    id: 9,
+    sidebar: "Supply Management",
+    icon: <StoreManagementIcon />,
+    child: [
+      {
+        sidebar: "Manufacturers",
+        href: ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTMANUFACTURERS,
+      },
+      {
+        sidebar: "Vendors",
+        href: ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTVENDORS,
+      },
+    ],
+  },
+  {
     id: 6,
     sidebar: "Store Management",
     icon: <StoreManagementIcon />,

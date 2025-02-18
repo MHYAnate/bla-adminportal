@@ -17,6 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ChevronLeft } from "lucide-react";
+import Link from "next/link";
+import { ROUTES } from "@/constant/routes";
 
 const DataTable: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -111,12 +113,14 @@ const DataTable: React.FC = () => {
     ),
     action: (item: OrdersData) => (
       <div className="flex gap-2.5">
-        <div
-          className="bg-[#27A376] p-2.5 rounded-lg"
-          onClick={() => setIsOpen(true)}
-        >
-          <ViewIcon />
-        </div>
+        <Link href={`${ROUTES.ADMIN.SIDEBAR.ORDERS}/1`}>
+          <div
+            className="bg-[#27A376] p-2.5 rounded-lg"
+            onClick={() => setIsOpen(true)}
+          >
+            <ViewIcon />
+          </div>
+        </Link>
         <div className="bg-[#E03137] p-2.5 rounded-lg">
           <DeleteIcon />
         </div>

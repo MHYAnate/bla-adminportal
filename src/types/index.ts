@@ -61,12 +61,49 @@ export interface ProductData extends DataItem {
   status: string;
 }
 
+export interface ManufacturerData extends DataItem {
+  productname: string;
+  id?: string | number;
+  category: string;
+  stocklevel: number;
+  skuid: string;
+  amount: string | number;
+  status: string;
+}
+
+export interface VendorsData extends DataItem {
+  status: string;
+  name: string;
+  contact: string;
+  phonenumber: string;
+  totalproducts: number | string;
+  id?: number | string;
+  email: string;
+}
+
+export interface StockData extends DataItem {
+  id?: string;
+  productname: string;
+  createddate: string;
+  costprice: number | string;
+  sellingprice: number | string;
+  change: string;
+  updatedby: string;
+  role: string;
+  url?: string;
+}
+
 export interface IReportCard {
   description: string;
   value: number | string;
   isProgressive: boolean;
   icon: ReactNode;
   count: number;
+  title: string;
+}
+export interface IOrderCard {
+  value: number | string;
+  icon: ReactNode;
   title: string;
 }
 
@@ -77,4 +114,16 @@ export interface IOrderItem {
   price: number | string;
   total: number | string;
   status: string;
+}
+
+export interface ISupplierCard {
+  isActive: boolean;
+  url: string;
+  total: string | number;
+  status: string;
+  name: string;
+  email: string;
+  location: string;
+  id: string;
+  phonenumber: string;
 }
