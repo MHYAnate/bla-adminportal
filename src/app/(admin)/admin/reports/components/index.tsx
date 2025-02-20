@@ -13,6 +13,8 @@ import {
 } from "../../../../../../public/icons";
 import ReportCard from "@/components/report-card";
 import { IReportCard } from "@/types";
+import { PieChartComponent } from "@/app/(admin)/components/pie-chart";
+import MultiLineGraphComponent from "./linegraph";
 
 export default function Reports() {
   const reportlist = [
@@ -49,6 +51,12 @@ export default function Reports() {
       title: "Total Pending",
     },
   ];
+  const chartData = [
+    { title: "Ibukun", values: 27, fill: "#FE964A" },
+    { title: "Semilore", values: 20, fill: "#2DD4BF" },
+    { title: "Taofeek", values: 17, fill: "#8C62FF" },
+    { title: "Sammy", values: 18, fill: "#8C62FF" },
+  ];
   return (
     <section>
       <Card className="bg-white mb-8">
@@ -76,6 +84,16 @@ export default function Reports() {
         {reportlist.map((report: IReportCard, index) => (
           <ReportCard report={report} key={index} />
         ))}
+      </div>
+      <div className="flex gap-4 mb-6">
+        <MultiLineGraphComponent />
+        <div className="w-[339px]">
+          <PieChartComponent
+            title="Total Customers"
+            value={121}
+            chartData={chartData}
+          />
+        </div>
       </div>
       <DataTable />
     </section>

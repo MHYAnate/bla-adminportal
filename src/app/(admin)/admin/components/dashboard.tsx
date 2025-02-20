@@ -9,15 +9,23 @@ import {
   ProgressIcon,
 } from "../../../../../public/icons";
 import LineGraphComponent from "../../components/line-chart";
+import { PieActiveComponent } from "../../components/pie-chart-active";
+import { PieChartComponent } from "../../components/pie-chart";
+import CustomersDataTable from "./customers-datatable";
 
 const Dashboard: React.FC = () => {
+  const chartData = [
+    { title: "Rice", values: 275, fill: "#FE964A" },
+    { title: "Beans", values: 200, fill: "#2DD4BF" },
+    { title: "Garri", values: 187, fill: "#8C62FF" },
+  ];
   return (
     <section>
       <Header
         title="Good morning, Evelyn."
         subtext="Welcome to Buylocal Admin. Manage Inventory, Store and Assign Roles. "
       />
-      <Card className="mt-[26px]">
+      <Card className="mt-[26px] mb-6">
         <CardContent className="p-4 gap-4 flex">
           <div className="grid grid-cols-2 flex-1">
             <div className="p-6 bg-[#FFCEDB]">
@@ -82,6 +90,17 @@ const Dashboard: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      <div className="flex gap-4">
+        <CustomersDataTable />
+        <div className="w-[339px]">
+          <PieActiveComponent />
+          <PieChartComponent
+            title="Total Sales"
+            value={121}
+            chartData={chartData}
+          />
+        </div>
+      </div>
     </section>
   );
 };

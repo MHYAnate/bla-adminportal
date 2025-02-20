@@ -33,16 +33,7 @@ export const adminSidebarList = [
     id: 2,
     sidebar: "Customers",
     icon: <UserIcon />,
-    child: [
-      {
-        sidebar: "Business Owner",
-        href: ROUTES.ADMIN.SIDEBAR.BUSINESSOWNERS,
-      },
-      {
-        sidebar: "Individual",
-        href: ROUTES.ADMIN.SIDEBAR.INDIVIDUALS,
-      },
-    ],
+    href: ROUTES.ADMIN.SIDEBAR.CUSTOMERS,
   },
   {
     id: 3,
@@ -60,20 +51,7 @@ export const adminSidebarList = [
     id: 5,
     sidebar: "Reports",
     icon: <ReportIcon />,
-    child: [
-      {
-        sidebar: "Customers Report",
-        href: ROUTES.ADMIN.SIDEBAR.CUSTOMERSREPORT,
-      },
-      {
-        sidebar: "Business Owner",
-        href: ROUTES.ADMIN.SIDEBAR.BUSINESSOWNERSREPORT,
-      },
-      {
-        sidebar: "Individual",
-        href: ROUTES.ADMIN.SIDEBAR.INDIVIDUALREPORT,
-      },
-    ],
+    href: ROUTES.ADMIN.SIDEBAR.REPORTS,
   },
   {
     id: 9,

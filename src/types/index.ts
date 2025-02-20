@@ -31,6 +31,15 @@ export interface AdminsData extends DataItem {
   status: string;
   rolecount: number;
 }
+export interface CustomersData extends DataItem {
+  id?: string | number;
+  customername: string;
+  customertype: string;
+  customerid: string;
+  customerstatus: string;
+  kyc: string;
+  email?: string;
+}
 
 export interface ReportsData extends DataItem {
   name: string;
@@ -126,4 +135,14 @@ export interface ISupplierCard {
   location: string;
   id: string;
   phonenumber: string;
+}
+
+export interface IOrderDetails {
+  name: string;
+  price: string | number;
+  orderid: string;
+  url?: string;
+  date: string;
+  status: string;
+  id: string | number;
 }

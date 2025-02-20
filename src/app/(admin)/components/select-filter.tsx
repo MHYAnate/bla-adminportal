@@ -17,12 +17,14 @@ interface IProps {
   list: selectType[];
   placeholder?: string;
   setFilter: React.Dispatch<React.SetStateAction<string>>;
+  customSize?: boolean;
 }
 
 export function SelectFilter({
   list,
   placeholder = "Status",
   setFilter,
+  customSize = true,
 }: IProps) {
   return (
     <Select
@@ -30,10 +32,10 @@ export function SelectFilter({
         await setFilter(value);
       }}
     >
-      <SelectTrigger className="w-[186px]">
+      <SelectTrigger className={customSize ? "w-[186px] h-14" : ""}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent>
+      <SelectContent className="">
         <SelectGroup>
           {list?.map((list, index: number) => (
             <SelectItem value={list?.value} key={index}>
