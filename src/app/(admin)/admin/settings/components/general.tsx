@@ -32,42 +32,29 @@ import { CalendarIcon } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(5, "Name must be greater 4"),
-  role: z.string({
-    required_error: "Please select a role.",
+  status: z.string({
+    required_error: "Change status",
   }),
-  description: z.string(),
-  password: z.string(),
-  rolecount: z.number(),
+  username: z.string(),
+  email: z.string().email(),
+  phonenumber: z.string(),
   dob: z.date({
     required_error: "A date of birth is required.",
   }),
-  picture: z
-    .instanceof(FileList)
-    .refine((files) => files.length > 0, "File is required")
-    .refine(
-      (files) => files[0]?.size <= 5 * 1024 * 1024,
-      "File size must be less than 5MB"
-    )
-    .refine(
-      (files) => ["image/png", "image/jpeg"].includes(files[0]?.type),
-      "Only PNG and JPEG files are allowed"
-    ),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
-interface iProps {
-  setClose: () => void;
-}
+interface iProps {}
 
-const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
+const SettingsGeneral: React.FC<iProps> = () => {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      role: "",
-      description: "",
-      password: "",
-      rolecount: 0,
+      status: "",
+      username: "",
+      email: "",
+      phonenumber: "",
     },
   });
 
@@ -78,6 +65,7 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
 
   return (
     <div>
+      <h6 className="text-[#111827] text-xl font-bold mb-6">General</h6>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="mb-8">
           <div className="flex gap-6 mb-6">
@@ -96,24 +84,13 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
             />
             <FormField
               control={form.control}
-              name="role"
+              name="username"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Mode</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-14">
-                        <SelectValue placeholder="Admin role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="usdc">USDC</SelectItem>
-                      <SelectItem value="usdt">USDT</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormLabel>Username</FormLabel>
+                  <FormControl>
+                    <Input type="text" placeholder="admin1524887" {...field} />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -122,14 +99,14 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
           <div className="flex gap-6 mb-6">
             <FormField
               control={form.control}
-              name="password"
+              name="email"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Create Password</FormLabel>
+                  <FormLabel>Emaiil</FormLabel>
                   <FormControl>
                     <Input
-                      type="password"
-                      placeholder="admin1524887"
+                      type="text"
+                      placeholder="admin1524887@gmail.com"
                       {...field}
                     />
                   </FormControl>
@@ -139,41 +116,18 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
             />
             <FormField
               control={form.control}
-              name="picture"
-              render={({ field: { onChange, value, ...rest } }) => (
+              name="phonenumber"
+              render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Upload</FormLabel>
+                  <FormLabel>Phone Number</FormLabel>
                   <FormControl>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      placeholder="Upload"
-                      onChange={(e) => onChange(e.target.files)}
-                      {...rest}
-                    />
+                    <Input type="text" placeholder="09011223321" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem className="mb-6">
-                <FormLabel>Description</FormLabel>
-                <FormControl>
-                  <Input
-                    type="text"
-                    placeholder="Add role desription"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <div className="flex gap-6 mb-14">
             <FormField
               control={form.control}
@@ -218,34 +172,30 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
             />
             <FormField
               control={form.control}
-              name="rolecount"
+              name="status"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Number of roles assigned</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="admin1524887"
-                      {...field}
-                    />
-                  </FormControl>
+                  <FormLabel>Status</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="h-14">
+                        <SelectValue placeholder="Admin role" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="usdc">Active</SelectItem>
+                      <SelectItem value="usdt">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
           <div className="gap-5 justify-end flex">
-            <Button
-              variant="outline"
-              className="w-auto py-4 px-[3rem] font-bold text-base"
-              size="xl"
-              onClick={(e) => {
-                e.preventDefault();
-                setClose();
-              }}
-            >
-              Cancel
-            </Button>
             <Button
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
@@ -260,4 +210,4 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
   );
 };
 
-export default CreateAdmin;
+export default SettingsGeneral;

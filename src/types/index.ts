@@ -110,6 +110,7 @@ export interface IReportCard {
   count: number;
   title: string;
 }
+
 export interface IOrderCard {
   value: number | string;
   icon: ReactNode;
@@ -145,4 +146,12 @@ export interface IOrderDetails {
   date: string;
   status: string;
   id: string | number;
+}
+
+export interface IFinancialReportCard {
+  description: string;
+  value: number | string;
+  isProgressive: boolean;
+  count: number;
+  title: string;
 }

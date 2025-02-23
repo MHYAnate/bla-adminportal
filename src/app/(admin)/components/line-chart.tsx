@@ -68,7 +68,7 @@ export default function LineGraphComponent() {
         </CardDescription>
       </div>
       <div>
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={chartConfig} className="max-h-[430px] w-full">
           <LineChart
             accessibilityLayer
             data={chartData}
