@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ExportIcon } from "../../../../../../public/icons";
 import FinancialReportCard from "@/components/widgets/financial-report-card";
 import { IFinancialReportCard } from "@/types";
+import LineGraphComponent from "@/app/(admin)/components/line-chart";
 
 const FinancialReport: React.FC = () => {
   const reportlist = [
@@ -52,6 +53,7 @@ const FinancialReport: React.FC = () => {
               <FinancialReportCard report={report} key={index} />
             ))}
           </div>
+          <LineGraphComponent />
         </CardContent>
       </Card>
     </div>
