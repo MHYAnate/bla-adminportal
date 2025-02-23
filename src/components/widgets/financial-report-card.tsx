@@ -24,7 +24,7 @@ const FinancialReportCard: React.FC<iProps> = ({ report }) => {
             <SinglePieComponent />
           </div>
         </div>
-        <div className="inline-flex gap-3 items-center">
+        <div className="inline-flex gap-3 items-center mt-4">
           {report.isProgressive ? <ProgressIcon /> : <DowngressIcon />}{" "}
           <p className="font-medium text-[1rem] text-[#606060]">
             <span

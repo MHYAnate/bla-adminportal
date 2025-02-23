@@ -30,13 +30,6 @@ const FinancialReport: React.FC = () => {
       isProgressive: true,
       title: "Total Order",
     },
-    {
-      description: "Up from yesterday",
-      count: 8.5,
-      value: 2040,
-      isProgressive: false,
-      title: "Total Pending",
-    },
   ];
   return (
     <div>
