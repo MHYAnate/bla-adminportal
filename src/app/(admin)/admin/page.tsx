@@ -1,3 +1,9 @@
-export default function DashboardPage() {
-  return <p>Dashboard Page!</p>;
+import Dashboard from "./components/dashboard";
+
+export default function AdminHomePage() {
+  return (
+    <>
+      <Dashboard />
+    </>
+  );
 }

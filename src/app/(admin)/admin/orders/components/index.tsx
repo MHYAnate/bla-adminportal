@@ -5,48 +5,60 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import DataTable from "./data-table";
 import {
+  DeliveredIcon,
   ExportIcon,
-  TotalOrderIcon,
-  TotalOrdersIcon,
-  TotalPendingIcon,
-  TotalSalesIcon,
+  InprogressIcon,
+  OrderCancelIcon,
+  OrderDeliveringIcon,
+  OrderShippedIcon,
+  PaymentRefundIcon,
+  PendingPaymentIcon,
+  PendingReviewIcon,
 } from "../../../../../../public/icons";
-import ReportCard from "@/components/report-card";
-import { IReportCard } from "@/types";
+import { IOrderCard } from "@/types";
+import OrderCard from "@/components/widgets/order";
 
 export default function Orders() {
   const orderlist = [
     {
-      description: "Up from yesterday",
-      count: 8.5,
       value: "405,689",
-      isProgressive: true,
-      icon: <TotalOrdersIcon />,
-      title: "Total Orders",
+      icon: <PaymentRefundIcon />,
+      title: "Payment Refund",
     },
     {
-      description: "Up from yesterday",
-      count: 8.5,
-      value: "NGN891,000",
-      isProgressive: false,
-      icon: <TotalSalesIcon />,
-      title: "Order Delivered",
+      value: "22",
+      icon: <OrderCancelIcon />,
+      title: "Order Cancelled",
     },
     {
-      description: "Up from yesterday",
-      count: 8.5,
       value: 293,
-      isProgressive: true,
-      icon: <TotalOrderIcon />,
-      title: "Ongoing Order",
+      icon: <OrderShippedIcon />,
+      title: "Order Shipped",
     },
     {
-      description: "Up from yesterday",
-      count: 8.5,
       value: 48,
-      isProgressive: false,
-      icon: <TotalPendingIcon />,
-      title: "Cancelled Order",
+      icon: <OrderDeliveringIcon />,
+      title: "Order Delivering",
+    },
+    {
+      value: 48,
+      icon: <PendingReviewIcon />,
+      title: "Pending Review",
+    },
+    {
+      value: 48,
+      icon: <PendingPaymentIcon />,
+      title: "Pending Payment",
+    },
+    {
+      value: 48,
+      icon: <DeliveredIcon />,
+      title: "Delivered",
+    },
+    {
+      value: 48,
+      icon: <InprogressIcon />,
+      title: "In Progress",
     },
   ];
   return (
@@ -66,8 +78,8 @@ export default function Orders() {
         </CardContent>
       </Card>
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {orderlist.map((report: IReportCard, index) => (
-          <ReportCard report={report} key={index} />
+        {orderlist.map((report: IOrderCard, index) => (
+          <OrderCard report={report} key={index} />
         ))}
       </div>
       <DataTable />

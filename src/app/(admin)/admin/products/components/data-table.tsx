@@ -114,7 +114,7 @@ const DataTable: React.FC = () => {
     ),
   };
 
-  const columnOrder: (keyof AdminsData)[] = [
+  const columnOrder: (keyof ProductData)[] = [
     "name",
     "price",
     "quantity",

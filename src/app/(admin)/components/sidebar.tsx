@@ -23,7 +23,6 @@ import { ChevronUp } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import {
   DashboardIcon,
   NotificationIcon,
@@ -59,7 +58,7 @@ const AdminSidebar: React.FC = () => {
               >
                 <SidebarMenuButton asChild className="p-0">
                   <Link
-                    href={""}
+                    href={ROUTES.ADMIN.SIDEBAR.DASHBOARD}
                     className="flex w-full items-center justify-between gap-2 py-[17px] px-5"
                   >
                     <h5 className="text-sm font-bold">Dashboard</h5>

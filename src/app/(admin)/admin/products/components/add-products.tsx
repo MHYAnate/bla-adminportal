@@ -21,7 +21,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { useCallback, useState } from "react";
-import { ImagePlus } from "lucide-react";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
 import { UploadIcon } from "../../../../../../public/icons";
@@ -307,7 +306,7 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"
             >
-              Submit
+              Create
             </Button>
           </div>
         </form>
