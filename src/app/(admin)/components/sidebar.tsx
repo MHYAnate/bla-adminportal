@@ -180,7 +180,7 @@ const AdminSidebar: React.FC = () => {
               >
                 <SidebarMenuButton asChild className="p-0">
                   <Link
-                    href={""}
+                    href={`${ROUTES.ADMIN.SIDEBAR.SETTINGS}?tab=general`}
                     className="flex w-full items-center gap-2 py-[17px]"
                   >
                     <span

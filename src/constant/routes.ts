@@ -13,7 +13,7 @@ export const ROUTES = {
       INVEMTORYMANAGEMENT: "/admin/inventory-management",
       FINANCIALREPORTS: "/admin/financial-reports",
       NOTIFICATIONS: "/admin/notifications",
-      SETTINGS: "/admin/setting",
+      SETTINGS: "/admin/settings",
       SUPPLYMANAGEMENTMANUFACTURERS: "/admin/supply-management/manufacturers",
       SUPPLYMANAGEMENTVENDORS: "/admin/supply-management/vendors",
     },

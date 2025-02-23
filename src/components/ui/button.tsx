@@ -17,7 +17,7 @@ const buttonVariants = cva(
           "border border-warning bg-background shadow-sm w-full hover:text-accent-foreground text-[#111827]",
         secondary:
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
+        ghost: "hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
         warning: "bg-warning text-white hover:bg-warning/90 w-full",
       },
