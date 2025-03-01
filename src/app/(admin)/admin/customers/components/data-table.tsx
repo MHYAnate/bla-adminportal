@@ -123,18 +123,11 @@ const DataTable: React.FC = () => {
     action: (item: CustomersData) => (
       <div className="flex gap-2.5">
         <Link
-          href={`${
-            item?.customertype.toLowerCase() === "individual"
-              ? `${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/${item?.id}?tab=general`
-              : "#"
-          }`}
+          href={`${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/${item?.id}?tab=general`}
           className="bg-[#27A376] p-2.5 rounded-lg"
         >
           <ViewIcon />
         </Link>
-        <div className="bg-[#2F78EE] p-2.5 rounded-lg">
-          <EditIcon />
-        </div>
         <div className="bg-[#E03137] p-2.5 rounded-lg">
           <DeleteIcon />
         </div>

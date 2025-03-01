@@ -12,16 +12,19 @@ interface IProps {
 const Header: React.FC<IProps> = ({ title, subtext, showBack = false }) => {
   const router = useRouter();
   return (
-    <div className="flex items-start" onClick={() => showBack && router.back()}>
+    <div
+      className="flex items-center cursor-pointer"
+      onClick={() => showBack && router.back()}
+    >
       {showBack && (
-        <div className="pe-5 cursor-pointer">
-          <ChevronLeft />
+        <div>
+          <ChevronLeft size={20} />
         </div>
       )}
       <div>
-        <h6 className="font-semibold text-lg text-[#111827] mb-1">{title}</h6>
+        <h6 className="font-semibold text-lg text-[#111827]">{title}</h6>
         {subtext && (
-          <p className="text-[#687588] font-medium text-sm">{subtext}</p>
+          <p className="text-[#687588] font-medium text-sm mt-1">{subtext}</p>
         )}
       </div>
     </div>

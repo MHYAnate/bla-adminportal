@@ -19,7 +19,7 @@ const Navbar: React.FC = () => {
   return (
     <section
       className={cn(
-        "flex items-center justify-between border-b border-[#E9EAEC] px-8 py-6"
+        "flex items-center justify-between border-b border-[#E9EAEC] px-8 py-6 sticky top-0 z-10 bg-white"
       )}
     >
       <div>

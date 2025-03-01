@@ -2,7 +2,7 @@ export const ROUTES = {
   ADMIN: {
     SIDEBAR: {
       DASHBOARD: "/admin",
-      ADMINS: "/admin/admins",
+      ADMINS: "/admin/admin-management",
       ROLES: "/admin/roles",
       PERMISSIONS: "/admin/permissions",
       CUSTOMERS: "/admin/customers",

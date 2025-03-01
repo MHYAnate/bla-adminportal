@@ -90,17 +90,22 @@ const Dashboard: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-      <div className="flex gap-4">
-        <CustomersDataTable />
-        <div className="w-[339px]">
-          <PieActiveComponent />
-          <PieChartComponent
-            title="Total Sales"
-            value={121}
-            chartData={chartData}
-          />
-        </div>
+
+      <div className="flex gap-6 mb-6">
+        <PieActiveComponent />
+        <PieChartComponent
+          title="Total Sales"
+          value={121}
+          chartData={chartData}
+        />
+        <PieChartComponent
+          title="Total Customers"
+          value={121}
+          chartData={chartData}
+        />
       </div>
+
+      <CustomersDataTable />
     </section>
   );
 };

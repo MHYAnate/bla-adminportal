@@ -13,6 +13,7 @@ import {
 import CreateAdmin from "./add-admin";
 import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
+import AdminUsersCard from "@/components/widgets/admin-user";
 
 export default function Admins() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -34,9 +35,20 @@ export default function Admins() {
           </Button>
         </CardContent>
       </Card>
+      <div className="flex gap-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <AdminUsersCard
+            key={index}
+            rolename="Inventory Manager"
+            total={5}
+            count={4}
+          />
+        ))}
+      </div>
+
       <DataTable />
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
-        <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen">
+        <DialogContent className="right-[30px] p-8 max-w-[35.56rem]">
           <DialogHeader>
             <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
               <div onClick={() => setIsOpen(false)} className="cursor-pointer">
