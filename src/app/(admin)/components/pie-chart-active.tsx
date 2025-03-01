@@ -57,7 +57,7 @@ const list = [
 export function PieActiveComponent() {
   const [filter, setFilter] = useState<string>("");
   return (
-    <Card className="flex flex-col p-6 mb-6">
+    <Card className="flex flex-col p-6 w-full h-auto">
       <div className="flex items-center mb-6 justify-between">
         <h5 className="font-bold text-[#111827]">Order Summary</h5>
         <div className="w-[72px]">

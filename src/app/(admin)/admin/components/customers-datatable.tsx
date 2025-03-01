@@ -7,6 +7,8 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TableComponent } from "@/components/custom-table";
 import Link from "next/link";
+import { DeleteIcon, ViewIcon } from "../../../../../public/icons";
+import { ROUTES } from "@/constant/routes";
 
 const CustomersDataTable: React.FC = () => {
   const pageSize = 10;
@@ -104,6 +106,19 @@ const CustomersDataTable: React.FC = () => {
         {item.customerstatus}
       </div>
     ),
+    action: (item: CustomersData) => (
+      <div className="flex gap-2.5">
+        <Link
+          href={`${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/${item?.id}?tab=general`}
+          className="bg-[#27A376] p-2.5 rounded-lg"
+        >
+          <ViewIcon />
+        </Link>
+        <div className="bg-[#E03137] p-2.5 rounded-lg">
+          <DeleteIcon />
+        </div>
+      </div>
+    ),
   };
 
   const columnOrder: (keyof CustomersData)[] = [
@@ -112,6 +127,7 @@ const CustomersDataTable: React.FC = () => {
     "customerid",
     "kyc",
     "customerstatus",
+    "action",
   ];
 
   const columnLabels = {
@@ -120,34 +136,20 @@ const CustomersDataTable: React.FC = () => {
     customerid: "Customer ID",
     customerstatus: "Customer Status",
     kyc: "KYC",
+    action: "Action",
   };
 
   return (
     <Card className="bg-white flex-1">
       <CardContent className="p-6">
-        <div className="flex justify-between items-center">
-          <h6 className="font-semibold text-lg text-[#111827] mb-1">
-            Top 5 Customers
+        <div className="flex justify-between items-center mb-6">
+          <h6 className="font-semibold text-lg text-[#111827]">
+            Recent Customers
           </h6>
-          <Link href="#" className="text-sm font-medium underline">
-            View All
-          </Link>
-        </div>
-
-        <TableComponent<CustomersData>
-          tableData={tableData}
-          currentPage={currentPage}
-          onPageChange={onPageChange}
-          totalPages={Math.ceil(tableData.length / pageSize)}
-          cellRenderers={cellRenderers}
-          columnOrder={columnOrder}
-          columnLabels={columnLabels}
-        />
-        <div className="border-t pt-2 mt-2 border-[#E9EAEC] flex justify-between items-center mb-2">
-          <h6 className="font-semibold text-lg text-[#111827] mb-1">
-            Top 5 Business Owners
-          </h6>
-          <Link href="#" className="text-sm font-medium underline">
+          <Link
+            href="#"
+            className="text-sm font-medium text-[#687588] underline border border-[#E9EAEC] rounded-md px-[3.56rem] py-4"
+          >
             View All
           </Link>
         </div>

@@ -56,7 +56,7 @@ interface iProps {
 export function PieChartComponent({ chartData, title, value }: iProps) {
   const [filter, setFilter] = useState<string>("");
   return (
-    <Card className="flex flex-col p-6">
+    <Card className="flex flex-col p-6 w-full h-auto">
       <div className="flex items-center justify-between">
         <h5 className="font-bold text-[#111827]">Top 3 Selling</h5>
         <div className="w-[72px]">
@@ -66,7 +66,7 @@ export function PieChartComponent({ chartData, title, value }: iProps) {
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[250px]"
+          className="mx-auto aspect-square max-h-[250px] flex justify-center items-center"
         >
           <PieChart>
             <ChartTooltip

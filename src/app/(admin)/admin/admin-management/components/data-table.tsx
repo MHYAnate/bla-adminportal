@@ -16,6 +16,8 @@ import {
 import { TableComponent } from "@/components/custom-table";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
+import Link from "next/link";
+import { ROUTES } from "@/constant/routes";
 
 const DataTable: React.FC = () => {
   const pageSize = 10;
@@ -113,9 +115,12 @@ const DataTable: React.FC = () => {
 
     action: (item: AdminsData) => (
       <div className="flex gap-2.5">
-        <div className="bg-[#27A376] p-2.5 rounded-lg">
+        <Link
+          href={`${ROUTES.ADMIN.SIDEBAR.ADMINS}/${item?.id}?tab=general`}
+          className="bg-[#27A376] p-2.5 rounded-lg"
+        >
           <ViewIcon />
-        </div>
+        </Link>
         <div className="bg-[#2F78EE] p-2.5 rounded-lg">
           <EditIcon />
         </div>

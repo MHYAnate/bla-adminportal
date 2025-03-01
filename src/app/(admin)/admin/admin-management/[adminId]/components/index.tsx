@@ -12,30 +12,19 @@ import {
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import General from "./general";
-import Documents from "./documents";
-import OrderHistory from "./order-history";
 import { useSearchParams } from "next/navigation";
 import { useHandlePush } from "@/hooks/use-handle-push";
 import { ROUTES } from "@/constant/routes";
 
-const CustomerDetail: React.FC = () => {
+const AdminDetail: React.FC = () => {
   const param = useSearchParams();
   const tabber = param.get("tab");
   const { handlePush } = useHandlePush();
-  const customer = "Individuals";
   const status = "Active";
   const list = [
     {
       value: "general",
       text: "General",
-    },
-    {
-      value: "documents",
-      text: "Documents",
-    },
-    {
-      value: "order-history",
-      text: "Order History",
     },
   ];
   return (
@@ -97,41 +86,18 @@ const CustomerDetail: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <div>
-                <p className="text-xs text-[#687588] mb-1">Referral Code</p>
-                <p className="font-semibold text-sm text-[#111827] mb-4">
-                  W5FFO
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-[#687588] mb-1">
-                  Number of Referrals
-                </p>
-                <p className="font-semibold text-sm text-[#111827] mb-4">45</p>
-              </div>
-              <div>
-                <p className="text-xs text-[#687588] mb-1">Language Selected</p>
-                <p className="font-semibold text-sm text-[#111827] mb-4">
-                  English
-                </p>
-              </div>
             </div>
           </CardContent>
         </Card>
         <Card className="flex-1">
           <CardContent className="p-6">
             <Tabs defaultValue={tabber || "general"}>
-              <TabsList className="justify-start border-b w-full mb-6">
+              <TabsList className="justify-start  border-b w-full mb-6">
                 {list.map((tab, index) => (
                   <TabsTrigger
                     value={tab.value}
                     key={index}
-                    className={`w-2/12 flex-col pb-0 ${
-                      customer.toLowerCase() === "individual" &&
-                      tab.value === "documents"
-                        ? "hidden"
-                        : ""
-                    }`}
+                    className={`w-2/12 flex-col pb-0`}
                     onClick={() =>
                       handlePush(
                         `${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/1?tab=${tab.value}`
@@ -154,12 +120,6 @@ const CustomerDetail: React.FC = () => {
               <TabsContent value="general">
                 <General />
               </TabsContent>
-              <TabsContent value="documents">
-                <Documents />
-              </TabsContent>
-              <TabsContent value="order-history">
-                <OrderHistory />
-              </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
@@ -168,4 +128,4 @@ const CustomerDetail: React.FC = () => {
   );
 };
 
-export default CustomerDetail;
+export default AdminDetail;
