@@ -116,7 +116,7 @@ const DataTable: React.FC = () => {
         <Link href={`${ROUTES.ADMIN.SIDEBAR.ORDERS}/1`}>
           <div
             className="bg-[#27A376] p-2.5 rounded-lg"
-            onClick={() => setIsOpen(true)}
+            // onClick={() => setIsOpen(true)}
           >
             <ViewIcon />
           </div>
@@ -131,24 +131,24 @@ const DataTable: React.FC = () => {
   const columnOrder: (keyof OrdersData)[] = [
     "name",
     "customertype",
-    "orderid",
     "amount",
+    "orderid",
     "status",
     "action",
   ];
 
   const columnLabels = {
-    name: "Customer Name",
+    name: "Name",
     customertype: "Customer Type",
+    amount: "Amount",
     action: "",
     orderid: "Order ID",
-    amount: "Amount",
-    status: "Product Status",
+    status: "Order Status",
   };
 
   return (
-    <Card className="bg-white">
-      <CardContent className="p-6">
+    <div className="bg-white">
+      <div className="p-6">
         <h6 className="font-semibold text-lg text-[#111827] mb-6">
           Detailed Order Table
         </h6>
@@ -161,6 +161,11 @@ const DataTable: React.FC = () => {
             placeholder="Customer Type"
             list={roleList}
           />
+          <SelectFilter
+            setFilter={setRole}
+            placeholder="Order Status"
+            list={roleList}
+          />
         </div>
         <TableComponent<OrdersData>
           tableData={tableData}
@@ -171,7 +176,7 @@ const DataTable: React.FC = () => {
           columnOrder={columnOrder}
           columnLabels={columnLabels}
         />
-      </CardContent>
+      </div>
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
         <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-scroll">
           <DialogHeader>
@@ -185,7 +190,7 @@ const DataTable: React.FC = () => {
           <OrderDetails setClose={setIsOpen} />
         </DialogContent>
       </Dialog>
-    </Card>
+    </div>
   );
 };
 
