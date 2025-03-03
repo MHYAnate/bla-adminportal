@@ -13,11 +13,11 @@ const Header: React.FC<IProps> = ({ title, subtext, showBack = false }) => {
   const router = useRouter();
   return (
     <div
-      className="flex items-center cursor-pointer"
+      className="flex items-start cursor-pointer"
       onClick={() => showBack && router.back()}
     >
       {showBack && (
-        <div>
+        <div className="mt-[2px]">
           <ChevronLeft size={20} />
         </div>
       )}

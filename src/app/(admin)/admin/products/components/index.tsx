@@ -13,36 +13,43 @@ import {
 import CreateAdmin from "./add-products";
 import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { ExportIcon } from "../../../../../../public/icons";
+import { EmptyProductIcon, ExportIcon } from "../../../../../../public/icons";
+import EmptyState from "@/app/(admin)/components/empty";
 
 export default function Products() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
     <section>
-      <Card className="bg-white mb-8">
-        <CardContent className="p-4 flex justify-between items-center">
-          <Header title="Products" subtext="Manage Products." />
+      <div className="p-4 flex justify-between items-center mb-8">
+        <Header title="Products" subtext="Manage Products." />
 
-          <div className="flex gap-5">
-            <Button
-              variant={"outline"}
-              className="font-bold text-base w-auto py-4 px-5 flex gap-2 items-center"
-              size={"xl"}
-            >
-              <ExportIcon /> Download
-            </Button>
-            <Button
-              variant={"warning"}
-              className="font-bold text-base w-auto py-4 px-6"
-              size={"xl"}
-              onClick={() => setIsOpen(true)}
-            >
-              + Add New Product
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <div className="flex gap-5">
+          <Button
+            variant={"outline"}
+            className="font-bold text-base w-auto py-4 px-5 flex gap-2 items-center"
+            size={"xl"}
+          >
+            <ExportIcon /> Download
+          </Button>
+          <Button
+            variant={"warning"}
+            className="font-bold text-base w-auto py-4 px-6"
+            size={"xl"}
+            onClick={() => setIsOpen(true)}
+          >
+            + Add New Product
+          </Button>
+        </div>
+      </div>
+
+      <EmptyState
+        icon={<EmptyProductIcon />}
+        btnText="Add new product"
+        header="No Products Here"
+        description="Start adding products, set prices and delivery information."
+        onClick={() => setIsOpen(true)}
+      />
       <DataTable />
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
         <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-scroll">

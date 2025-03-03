@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { ChevronLeft } from "lucide-react";
 import AddManufacturer from "./add-manufacturer";
+import { StoreManagementIcon } from "../../../../../../../public/icons";
 
 export default function Manufacturers() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -87,9 +88,11 @@ export default function Manufacturers() {
             </Button>
           </div>
           <EmptyState
+            icon={<StoreManagementIcon />}
             btnText="Add Manufacturer"
             header="Manufacturer Records Await"
             description="Start Managing Your Suppliers by Adding Your First Manufacturer."
+            onClick={() => setIsOpen(true)}
           />
           <div className="flex items-center gap-4 mb-6">
             <InputFilter
