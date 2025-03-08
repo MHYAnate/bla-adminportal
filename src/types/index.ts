@@ -8,6 +8,7 @@ export type CellValue =
   | null
   | undefined
   | ReactNode;
+
 export interface DataItem {
   [key: string]: CellValue;
   id?: string | number;
