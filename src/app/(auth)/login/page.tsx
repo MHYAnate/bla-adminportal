@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
@@ -10,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useLogin } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,6 +26,10 @@ const formSchema = z.object({
 type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
+  const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
+    console.log(res);
+  });
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,7 +39,9 @@ export default function LoginPage() {
     },
   });
 
-  async function onSubmit(values: FormSchemaType) {}
+  async function onSubmit(values: FormSchemaType) {
+    loginPayload(values);
+  }
   return (
     <section className="flex gap-[60px]">
       <div className="bg-[#0F3D30] flex-1">
@@ -167,6 +175,13 @@ export default function LoginPage() {
                         </FormItem>
                       )}
                     />
+                    <Button
+                      variant={"warning"}
+                      size={"md"}
+                      className="font-bold text-base leading-[1.5rem]"
+                    >
+                      Submit
+                    </Button>
                   </form>
                 </Form>
               </div>
