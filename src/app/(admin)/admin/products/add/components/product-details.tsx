@@ -31,7 +31,7 @@ const AddProduct: React.FC<iProps> = ({ form }) => {
         subtext="Tell your buyers all they need to know about this product "
       />
 
-      <div className="flex gap-6 mb-6">
+      <div className="flex gap-6 my-6">
         <FormField
           control={form.control}
           name="productname"

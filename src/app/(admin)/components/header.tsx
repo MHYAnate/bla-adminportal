@@ -22,7 +22,7 @@ const Header: React.FC<IProps> = ({ title, subtext, showBack = false }) => {
         </div>
       )}
       <div>
-        <h6 className="font-semibold text-lg text-[#111827]">{title}</h6>
+        <h6 className="font-bold text-lg text-[#111827]">{title}</h6>
         {subtext && (
           <p className="text-[#687588] font-medium text-sm mt-1">{subtext}</p>
         )}

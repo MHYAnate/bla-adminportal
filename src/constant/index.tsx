@@ -86,4 +86,19 @@ export const adminSidebarList = [
     icon: <FinancialReportIcon />,
     href: ROUTES.ADMIN.SIDEBAR.FINANCIALREPORTS,
   },
+  {
+    id: 9,
+    sidebar: "Support & Feedback",
+    icon: <UserIcon />,
+    child: [
+      {
+        sidebar: "Feedback",
+        href: ROUTES.ADMIN.SIDEBAR.FEEDBACK,
+      },
+      {
+        sidebar: "Support",
+        href: ROUTES.ADMIN.SIDEBAR.SUPPORT,
+      },
+    ],
+  },
 ];

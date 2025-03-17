@@ -72,12 +72,12 @@ export default function Products() {
           className={`${
             currentTab === "delete"
               ? "max-w-[33.75rem] left-[50%] translate-x-[-50%]"
-              : "right-0 p-8 max-w-[40.56rem] h-screen overflow-scroll"
+              : "right-0 p-8 max-w-[40.56rem] h-screen overflow-y-scroll"
           }`}
         >
           <DialogHeader>
             {currentTab !== "delete" && (
-              <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
+              <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-[18px] items-center">
                 <div
                   onClick={() => setIsOpen(false)}
                   className="cursor-pointer"
