@@ -16,7 +16,7 @@ import Notifications from "./notifications";
 
 const Settings: React.FC = () => {
   const param = useSearchParams();
-  const tabber = param.get("tab");
+  const tabber = param.get("tab") || "general";
   const { handlePush } = useHandlePush();
   const settingsList = [
     {
