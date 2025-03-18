@@ -21,7 +21,7 @@ import { z } from "zod";
 const formSchema = z.object({
   email: z.string().email("Invalid email provided"),
   password: z.string(),
-  remember: z.boolean().default(false).optional(),
+  remember: z.boolean().default(false),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;

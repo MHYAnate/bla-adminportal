@@ -36,6 +36,7 @@ export default function UpdatePasswordPage() {
       console.log(res);
     }
   );
+
   const email = Storage.get("email");
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
