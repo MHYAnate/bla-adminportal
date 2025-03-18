@@ -54,7 +54,7 @@ export const adminSidebarList = [
     href: ROUTES.ADMIN.SIDEBAR.REPORTS,
   },
   {
-    id: 9,
+    id: 11,
     sidebar: "Supply Management",
     icon: <StoreManagementIcon />,
     child: [

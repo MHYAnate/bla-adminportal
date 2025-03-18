@@ -11,6 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Storage } from "@/lib/utils";
 import { useLogin } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -27,7 +28,8 @@ type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
   const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
-    console.log(res);
+    Storage.set("token", res?.user?.token);
+    window.location.href = "/admin";
   });
 
   const form = useForm<FormSchemaType>({
@@ -42,6 +44,7 @@ export default function LoginPage() {
   async function onSubmit(values: FormSchemaType) {
     loginPayload(values);
   }
+
   return (
     <section className="flex gap-[60px]">
       <div className="bg-[#0F3D30] flex-1">
@@ -153,7 +156,7 @@ export default function LoginPage() {
                       control={form.control}
                       name="remember"
                       render={({ field }) => (
-                        <FormItem className="flex items-center gap-2">
+                        <FormItem className="flex items-center gap-2 mb-8">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
@@ -166,7 +169,7 @@ export default function LoginPage() {
                               Remember Me
                             </FormLabel>
                             <Link
-                              href="#"
+                              href={"/forgot-password"}
                               className="font-bold text-base leading-[1.5rem] text-[#687588]"
                             >
                               Forgot Password
@@ -179,6 +182,7 @@ export default function LoginPage() {
                       variant={"warning"}
                       size={"md"}
                       className="font-bold text-base leading-[1.5rem]"
+                      disabled={loginIsLoading}
                     >
                       Submit
                     </Button>
@@ -187,23 +191,6 @@ export default function LoginPage() {
               </div>
             </div>
           </div>
-        </div>
-        <div className="flex gap-2.5 ms-[29px] mt-auto">
-          <p className="text-base leading-[1.5rem] text-[#A0AEC0] font-medium">
-            © 2025 Buylocal . Alrights reserved.
-          </p>
-          <Link
-            href="#"
-            className="font-bold text-base leading-[1.5rem] text-[#111827]"
-          >
-            Terms & Conditions
-          </Link>
-          <Link
-            href="#"
-            className="font-bold text-base leading-[1.5rem] text-[#111827]"
-          >
-            Privacy Policy
-          </Link>
         </div>
       </div>
     </section>

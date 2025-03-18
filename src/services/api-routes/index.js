@@ -1,8 +1,8 @@
 export const routes = {
   login: () => "auth/login",
   signup: () => "/api/user/register",
-  forgotPassword: (email) => `/api/user/forgot_password?email=${email}`,
-  resetPassword: () => "/api/user/reset_password",
+  forgotPassword: () => `auth/reset`,
+  resetPassword: () => "auth/reset-password",
   confirmEmail: () => "/api/user/confirm-email",
   profile: () => "/api/user/info",
 };

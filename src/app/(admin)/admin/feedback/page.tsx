@@ -1,3 +1,9 @@
+import Feedbacks from "./components";
+
 export default function FeedbackPage() {
-  return <></>;
+  return (
+    <>
+      <Feedbacks />
+    </>
+  );
 }

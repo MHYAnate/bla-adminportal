@@ -10,6 +10,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { useHandlePush } from "@/hooks/use-handle-push";
+import { Storage } from "@/lib/utils";
+import { useForgotPassword } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,6 +24,12 @@ const formSchema = z.object({
 type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function ForgotPasswordPage() {
+  const { handlePush } = useHandlePush();
+  const { forgotPasswordIsLoading, forgotPasswordPayload } = useForgotPassword(
+    (res: any) => {
+      handlePush("/reset-password");
+    }
+  );
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -28,10 +37,13 @@ export default function ForgotPasswordPage() {
     },
   });
 
-  async function onSubmit(values: FormSchemaType) {}
+  async function onSubmit(values: FormSchemaType) {
+    Storage.set("email", values.email);
+    forgotPasswordPayload(values);
+  }
   return (
     <section className="flex justify-center">
-      <div className="h-screen flex flex-col pb-6 max-w-[470px]">
+      <div className="pt-[2rem] flex flex-col pb-6 max-w-[470px]">
         <div className="flex items-center h-full justify-center">
           <div>
             <div className="flex justify-center">
@@ -88,6 +100,7 @@ export default function ForgotPasswordPage() {
                     variant={"warning"}
                     size={"md"}
                     className="font-bold text-base leading-[1.5rem] mb-4"
+                    disabled={forgotPasswordIsLoading}
                   >
                     Submit
                   </Button>
@@ -97,23 +110,12 @@ export default function ForgotPasswordPage() {
                     className="font-bold text-base leading-[1.5rem]"
                     asChild
                   >
-                    <Link href="#">Back To Login</Link>
+                    <Link href="/login">Back To Login</Link>
                   </Button>
                 </form>
               </Form>
             </div>
           </div>
-        </div>
-        <div className="flex gap-2.5">
-          <p className="text-sm leading-[1.5rem] text-[#A0AEC0] font-medium">
-            © 2025 Buylocal . Alrights reserved.
-          </p>
-          <Link href="#" className="font-bold text-sm text-[#111827]">
-            Terms & Conditions
-          </Link>
-          <Link href="#" className="font-bold text-sm text-[#111827]">
-            Privacy Policy
-          </Link>
         </div>
       </div>
     </section>

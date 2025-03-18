@@ -4,7 +4,7 @@ import { routes } from "../api-routes";
 import httpService from "../httpService";
 import { ErrorHandler } from "../errorHandler";
 import useMutateItem from "../useMutateItem";
-import { showErrorAlert } from "@/lib/utils";
+import { showErrorAlert, showSuccessAlert } from "@/lib/utils";
 
 interface HandleSuccess {
   (resData: any): void;
@@ -46,11 +46,12 @@ export const useLogin = (handleSuccess: HandleSuccess): UseLoginResponse => {
       httpService.postDataWithoutToken(payload, routes.login()),
     queryKeys: ["login"],
     onSuccess: (requestParams: any) => {
-      const resData = requestParams?.data?.result || {};
+      const resData = requestParams?.data || {};
       handleSuccess(resData);
+      showSuccessAlert(resData?.message);
     },
     onError: (error: any) => {
-      showErrorAlert(error?.response?.data || "Something went wrong!");
+      showErrorAlert(error?.response?.data?.error || "Something went wrong!");
     },
   });
 
@@ -68,15 +69,16 @@ export const useForgotPassword = (
   handleSuccess: HandleSuccess
 ): UseForgotPasswordResponse => {
   const { data, error, isPending, mutateAsync } = useMutateItem({
-    mutationFn: ({ email }: { email: string }) =>
-      httpService.postDataWithoutToken({}, routes.forgotPassword(email)),
+    mutationFn: (payload: any) =>
+      httpService.postDataWithoutToken(payload, routes.forgotPassword()),
     queryKeys: ["forgot"],
     onSuccess: (requestParams: any) => {
-      const resData = requestParams?.data?.result || {};
+      const resData = requestParams?.data || {};
       handleSuccess(resData);
+      showSuccessAlert(resData?.message);
     },
     onError: (error: any) => {
-      showErrorAlert(error?.response?.data?.errorMessages[0]);
+      showErrorAlert(error?.response?.data?.error || "Something went wrong!");
     },
   });
 
@@ -102,7 +104,7 @@ export const useResetPassword = (
       handleSuccess(resData);
     },
     onError: (error: any) => {
-      showErrorAlert(error?.response?.data?.errorMessages[0]);
+      showErrorAlert(error?.response?.data?.error || "Something went wrong!");
     },
   });
 
