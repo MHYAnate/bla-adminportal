@@ -35,14 +35,6 @@ const Customers: React.FC = () => {
               >
                 <ExportIcon /> Download
               </Button>
-              {/* <Button
-                variant={"warning"}
-                className="font-bold text-base w-auto py-4 px-6"
-                size={"xl"}
-                onClick={() => setIsOpen(true)}
-              >
-                + Add New
-              </Button> */}
             </div>
           </div>
           <DataTable />
