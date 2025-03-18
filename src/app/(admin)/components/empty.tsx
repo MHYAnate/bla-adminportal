@@ -4,7 +4,7 @@ interface IProps {
   header: string;
   btnText: string;
   description: string;
-  icon: ReactNode;
+  icon?: ReactNode;
   onClick: () => void;
 }
 
