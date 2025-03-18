@@ -2,7 +2,6 @@
 
 import Header from "@/app/(admin)/components/header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import DataTable from "./data-table";
 import {
   Dialog,
@@ -10,14 +9,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import CreateAdmin from "./add-products";
+import EditProduct from "./edit-products";
 import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { EmptyProductIcon, ExportIcon } from "../../../../../../public/icons";
 import EmptyState from "@/app/(admin)/components/empty";
+import Link from "next/link";
+import ViewProduct from "./view-product";
+import DeleteContent from "@/app/(admin)/components/delete-content";
 
 export default function Products() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [currentTab, setCurrentTab] = useState<string>("view");
 
   return (
     <section>
@@ -36,9 +39,9 @@ export default function Products() {
             variant={"warning"}
             className="font-bold text-base w-auto py-4 px-6"
             size={"xl"}
-            onClick={() => setIsOpen(true)}
+            asChild
           >
-            + Add New Product
+            <Link href="/admin/products/add">+ Add New Product</Link>
           </Button>
         </div>
       </div>
@@ -50,18 +53,52 @@ export default function Products() {
         description="Start adding products, set prices and delivery information."
         onClick={() => setIsOpen(true)}
       />
-      <DataTable />
+      <DataTable
+        handleEdit={() => {
+          setCurrentTab("edit");
+          setIsOpen(true);
+        }}
+        handleView={() => {
+          setCurrentTab("view");
+          setIsOpen(true);
+        }}
+        handleDelete={() => {
+          setCurrentTab("delete");
+          setIsOpen(true);
+        }}
+      />
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
-        <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-scroll">
+        <DialogContent
+          className={`${
+            currentTab === "delete"
+              ? "max-w-[33.75rem] left-[50%] translate-x-[-50%]"
+              : "right-0 p-8 max-w-[40.56rem] h-screen overflow-y-scroll"
+          }`}
+        >
           <DialogHeader>
-            <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
-              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
-                <ChevronLeft size={24} />
-              </div>
-              Create new admin
-            </DialogTitle>
+            {currentTab !== "delete" && (
+              <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-[18px] items-center">
+                <div
+                  onClick={() => setIsOpen(false)}
+                  className="cursor-pointer"
+                >
+                  <ChevronLeft size={24} />
+                </div>
+                Edit Product
+              </DialogTitle>
+            )}
           </DialogHeader>
-          <CreateAdmin setClose={() => setIsOpen(false)} />
+          {currentTab === "view" ? (
+            <ViewProduct setClose={() => setIsOpen(false)} />
+          ) : currentTab === "edit" ? (
+            <EditProduct setClose={() => setIsOpen(false)} />
+          ) : (
+            <DeleteContent
+              handleClose={() => setIsOpen(false)}
+              description="This action is irreversible and will permanently remove all associated data."
+              title="Product"
+            />
+          )}
         </DialogContent>
       </Dialog>
     </section>

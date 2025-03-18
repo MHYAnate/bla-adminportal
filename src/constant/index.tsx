@@ -54,7 +54,7 @@ export const adminSidebarList = [
     href: ROUTES.ADMIN.SIDEBAR.REPORTS,
   },
   {
-    id: 9,
+    id: 11,
     sidebar: "Supply Management",
     icon: <StoreManagementIcon />,
     child: [
@@ -85,5 +85,20 @@ export const adminSidebarList = [
     sidebar: "Financial Reports",
     icon: <FinancialReportIcon />,
     href: ROUTES.ADMIN.SIDEBAR.FINANCIALREPORTS,
+  },
+  {
+    id: 9,
+    sidebar: "Support & Feedback",
+    icon: <UserIcon />,
+    child: [
+      {
+        sidebar: "Feedback",
+        href: ROUTES.ADMIN.SIDEBAR.FEEDBACK,
+      },
+      {
+        sidebar: "Support",
+        href: ROUTES.ADMIN.SIDEBAR.SUPPORT,
+      },
+    ],
   },
 ];

@@ -16,6 +16,8 @@ export const ROUTES = {
       SETTINGS: "/admin/settings",
       SUPPLYMANAGEMENTMANUFACTURERS: "/admin/supply-management/manufacturers",
       SUPPLYMANAGEMENTVENDORS: "/admin/supply-management/vendors",
+      FEEDBACK: "/admin/feedback",
+      SUPPORT: "/admin/support",
     },
   },
 };

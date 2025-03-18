@@ -56,11 +56,8 @@ const formSchema = z.object({
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
-interface iProps {
-  setClose: () => void;
-}
 
-const AdminOnboardingPage: React.FC<iProps> = ({ setClose }) => {
+export default function AdminOnboardingPage() {
   const [preview, setPreview] = useState<string | ArrayBuffer | null>("");
 
   const form = useForm<FormSchemaType>({
@@ -393,18 +390,7 @@ const AdminOnboardingPage: React.FC<iProps> = ({ setClose }) => {
               )}
             />
           </div>
-          <div className="gap-5 justify-end flex">
-            <Button
-              variant="outline"
-              className="w-auto py-4 px-[3rem] font-bold text-base"
-              size="xl"
-              onClick={(e) => {
-                e.preventDefault();
-                setClose();
-              }}
-            >
-              Cancel
-            </Button>
+          <div className="gap-5 justify-center flex">
             <Button
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
@@ -417,6 +403,4 @@ const AdminOnboardingPage: React.FC<iProps> = ({ setClose }) => {
       </Form>
     </div>
   );
-};
-
-export default AdminOnboardingPage;
+}

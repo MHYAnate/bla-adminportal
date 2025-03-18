@@ -10,7 +10,17 @@ import { TableComponent } from "@/components/custom-table";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 
-const DataTable: React.FC = () => {
+interface iProps {
+  handleEdit: () => void;
+  handleView: () => void;
+  handleDelete: () => void;
+}
+
+const DataTable: React.FC<iProps> = ({
+  handleEdit,
+  handleView,
+  handleDelete,
+}) => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [role, setRole] = useState<string>("");
@@ -101,13 +111,13 @@ const DataTable: React.FC = () => {
     ),
     action: (item: ProductData) => (
       <div className="flex gap-2.5">
-        <div className="bg-[#27A376] p-2.5 rounded-lg">
+        <div className="bg-[#27A376] p-2.5 rounded-lg" onClick={handleView}>
           <ViewIcon />
         </div>
-        <div className="bg-[#2F78EE] p-2.5 rounded-lg">
+        <div className="bg-[#2F78EE] p-2.5 rounded-lg" onClick={handleEdit}>
           <EditIcon />
         </div>
-        <div className="bg-[#E03137] p-2.5 rounded-lg">
+        <div className="bg-[#E03137] p-2.5 rounded-lg" onClick={handleDelete}>
           <DeleteIcon />
         </div>
       </div>

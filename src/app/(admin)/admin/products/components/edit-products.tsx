@@ -44,7 +44,7 @@ interface iProps {
   setClose: () => void;
 }
 
-const CreateProduct: React.FC<iProps> = ({ setClose }) => {
+const EditProduct: React.FC<iProps> = ({ setClose }) => {
   const [preview, setPreview] = useState<string | ArrayBuffer | null>("");
 
   const form = useForm<FormSchemaType>({
@@ -233,7 +233,7 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
               )}
             />
           </div>
-          <div>
+          {/* <div>
             <FormField
               control={form.control}
               name="image"
@@ -288,7 +288,7 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
                 </FormItem>
               )}
             />
-          </div>
+          </div> */}
           <div className="gap-5 justify-end flex">
             <Button
               variant="outline"
@@ -315,4 +315,4 @@ const CreateProduct: React.FC<iProps> = ({ setClose }) => {
   );
 };
 
-export default CreateProduct;
+export default EditProduct;

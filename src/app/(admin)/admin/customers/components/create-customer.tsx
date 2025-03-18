@@ -9,7 +9,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -17,18 +16,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { CalendarIcon, Upload } from "lucide-react";
 import { UploadIcn, UploadIcon } from "../../../../../../public/icons";
 
 const formSchema = z.object({
@@ -45,28 +36,28 @@ const formSchema = z.object({
   dob: z.date({
     required_error: "A date of birth is required.",
   }),
-  cacdocument: z
-    .instanceof(FileList)
-    .refine((files) => files.length > 0, "File is required")
-    .refine(
-      (files) => files[0]?.size <= 5 * 1024 * 1024,
-      "File size must be less than 5MB"
-    )
-    .refine(
-      (files) => files[0]?.type === "application/pdf",
-      "Only PDF files are allowed"
-    ),
-  kyc: z
-    .instanceof(FileList)
-    .refine((files) => files.length > 0, "File is required")
-    .refine(
-      (files) => files[0]?.size <= 5 * 1024 * 1024,
-      "File size must be less than 5MB"
-    )
-    .refine(
-      (files) => files[0]?.type === "application/pdf",
-      "Only PDF files are allowed"
-    ),
+  // cacdocument: z
+  //   .instanceof(FileList)
+  //   .refine((files) => files.length > 0, "File is required")
+  //   .refine(
+  //     (files) => files[0]?.size <= 5 * 1024 * 1024,
+  //     "File size must be less than 5MB"
+  //   )
+  //   .refine(
+  //     (files) => files[0]?.type === "application/pdf",
+  //     "Only PDF files are allowed"
+  //   ),
+  // kyc: z
+  //   .instanceof(FileList)
+  //   .refine((files) => files.length > 0, "File is required")
+  //   .refine(
+  //     (files) => files[0]?.size <= 5 * 1024 * 1024,
+  //     "File size must be less than 5MB"
+  //   )
+  //   .refine(
+  //     (files) => files[0]?.type === "application/pdf",
+  //     "Only PDF files are allowed"
+  //   ),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -97,7 +88,7 @@ const CreateCustomer: React.FC<iProps> = ({ setClose }) => {
     <div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="mb-8">
-          <div className="flex gap-6 mb-6">
+          {/* <div className="flex gap-6 mb-6">
             <FormField
               control={form.control}
               name="cacdocument"
@@ -144,8 +135,8 @@ const CreateCustomer: React.FC<iProps> = ({ setClose }) => {
                 </FormItem>
               )}
             />
-          </div>
-          <FormField
+          </div> */}
+          {/* <FormField
             control={form.control}
             name="kyc"
             render={({ field: { onChange, value, ...rest } }) => (
@@ -177,7 +168,7 @@ const CreateCustomer: React.FC<iProps> = ({ setClose }) => {
                 <FormMessage />
               </FormItem>
             )}
-          />
+          /> */}
           <div className="flex gap-6 mb-6">
             <FormField
               control={form.control}

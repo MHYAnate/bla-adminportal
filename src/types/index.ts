@@ -8,6 +8,7 @@ export type CellValue =
   | null
   | undefined
   | ReactNode;
+
 export interface DataItem {
   [key: string]: CellValue;
   id?: string | number;
@@ -80,6 +81,22 @@ export interface ManufacturerData extends DataItem {
   status: string;
 }
 
+export interface FeedbackData extends DataItem {
+  status: string;
+  customerName: string;
+  customerType: string;
+  feedbackId: string;
+
+  dateSubmitted: string;
+}
+
+export interface InventoryData extends DataItem {
+  status: string;
+  productname: string | number;
+  currentStock: string | number;
+  minStockLimit: string | number;
+  maxStockLimit: string;
+}
 export interface VendorsData extends DataItem {
   status: string;
   name: string;

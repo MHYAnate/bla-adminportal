@@ -10,30 +10,56 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Storage } from "@/lib/utils";
+import { useResetPassword } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-const formSchema = z.object({
-  newpassword: z.string(),
-  confirmpassword: z.string(),
-});
+
+const formSchema = z
+  .object({
+    password: z.string().min(8, "Password should be at least 8 characters"),
+    code: z.string().length(6, "Code must be exactly 6"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
+
 type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function UpdatePasswordPage() {
+  const { resetPasswordIsLoading, resetPasswordPayload } = useResetPassword(
+    (res) => {
+      console.log(res);
+    }
+  );
+
+  const email = Storage.get("email");
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      newpassword: "",
-      confirmpassword: "",
+      password: "",
+      confirmPassword: "",
+      code: "",
     },
   });
 
-  async function onSubmit(values: FormSchemaType) {}
+  async function onSubmit(values: FormSchemaType) {
+    const payload = {
+      password: values.password,
+      confirmPassword: values.confirmPassword,
+      email,
+      code: values.code,
+    };
+    resetPasswordPayload(payload);
+  }
+
   return (
     <section className="flex justify-center">
-      <div className="h-screen flex flex-col pb-6 max-w-[470px]">
+      <div className="flex flex-col pb-6 max-w-[470px] pt-[2rem]">
         <div className="flex items-center h-full justify-center">
           <div>
             <div className="flex justify-center">
@@ -63,7 +89,7 @@ export default function UpdatePasswordPage() {
                 >
                   <FormField
                     control={form.control}
-                    name="newpassword"
+                    name="password"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[#111827] font-medium text-base leading-[1.5rem]">
@@ -86,7 +112,7 @@ export default function UpdatePasswordPage() {
                   />
                   <FormField
                     control={form.control}
-                    name="confirmpassword"
+                    name="confirmPassword"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className="text-[#111827] font-medium text-base leading-[1.5rem]">
@@ -107,10 +133,34 @@ export default function UpdatePasswordPage() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="code"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-[#111827] font-medium text-base leading-[1.5rem]">
+                          Confirm Code
+                          <span className="text-sm font-mediul text-[#E03137]">
+                            *
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="Enter code sent to your email"
+                            {...field}
+                            className="h-14"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <Button
                     variant={"warning"}
                     size={"md"}
                     className="font-bold text-base leading-[1.5rem]"
+                    disabled={resetPasswordIsLoading}
                   >
                     Submit
                   </Button>
@@ -118,17 +168,6 @@ export default function UpdatePasswordPage() {
               </Form>
             </div>
           </div>
-        </div>
-        <div className="flex gap-2.5">
-          <p className="text-sm leading-[1.5rem] text-[#A0AEC0] font-medium">
-            © 2025 Buylocal . Alrights reserved.
-          </p>
-          <Link href="#" className="font-bold text-sm text-[#111827]">
-            Terms & Conditions
-          </Link>
-          <Link href="#" className="font-bold text-sm text-[#111827]">
-            Privacy Policy
-          </Link>
         </div>
       </div>
     </section>

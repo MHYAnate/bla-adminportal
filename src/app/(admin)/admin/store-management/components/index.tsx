@@ -35,6 +35,7 @@ export default function StoreManagement() {
             btnText="Add Store"
             header="Store Records Await"
             description="Start Managing Your Suppliers by Adding Your First Store."
+            onClick={() => console.log("Hi!")}
           />
           <div className="flex items-center gap-4 mb-6">
             <InputFilter
