@@ -14,9 +14,18 @@ import {
 import { useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import CreateCustomer from "./create-customer";
+import { useGetCustomers } from "@/services/customers";
 
 const Customers: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const {
+    getCustomersData,
+    refetchCustomers,
+    getCustomersIsLoading,
+    setCustomersFilter,
+  } = useGetCustomers();
+
+  console.log(getCustomersData);
 
   return (
     <div>

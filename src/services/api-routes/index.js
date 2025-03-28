@@ -1,8 +1,11 @@
 export const routes = {
   login: () => "auth/login",
-  signup: () => "/api/user/register",
   forgotPassword: () => `auth/reset`,
   resetPassword: () => "auth/reset-password",
-  confirmEmail: () => "/api/user/confirm-email",
   profile: () => "/api/user/info",
+  dashboard: () => "admin/dashboard",
+  customers: (data) => {
+    const params = new URLSearchParams(data);
+    return `admin/customers?${params}`;
+  },
 };
