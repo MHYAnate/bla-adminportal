@@ -33,6 +33,7 @@ export interface AdminsData extends DataItem {
   rolecount: number;
 }
 export interface CustomersData extends DataItem {
+  [key: string]: string | number | undefined;
   id?: string | number;
   customername: string;
   customertype: string;

@@ -1,7 +1,5 @@
 "use client";
-
 import { Label, Pie, PieChart, Sector } from "recharts";
-import { PieSectorDataItem } from "recharts/types/polar/Pie";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -10,68 +8,38 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { SelectFilter } from "./select-filter";
-import { useState } from "react";
-const chartData = [
-  { title: "Ongoing", values: 275, fill: "#EC9F01" },
-  { title: "Cancelled", values: 200, fill: "#E03137" },
-  { title: "Delivered", values: 187, fill: "#27A376" },
-];
+import { PieSectorDataItem } from "recharts/types/polar/Pie";
 
-const chartConfig = {
-  values: {
-    label: "values",
-  },
-  chrome: {
-    label: "Chrome",
-    color: "hsl(var(--chart-1))",
-  },
-  safari: {
-    label: "Safari",
-    color: "hsl(var(--chart-2))",
-  },
-  firefox: {
-    label: "Firefox",
-    color: "hsl(var(--chart-3))",
-  },
-  edge: {
-    label: "Edge",
-    color: "hsl(var(--chart-4))",
-  },
-  other: {
-    label: "Other",
-    color: "hsl(var(--chart-5))",
-  },
-} satisfies ChartConfig;
-const list = [
-  {
-    text: "Admin",
-    value: "admin",
-  },
-  {
-    text: "Super Admin",
-    value: "super-admin",
-  },
-];
-interface iProps {
-  showFilter?: boolean;
+interface OrderData {
+  status: string;
+  sales: number;
 }
 
-export function PieActiveComponent({ showFilter = false }: iProps) {
-  const [filter, setFilter] = useState<string>("");
+interface iProps {
+  data: OrderData[];
+}
+
+export function TopOrdersChart({ data }: iProps) {
+  //   const totalOrders = data?.reduce((acc, item) => acc + Number(item.values), 0);
+  const totalOrders = 500;
+
+  const coloredData = data.map((item, index) => ({
+    ...item,
+    fill: `hsl(var(--chart-${(index % 5) + 1}))`,
+  }));
+
+  const chartConfig = coloredData.reduce((acc, item, index) => {
+    acc[`customer_${index + 1}`] = {
+      label: item.status,
+      color: item.fill,
+    };
+    return acc;
+  }, {} as Record<string, { label: string; color: string }>) satisfies ChartConfig;
+
   return (
     <Card className="flex flex-col p-6 w-full h-auto">
       <div className="flex items-center mb-6 justify-between">
         <h5 className="font-bold text-[#111827]">Order Summary</h5>
-        {showFilter && (
-          <div className="w-[72px]">
-            <SelectFilter
-              setFilter={setFilter}
-              list={list}
-              customSize={false}
-            />
-          </div>
-        )}
       </div>
       <CardContent className="flex-1 pb-0">
         <ChartContainer
@@ -84,9 +52,12 @@ export function PieActiveComponent({ showFilter = false }: iProps) {
               content={<ChartTooltipContent hideLabel />}
             />
             <Pie
-              data={chartData}
-              dataKey="values"
-              nameKey="title"
+              data={data.map((d, i) => ({
+                ...d,
+                fill: `hsl(var(--chart-${(i % 5) + 1}))`,
+              }))}
+              dataKey="count"
+              nameKey="status"
               innerRadius={60}
               strokeWidth={0}
               activeIndex={0}
@@ -105,10 +76,10 @@ export function PieActiveComponent({ showFilter = false }: iProps) {
                   className="fill-[#111827] text-2xl font-bold"
                 >
                   <tspan x={cx} y={cy}>
-                    121
+                    {totalOrders}
                   </tspan>
                   <tspan x={cx} y={cy + 24} className="fill-[#A0AEC0] text-xs">
-                    Total Order.
+                    Total Orders
                   </tspan>
                 </text>
               )}
@@ -117,16 +88,18 @@ export function PieActiveComponent({ showFilter = false }: iProps) {
         </ChartContainer>
       </CardContent>
       <div className="flex flex-col gap-3">
-        {chartData?.map((data, index) => (
+        {data?.map((item, index) => (
           <div className="flex items-center gap-3" key={index}>
             <div
               className={`w-[10px] h-[10px] rounded-full`}
-              style={{ backgroundColor: data.fill }}
+              style={{
+                backgroundColor: `hsl(var(--chart-${(index % 5) + 1}))`,
+              }}
             ></div>
             <p className="text-[#687588] text-xs font-medium me-auto">
-              {data?.title}
+              {item?.status}
             </p>
-            <h6 className="font-bold text-sm text-[#111827]">{data?.values}</h6>
+            <h6 className="font-bold text-sm text-[#111827]">20</h6>
           </div>
         ))}
       </div>

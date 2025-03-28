@@ -7,10 +7,13 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { TableComponent } from "@/components/custom-table";
 import Link from "next/link";
-import { DeleteIcon, ViewIcon } from "../../../../../public/icons";
+import { ViewIcon } from "../../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
+interface iProps {
+  data?: any;
+}
 
-const CustomersDataTable: React.FC = () => {
+const CustomersDataTable: React.FC<iProps> = ({ data }) => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const onPageChange = (page: number) => {
@@ -77,28 +80,28 @@ const CustomersDataTable: React.FC = () => {
         </div>
       </div>
     ),
-    customertype: (item: CustomersData) => (
-      <span className="font-medium">{item.customertype}</span>
+    type: (item: CustomersData) => (
+      <span className="font-medium">{item?.type}</span>
     ),
-    customerid: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3">
-        {item.customerid}
-      </div>
+    id: (item: CustomersData) => (
+      <div className="font-medium flex items-center gap-3">{item?.id}</div>
     ),
     kyc: (item: CustomersData) => (
       <Badge
         variant={
-          item.kyc.toLowerCase() === "verified"
-            ? "success"
-            : item.kyc.toLowerCase() === "pending"
-            ? "tertiary"
-            : item.kyc.toLowerCase() === "flagged"
-            ? "destructive"
-            : "warning"
+          // item?.kyc?.toLowerCase() === "verified"
+          //   ? "success"
+          //   : item?.kyc?.toLowerCase() === "pending"
+          //   ? "tertiary"
+          //   : item?.kyc?.toLowerCase() === "flagged"
+          //   ? "destructive"
+          //   : "warning"
+          item?.isVerified ? "success" : "destructive"
         }
         className="py-1 px-[26px] font-bold text-[10px]"
       >
-        {item.kyc.toUpperCase()}
+        {/* {item?.kyc?.toUpperCase()} */}
+        {item?.isVerified ? "Verified" : "Not Verified"}
       </Badge>
     ),
     customerstatus: (item: CustomersData) => (
@@ -114,17 +117,14 @@ const CustomersDataTable: React.FC = () => {
         >
           <ViewIcon />
         </Link>
-        <div className="bg-[#E03137] p-2.5 rounded-lg">
-          <DeleteIcon />
-        </div>
       </div>
     ),
   };
 
   const columnOrder: (keyof CustomersData)[] = [
     "customername",
-    "customertype",
-    "customerid",
+    "type",
+    "id",
     "kyc",
     "customerstatus",
     "action",
@@ -132,8 +132,8 @@ const CustomersDataTable: React.FC = () => {
 
   const columnLabels = {
     customername: "Name",
-    customertype: "Customer Type",
-    customerid: "Customer ID",
+    type: "Customer Type",
+    id: "Customer ID",
     customerstatus: "Customer Status",
     kyc: "KYC",
     action: "Action",
@@ -147,7 +147,7 @@ const CustomersDataTable: React.FC = () => {
             Recent Customers
           </h6>
           <Link
-            href="#"
+            href={ROUTES.ADMIN.SIDEBAR.CUSTOMERS}
             className="text-sm font-medium text-[#687588] underline border border-[#E9EAEC] rounded-md px-[3.56rem] py-4"
           >
             View All
@@ -155,10 +155,10 @@ const CustomersDataTable: React.FC = () => {
         </div>
 
         <TableComponent<CustomersData>
-          tableData={tableData}
+          tableData={data}
           currentPage={currentPage}
           onPageChange={onPageChange}
-          totalPages={Math.ceil(tableData.length / pageSize)}
+          totalPages={Math.ceil(data?.length / pageSize)}
           cellRenderers={cellRenderers}
           columnOrder={columnOrder}
           columnLabels={columnLabels}
