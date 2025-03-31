@@ -25,8 +25,6 @@ const Customers: React.FC = () => {
     setCustomersFilter,
   } = useGetCustomers();
 
-  console.log(getCustomersData);
-
   return (
     <div>
       <Card className="bg-white">
