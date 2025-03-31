@@ -20,7 +20,6 @@ interface iProps {
 }
 
 export function TopOrdersChart({ data }: iProps) {
-  //   const totalOrders = data?.reduce((acc, item) => acc + Number(item.values), 0);
   const totalOrders = 500;
 
   const coloredData = data.map((item, index) => ({
