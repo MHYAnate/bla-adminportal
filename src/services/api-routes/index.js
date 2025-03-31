@@ -8,4 +8,11 @@ export const routes = {
     const params = new URLSearchParams(data);
     return `admin/customers?${params}`;
   },
+  getCustomerInfo: (id) => `admin/customers/${id}`,
+  getCustomerOrderHistory: (id) => `admin/customers/${id}/orders`,
+  orders: (data) => {
+    const params = new URLSearchParams(data);
+    return `admin/orders?${params}`;
+  },
+  getOrderInfo: (id) => `admin/orders/${id}`,
 };

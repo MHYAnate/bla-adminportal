@@ -17,11 +17,20 @@ import OrderHistory from "./order-history";
 import { useSearchParams } from "next/navigation";
 import { useHandlePush } from "@/hooks/use-handle-push";
 import { ROUTES } from "@/constant/routes";
+import { useGetCustomerInfo } from "@/services/customers";
+import { useEffect } from "react";
+import { capitalizeFirstLetter, formatDate } from "@/lib/utils";
 
-const CustomerDetail: React.FC = () => {
+export default function CustomerDetail({ customerId }: { customerId: string }) {
   const param = useSearchParams();
   const tabber = param.get("tab");
   const { handlePush } = useHandlePush();
+  const {
+    getCustomerInfoData: data,
+    setCustomerInfoFilter,
+    getCustomerInfoIsLoading,
+    refetchCustomerInfo,
+  } = useGetCustomerInfo();
   const customer = "Individuals";
   const status = "Active";
   const list = [
@@ -29,15 +38,20 @@ const CustomerDetail: React.FC = () => {
       value: "general",
       text: "General",
     },
-    {
-      value: "documents",
-      text: "Documents",
-    },
+    // {
+    //   value: "documents",
+    //   text: "Documents",
+    // },
     {
       value: "order-history",
       text: "Order History",
     },
   ];
+
+  useEffect(() => {
+    setCustomerInfoFilter(customerId);
+  }, [customerId]);
+
   return (
     <div>
       <Header title="Customer information" showBack={true} />
@@ -57,10 +71,10 @@ const CustomerDetail: React.FC = () => {
                 </div>
                 <h6 className="text-center text-[#111827] text-xl mb-2.5"></h6>
                 <p className="text-[#687588] text-sm mb-2.5 text-center">
-                  Business Owner
+                  Customer type: {capitalizeFirstLetter(data?.type)}
                 </p>
                 <p className="text-[#687588] text-sm mb-6 text-center">
-                  @mirable_store
+                  Id: {data?.id}
                 </p>
                 <div className="flex justify-center">
                   <Badge
@@ -81,7 +95,7 @@ const CustomerDetail: React.FC = () => {
                 <div className="flex gap-3 items-center mb-4">
                   <MailIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                    mirablestore@gmail.com
+                    {data?.email || "----"}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
@@ -98,6 +112,12 @@ const CustomerDetail: React.FC = () => {
                 </div>
               </div>
               <div>
+                <p className="text-xs text-[#687588] mb-1">Date Joined</p>
+                <p className="font-semibold text-sm text-[#111827] mb-4">
+                  {formatDate(data?.createdAt)}
+                </p>
+              </div>
+              {/* <div>
                 <p className="text-xs text-[#687588] mb-1">Referral Code</p>
                 <p className="font-semibold text-sm text-[#111827] mb-4">
                   W5FFO
@@ -108,13 +128,13 @@ const CustomerDetail: React.FC = () => {
                   Number of Referrals
                 </p>
                 <p className="font-semibold text-sm text-[#111827] mb-4">45</p>
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 <p className="text-xs text-[#687588] mb-1">Language Selected</p>
                 <p className="font-semibold text-sm text-[#111827] mb-4">
                   English
                 </p>
-              </div>
+              </div> */}
             </div>
           </CardContent>
         </Card>
@@ -134,7 +154,7 @@ const CustomerDetail: React.FC = () => {
                     }`}
                     onClick={() =>
                       handlePush(
-                        `${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/1?tab=${tab.value}`
+                        `${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/${customerId}?tab=${tab.value}`
                       )
                     }
                   >
@@ -152,13 +172,14 @@ const CustomerDetail: React.FC = () => {
               </TabsList>
 
               <TabsContent value="general">
-                <General />
+                <General data={data} />
               </TabsContent>
-              <TabsContent value="documents">
+
+              {/* <TabsContent value="documents">
                 <Documents />
-              </TabsContent>
+              </TabsContent> */}
               <TabsContent value="order-history">
-                <OrderHistory />
+                <OrderHistory customerId={customerId} />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -166,6 +187,4 @@ const CustomerDetail: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default CustomerDetail;
+}

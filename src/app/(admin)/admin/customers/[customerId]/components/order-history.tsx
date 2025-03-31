@@ -1,8 +1,16 @@
+"use client";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { ShoppingBagIcon } from "../../../../../../../public/icons";
 import OrderDetailsCard from "@/components/widgets/order-details";
+import { useGetCustomerOrderHistory } from "@/services/customers";
+import { useEffect } from "react";
 
-const OrderHistory: React.FC = () => {
+interface iProps {
+  customerId: string;
+}
+
+const OrderHistory: React.FC<iProps> = ({ customerId }) => {
   const order = {
     name: "Mr. Rice. Foreign long rice (50kg)",
     price: "55,000",
@@ -11,6 +19,20 @@ const OrderHistory: React.FC = () => {
     status: "Ongoing",
     id: 1,
   };
+
+  const {
+    getCustomerOrderHistoryIsLoading,
+    getCustomerOrderHistoryData,
+    setCustomerOrderHistoryFilter,
+    getCustomerOrderHistoryError,
+    refetchCustomerOrderHistoryInfo,
+  } = useGetCustomerOrderHistory();
+
+  useEffect(() => {
+    setCustomerOrderHistoryFilter(customerId);
+  }, [customerId]);
+
+  console.log(customerId);
 
   return (
     <>

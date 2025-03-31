@@ -7,6 +7,7 @@ export type CellValue =
   | Date
   | null
   | undefined
+  | object
   | ReactNode;
 
 export interface DataItem {
@@ -41,6 +42,7 @@ export interface CustomersData extends DataItem {
   customerstatus: string;
   kyc: string;
   email?: string;
+  profile?: Record<string | number, string | number> | any;
 }
 
 export interface ReportsData extends DataItem {
@@ -68,8 +70,9 @@ export interface ProductData extends DataItem {
   id?: string | number;
   price: number | string;
   quantity: number;
-  productid: string;
+  productid?: string;
   status: string;
+  product?: Record<string | number, string | number> | any;
 }
 
 export interface ManufacturerData extends DataItem {

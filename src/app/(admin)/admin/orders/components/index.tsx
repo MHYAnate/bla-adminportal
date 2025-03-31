@@ -19,8 +19,16 @@ import { IOrderCard } from "@/types";
 import OrderCard from "@/components/widgets/order";
 import { OrderBarComponent } from "./order-bar-chart";
 import LineGraphComponent from "./line-graph";
+import { useGetOrders } from "@/services/orders";
 
 export default function Orders() {
+  const {
+    getOrdersData: data,
+    getOrdersError,
+    getOrdersIsLoading,
+    setOrdersFilter,
+  } = useGetOrders();
+
   const orderlist = [
     {
       value: "405,689",
@@ -63,6 +71,7 @@ export default function Orders() {
       title: "In Progress",
     },
   ];
+
   return (
     <section>
       <Card className="bg-white">

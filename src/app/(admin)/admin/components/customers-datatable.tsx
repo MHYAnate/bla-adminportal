@@ -9,6 +9,7 @@ import { TableComponent } from "@/components/custom-table";
 import Link from "next/link";
 import { ViewIcon } from "../../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
+import { capitalizeFirstLetter } from "@/lib/utils";
 interface iProps {
   data?: any;
 }
@@ -19,51 +20,9 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
-  const tableData: CustomersData[] = [
-    {
-      id: "1",
-      customername: "Alice Johnson",
-      customertype: "Individual",
-      customerid: "CUST001",
-      customerstatus: "Active",
-      kyc: "Verified",
-    },
-    {
-      id: "2",
-      customername: "Bob Williams",
-      customertype: "Business Owner",
-      customerid: "CUST002",
-      customerstatus: "Inactive",
-      kyc: "Flagged",
-    },
-    {
-      id: "3",
-      customername: "Charlie Brown",
-      customertype: "Individual",
-      customerid: "CUST003",
-      customerstatus: "Active",
-      kyc: "Under Review",
-    },
-    {
-      id: "4",
-      customername: "Diana Smith",
-      customertype: "Individual",
-      customerid: "CUST004",
-      customerstatus: "Inactive",
-      kyc: "Verified",
-    },
-    {
-      id: "5",
-      customername: "Ethan Martinez",
-      customertype: "Business Owner",
-      customerid: "CUST005",
-      customerstatus: "Active",
-      kyc: "Flagged",
-    },
-  ];
 
   const cellRenderers = {
-    name: (item: CustomersData) => (
+    fullName: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">
         <Image
           src="/images/user-avatar.png"
@@ -73,7 +32,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
           className="w-6 h-6 rounded-full"
         />
         <div>
-          <p> {item.customername}</p>
+          <p> {item?.profile?.fullName || "----"}</p>
           <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
             {item?.email || "lincoln@unpixel.com"}
           </p>
@@ -81,7 +40,9 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
       </div>
     ),
     type: (item: CustomersData) => (
-      <span className="font-medium">{item?.type}</span>
+      <span className="font-medium">
+        {capitalizeFirstLetter(item?.type?.toString() || "customer")}
+      </span>
     ),
     id: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">{item?.id}</div>
@@ -122,7 +83,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
   };
 
   const columnOrder: (keyof CustomersData)[] = [
-    "customername",
+    "fullName",
     "type",
     "id",
     "kyc",
@@ -131,7 +92,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
   ];
 
   const columnLabels = {
-    customername: "Name",
+    fullName: "Name",
     type: "Customer Type",
     id: "Customer ID",
     customerstatus: "Customer Status",

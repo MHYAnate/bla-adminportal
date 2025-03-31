@@ -5,9 +5,13 @@ import { ProductData } from "@/types";
 import Image from "next/image";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+interface iProps {
+  data: any;
+}
 import { TableComponent } from "@/components/custom-table";
+import { formatMoney } from "@/lib/utils";
 
-const DataTable: React.FC = () => {
+const DataTable: React.FC<iProps> = ({ data }) => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const onPageChange = (page: number) => {
@@ -60,19 +64,19 @@ const DataTable: React.FC = () => {
           className="w-9 h-9 rounded-full"
         />
         <div>
-          <p> {item.productname}</p>
+          <p> {item?.product?.name}</p>
           <p className="font-normal text-[0.75rem] text-[#A0AEC0]">Cocoa</p>
         </div>
       </div>
     ),
     price: (item: ProductData) => (
-      <div className="font-medium">NGN{item.price}</div>
+      <div className="font-medium">{formatMoney(Number(item?.price) || 0)}</div>
     ),
     quantity: (item: ProductData) => (
-      <span className="font-medium">{item.quantity}</span>
+      <span className="font-medium">{item?.quantity}</span>
     ),
     productid: (item: ProductData) => (
-      <div className="font-medium">{item.productid}</div>
+      <div className="font-medium">{item.product?.id}</div>
     ),
   };
 
@@ -94,7 +98,7 @@ const DataTable: React.FC = () => {
     <Card className="bg-white">
       <CardContent className="p-6">
         <TableComponent<ProductData>
-          tableData={tableData}
+          tableData={data || []}
           currentPage={currentPage}
           onPageChange={onPageChange}
           totalPages={Math.ceil(tableData.length / pageSize)}
