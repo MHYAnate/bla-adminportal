@@ -20,7 +20,7 @@ interface iProps {
 }
 
 export function TopOrdersChart({ data }: iProps) {
-  const totalOrders = 500;
+  const totalOrders = data.reduce((sum, item) => sum + item.sales, 0);
 
   const coloredData = data.map((item, index) => ({
     ...item,
@@ -55,7 +55,7 @@ export function TopOrdersChart({ data }: iProps) {
                 ...d,
                 fill: `hsl(var(--chart-${(i % 5) + 1}))`,
               }))}
-              dataKey="count"
+              dataKey="sales"
               nameKey="status"
               innerRadius={60}
               strokeWidth={0}
@@ -75,7 +75,7 @@ export function TopOrdersChart({ data }: iProps) {
                   className="fill-[#111827] text-2xl font-bold"
                 >
                   <tspan x={cx} y={cy}>
-                    {totalOrders}
+                    {totalOrders || 0}
                   </tspan>
                   <tspan x={cx} y={cy + 24} className="fill-[#A0AEC0] text-xs">
                     Total Orders
@@ -98,7 +98,7 @@ export function TopOrdersChart({ data }: iProps) {
             <p className="text-[#687588] text-xs font-medium me-auto">
               {item?.status}
             </p>
-            <h6 className="font-bold text-sm text-[#111827]">20</h6>
+            <h6 className="font-bold text-sm text-[#111827]">{item?.sales}</h6>
           </div>
         ))}
       </div>

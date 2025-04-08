@@ -32,7 +32,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
           className="w-6 h-6 rounded-full"
         />
         <div>
-          <p> {item?.profile?.fullName || "----"}</p>
+          <p> {item?.name || "----"}</p>
           <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
             {item?.email || "lincoln@unpixel.com"}
           </p>
@@ -50,25 +50,30 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
     kyc: (item: CustomersData) => (
       <Badge
         variant={
-          // item?.kyc?.toLowerCase() === "verified"
-          //   ? "success"
-          //   : item?.kyc?.toLowerCase() === "pending"
-          //   ? "tertiary"
-          //   : item?.kyc?.toLowerCase() === "flagged"
-          //   ? "destructive"
-          //   : "warning"
-          item?.isVerified ? "success" : "destructive"
+          item.kycStatus.toLowerCase() === "verified"
+            ? "success"
+            : item.kycStatus.toLowerCase() === "pending"
+            ? "tertiary"
+            : item.kycStatus.toLowerCase() === "flagged"
+            ? "destructive"
+            : "warning"
         }
         className="py-1 px-[26px] font-bold text-[10px]"
       >
-        {/* {item?.kyc?.toUpperCase()} */}
-        {item?.isVerified ? "Verified" : "Not Verified"}
+        {item?.kycStatus?.toString().toUpperCase()}
       </Badge>
     ),
-    customerstatus: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3">
-        {item.customerstatus}
-      </div>
+    status: (item: CustomersData) => (
+      <Badge
+        variant={
+          item?.status?.toString().toLowerCase() === "active"
+            ? "success"
+            : "destructive"
+        }
+        className="py-1 px-[26px] font-bold text-[10px]"
+      >
+        {item.status}
+      </Badge>
     ),
     action: (item: CustomersData) => (
       <div className="flex gap-2.5">
@@ -87,7 +92,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
     "type",
     "id",
     "kyc",
-    "customerstatus",
+    "status",
     "action",
   ];
 
@@ -95,7 +100,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
     fullName: "Name",
     type: "Customer Type",
     id: "Customer ID",
-    customerstatus: "Customer Status",
+    status: "Customer Status",
     kyc: "KYC",
     action: "Action",
   };

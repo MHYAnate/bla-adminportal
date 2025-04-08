@@ -28,7 +28,7 @@ type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
   const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
-    Storage.set("token", res?.user?.token);
+    Storage.set("token", res?.data?.token);
     window.location.href = "/admin";
   });
 

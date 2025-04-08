@@ -11,7 +11,7 @@ import {
 import { formatNumber, formatString } from "@/lib/utils";
 
 interface ProductData {
-  product: string;
+  name: string;
   sales: number;
 }
 
@@ -32,7 +32,7 @@ export function TopProductsChart({ data }: iProps) {
 
   const chartConfig = coloredData.reduce((acc, item, index) => {
     acc[`customer_${index + 1}`] = {
-      label: item.product,
+      label: item.name,
       color: item.fill,
     };
     return acc;
@@ -56,7 +56,7 @@ export function TopProductsChart({ data }: iProps) {
             <Pie
               data={coloredData}
               dataKey="sales"
-              nameKey="product"
+              nameKey="name"
               innerRadius={60}
               strokeWidth={0}
               activeIndex={0}
@@ -89,7 +89,7 @@ export function TopProductsChart({ data }: iProps) {
               style={{ backgroundColor: data.fill }}
             ></div>
             <p className="text-[#687588] text-xs font-medium me-auto">
-              {formatString(data?.product, 15) || ""}
+              {formatString(data?.name, 15) || ""}
             </p>
             <h6 className="font-bold text-sm text-[#111827]">{data?.sales}</h6>
           </div>

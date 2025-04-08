@@ -36,11 +36,13 @@ export interface AdminsData extends DataItem {
 export interface CustomersData extends DataItem {
   [key: string]: string | number | undefined;
   id?: string | number;
-  customername: string;
-  customertype: string;
+  name: string;
+  customerType: string;
   customerid: string;
   customerstatus: string;
-  kyc: string;
+  ststus?: string;
+  kycStatus: string;
+  kyc?: string;
   email?: string;
   profile?: Record<string | number, string | number> | any;
 }

@@ -10,8 +10,12 @@ import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
+import { capitalizeFirstLetter } from "@/lib/utils";
+interface iProps {
+  data?: any;
+}
 
-const DataTable: React.FC = () => {
+const DataTable: React.FC<iProps> = ({ data }) => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [role, setRole] = useState<string>("");
@@ -29,48 +33,6 @@ const DataTable: React.FC = () => {
       value: "super-admin",
     },
   ];
-  const tableData: CustomersData[] = [
-    {
-      id: "1",
-      customername: "Alice Johnson",
-      customertype: "Individual",
-      customerid: "CUST001",
-      customerstatus: "Active",
-      kyc: "Verified",
-    },
-    {
-      id: "2",
-      customername: "Bob Williams",
-      customertype: "Business Owner",
-      customerid: "CUST002",
-      customerstatus: "Inactive",
-      kyc: "Flagged",
-    },
-    {
-      id: "3",
-      customername: "Charlie Brown",
-      customertype: "Individual",
-      customerid: "CUST003",
-      customerstatus: "Active",
-      kyc: "Under Review",
-    },
-    {
-      id: "4",
-      customername: "Diana Smith",
-      customertype: "Individual",
-      customerid: "CUST004",
-      customerstatus: "Inactive",
-      kyc: "Verified",
-    },
-    {
-      id: "5",
-      customername: "Ethan Martinez",
-      customertype: "Business Owner",
-      customerid: "CUST005",
-      customerstatus: "Active",
-      kyc: "Flagged",
-    },
-  ];
 
   const cellRenderers = {
     name: (item: CustomersData) => (
@@ -83,7 +45,7 @@ const DataTable: React.FC = () => {
           className="w-6 h-6 rounded-full"
         />
         <div>
-          <p> {item.customername}</p>
+          <p> {item?.name || "----"}</p>
           <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
             {item?.email || "lincoln@unpixel.com"}
           </p>
@@ -91,33 +53,31 @@ const DataTable: React.FC = () => {
       </div>
     ),
     customertype: (item: CustomersData) => (
-      <span className="font-medium">{item.customertype}</span>
+      <span className="font-medium">
+        {capitalizeFirstLetter(item?.customerType.toString() || "")}
+      </span>
     ),
-    customerid: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3">
-        {item.customerid}
-      </div>
+    id: (item: CustomersData) => (
+      <div className="font-medium flex items-center gap-3">{item.id}</div>
     ),
     kyc: (item: CustomersData) => (
       <Badge
         variant={
-          item.kyc.toLowerCase() === "verified"
+          item?.kyc?.toLowerCase() === "verified"
             ? "success"
-            : item.kyc.toLowerCase() === "pending"
+            : item?.kyc?.toLowerCase() === "pending"
             ? "tertiary"
-            : item.kyc.toLowerCase() === "flagged"
+            : item?.kyc?.toLowerCase() === "flagged"
             ? "destructive"
             : "warning"
         }
         className="py-1 px-[26px] font-bold"
       >
-        {item.kyc.toUpperCase()}
+        {item?.kyc?.toUpperCase()}
       </Badge>
     ),
     customerstatus: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3">
-        {item.customerstatus}
-      </div>
+      <div className="font-medium flex items-center gap-3">{item?.status}</div>
     ),
 
     action: (item: CustomersData) => (
@@ -136,18 +96,18 @@ const DataTable: React.FC = () => {
   };
 
   const columnOrder: (keyof CustomersData)[] = [
-    "customername",
-    "customertype",
-    "customerid",
+    "name",
+    "customerType",
+    "id",
     "customerstatus",
     "kyc",
     "action",
   ];
 
   const columnLabels = {
-    customername: "Name",
-    customertype: "Customer Type",
-    customerid: "Customer ID",
+    name: "Name",
+    customerType: "Customer Type",
+    id: "Customer ID",
     customerstatus: "Customer Status",
     kyc: "KYC",
     action: "Action",
@@ -165,10 +125,10 @@ const DataTable: React.FC = () => {
         <SelectFilter setFilter={setRole} list={roleList} />
       </div>
       <TableComponent<CustomersData>
-        tableData={tableData}
+        tableData={data}
         currentPage={currentPage}
         onPageChange={onPageChange}
-        totalPages={Math.ceil(tableData.length / pageSize)}
+        totalPages={Math.ceil(data.length / pageSize)}
         cellRenderers={cellRenderers}
         columnOrder={columnOrder}
         columnLabels={columnLabels}

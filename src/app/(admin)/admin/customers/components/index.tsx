@@ -19,12 +19,12 @@ import { useGetCustomers } from "@/services/customers";
 const Customers: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const {
-    getCustomersData,
+    getCustomersData: data,
     refetchCustomers,
     getCustomersIsLoading,
     setCustomersFilter,
   } = useGetCustomers();
-
+  console.log(data);
   return (
     <div>
       <Card className="bg-white">
@@ -44,7 +44,7 @@ const Customers: React.FC = () => {
               </Button>
             </div>
           </div>
-          <DataTable />
+          <DataTable data={data?.data || []} />
         </CardContent>
       </Card>
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>

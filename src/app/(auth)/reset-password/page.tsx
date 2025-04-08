@@ -10,7 +10,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Storage } from "@/lib/utils";
+import { useHandlePush } from "@/hooks/use-handle-push";
+import { showSuccessAlert, Storage } from "@/lib/utils";
 import { useResetPassword } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -31,9 +32,11 @@ const formSchema = z
 type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function UpdatePasswordPage() {
+  const { handlePush } = useHandlePush();
   const { resetPasswordIsLoading, resetPasswordPayload } = useResetPassword(
     (res) => {
-      console.log(res);
+      showSuccessAlert("Password reset successful!");
+      handlePush("/login");
     }
   );
 
