@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 
 export type CellValue =
   | string
@@ -22,6 +22,12 @@ export interface ITableProps<T extends DataItem> {
   onPageChange?: (page: number) => void;
   statusKey?: keyof T;
   onRowClick?: (item: T) => void;
+  setFilter?: React.Dispatch<React.SetStateAction<string>>;
+}
+export interface IPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export interface AdminsData extends DataItem {

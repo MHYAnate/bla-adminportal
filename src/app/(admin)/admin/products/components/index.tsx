@@ -10,17 +10,63 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import EditProduct from "./edit-products";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
-import { EmptyProductIcon, ExportIcon } from "../../../../../../public/icons";
-import EmptyState from "@/app/(admin)/components/empty";
+import { ExportIcon } from "../../../../../../public/icons";
 import Link from "next/link";
 import ViewProduct from "./view-product";
 import DeleteContent from "@/app/(admin)/components/delete-content";
+import { Card, CardContent } from "@/components/ui/card";
+import { SelectFilter } from "@/app/(admin)/components/select-filter";
+import { InputFilter } from "@/app/(admin)/components/input-filter";
+import { useDeleteProduct, useGetProducts } from "@/services/products";
+import DatePickerWithRange from "@/components/ui/date-picker";
 
 export default function Products() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [currentTab, setCurrentTab] = useState<string>("view");
+  const [filter, setFilter] = useState<string>("");
+  const [status, setStatus] = useState<string>("");
+  const [pageSize, setPageSize] = useState<string>("10");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
+  const onPageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  const {
+    getPRoductsIsLoading,
+    getProductsData,
+    setProductsFilter,
+    refetchProducts,
+  } = useGetProducts();
+  const { deleteProductData, deleteProductIsLoading, deleteProductPayload } =
+    useDeleteProduct((res: any) => {
+      refetchProducts();
+      setIsOpen(false);
+    });
+
+  const productTypeList = [
+    {
+      text: "Platform",
+      value: "platform",
+    },
+    {
+      text: "Service",
+      value: "service",
+    },
+  ];
+
+  const payload = {
+    search: filter,
+    page: currentPage,
+    pageSize,
+    type: status,
+  };
+
+  useEffect(() => {
+    setProductsFilter(payload);
+  }, [filter, status, pageSize]);
 
   return (
     <section>
@@ -45,28 +91,50 @@ export default function Products() {
           </Button>
         </div>
       </div>
+      <Card className="bg-white">
+        <CardContent className="p-6">
+          <h6 className="font-semibold text-lg text-[#111827] mb-6">
+            Detailed Product Table
+          </h6>
+          <div className="flex items-center gap-4 mb-6">
+            <InputFilter
+              setQuery={setFilter}
+              placeholder="Search by customer name, categoryId, manufacturerId"
+            />
 
-      <EmptyState
-        icon={<EmptyProductIcon />}
-        btnText="Add new product"
-        header="No Products Here"
-        description="Start adding products, set prices and delivery information."
-        onClick={() => setIsOpen(true)}
-      />
-      <DataTable
-        handleEdit={() => {
-          setCurrentTab("edit");
-          setIsOpen(true);
-        }}
-        handleView={() => {
-          setCurrentTab("view");
-          setIsOpen(true);
-        }}
-        handleDelete={() => {
-          setCurrentTab("delete");
-          setIsOpen(true);
-        }}
-      />
+            <SelectFilter
+              setFilter={setStatus}
+              placeholder="Product Type"
+              list={productTypeList}
+            />
+            <DatePickerWithRange
+              setFromDate={setStartDate}
+              setToDate={setEndDate}
+            />
+          </div>
+
+          <DataTable
+            handleEdit={() => {
+              setCurrentTab("edit");
+              setIsOpen(true);
+            }}
+            handleView={() => {
+              setCurrentTab("view");
+              setIsOpen(true);
+            }}
+            handleDelete={() => {
+              setCurrentTab("delete");
+              setIsOpen(true);
+            }}
+            setPageSize={setPageSize}
+            data={[]}
+            currentPage={currentPage}
+            onPageChange={onPageChange}
+            pageSize={Number(pageSize)}
+            totalPages={40}
+          />
+        </CardContent>
+      </Card>
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
         <DialogContent
           className={`${
@@ -84,7 +152,12 @@ export default function Products() {
                 >
                   <ChevronLeft size={24} />
                 </div>
-                Edit Product
+                {currentTab === "view"
+                  ? "View"
+                  : currentTab === "edit"
+                  ? "Edit"
+                  : "Delete"}
+                Product
               </DialogTitle>
             )}
           </DialogHeader>

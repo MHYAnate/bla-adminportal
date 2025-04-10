@@ -11,20 +11,68 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import CreateCustomer from "./create-customer";
 import { useGetCustomers } from "@/services/customers";
+import { InputFilter } from "@/app/(admin)/components/input-filter";
+import { SelectFilter } from "@/app/(admin)/components/select-filter";
+import DeleteContent from "@/app/(admin)/components/delete-content";
+import DatePickerWithRange from "@/components/ui/date-picker";
 
 const Customers: React.FC = () => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
   const {
     getCustomersData: data,
     refetchCustomers,
     getCustomersIsLoading,
     setCustomersFilter,
   } = useGetCustomers();
-  console.log(data);
+  const [filter, setFilter] = useState<string>("");
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [type, setType] = useState<string>("");
+  const [status, setStatus] = useState<string>("");
+  const [pageSize, setPageSize] = useState<string>("10");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [currentTab, setCurrentTab] = useState<string>("delete");
+  const [startDate, setStartDate] = useState<string | null>(null);
+  const [endDate, setEndDate] = useState<string | null>(null);
+
+  const onPageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  const payload = {
+    page: currentPage,
+    pageSize,
+    type,
+    status,
+  };
+
+  useEffect(() => {
+    setCustomersFilter(payload);
+  }, [filter, type, status, pageSize]);
+
+  const customerList = [
+    {
+      text: "Individual",
+      value: "individual",
+    },
+    {
+      text: "business",
+      value: "business",
+    },
+  ];
+
+  const kycList = [
+    {
+      text: "Verified",
+      value: "verified",
+    },
+    {
+      text: "Not Verified",
+      value: "not verified",
+    },
+  ];
+
   return (
     <div>
       <Card className="bg-white">
@@ -44,20 +92,55 @@ const Customers: React.FC = () => {
               </Button>
             </div>
           </div>
-          <DataTable data={data?.data || []} />
+          <div className="flex items-center gap-4 mb-6">
+            <InputFilter setQuery={setFilter} />
+            <SelectFilter
+              setFilter={setType}
+              placeholder="Customer type"
+              list={customerList}
+            />
+            <SelectFilter
+              setFilter={setStatus}
+              list={kycList}
+              placeholder="Kyc status"
+            />
+            <DatePickerWithRange
+              setFromDate={setStartDate}
+              setToDate={setEndDate}
+            />
+          </div>
+          <DataTable
+            data={data?.data || []}
+            currentPage={currentPage}
+            onPageChange={onPageChange}
+            pageSize={Number(pageSize)}
+            totalPages={40}
+            setPageSize={setPageSize}
+            handleDelete={() => {
+              setIsOpen(true);
+            }}
+          />
         </CardContent>
       </Card>
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
-        <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-y-auto">
+        <DialogContent
+          className={`${
+            currentTab === "delete"
+              ? "max-w-[33.75rem] left-[50%] translate-x-[-50%]"
+              : "right-0 p-8 max-w-[47.56rem] h-screen overflow-y-scroll"
+          }`}
+        >
           <DialogHeader>
             <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
-              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
-                <ChevronLeft size={24} />
-              </div>
-              New Customer
+              Delete Customer
             </DialogTitle>
           </DialogHeader>
-          <CreateCustomer setClose={() => setIsOpen(false)} />
+          {/* <CreateCustomer setClose={() => setIsOpen(false)} /> */}
+          <DeleteContent
+            handleClose={() => setIsOpen(false)}
+            description="This action is irreversible and will permanently remove all associated data."
+            title="Customer"
+          />
         </DialogContent>
       </Dialog>
     </div>

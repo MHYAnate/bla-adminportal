@@ -11,6 +11,10 @@ import {
 import { cn } from "@/lib/utils";
 import { DataItem, ITableProps } from "@/types";
 import { ReactNode } from "react";
+import { Pagination } from "../ui/pagination";
+import { SelectFilter } from "@/app/(admin)/components/select-filter";
+import { FileQuestion } from "lucide-react";
+import { EmptyProductIcon } from "../../../public/icons";
 // import { Pagination } from '../pagination'
 
 type CellRenderer<T> = (item: T, column: keyof T) => ReactNode;
@@ -23,15 +27,23 @@ export interface EnhancedTableProps<T extends DataItem> extends ITableProps<T> {
 
 export function TableComponent<T extends DataItem>({
   tableData,
-  currentPage,
-  totalPages,
+  currentPage = 1,
+  totalPages = 10,
   onPageChange,
   cellRenderers = {},
   columnOrder,
   columnLabels = {},
   onRowClick,
+  setFilter,
 }: EnhancedTableProps<T>) {
-  if (tableData.length === 0) return <div>No data available</div>;
+  if (tableData.length === 0)
+    return (
+      <div className="h-[50vh] flex flex-col items-center justify-center text-gray-500">
+        <EmptyProductIcon />
+        <p className="text-sm">No data available</p>
+      </div>
+    );
+  const safeOnPageChange = onPageChange ?? (() => {});
 
   const columns = columnOrder || (Object.keys(tableData[0]) as (keyof T)[]);
 
@@ -51,6 +63,21 @@ export function TableComponent<T extends DataItem>({
 
     return String(item[column]);
   };
+
+  const list = [
+    {
+      value: "10",
+      text: "10",
+    },
+    {
+      value: "20",
+      text: "20",
+    },
+    {
+      value: "30",
+      text: "30",
+    },
+  ];
 
   return (
     <div className="w-full">
@@ -93,11 +120,19 @@ export function TableComponent<T extends DataItem>({
           </TableBody>
         </Table>
       </div>
-      {/* <Pagination
-				currentPage={currentPage}
-				onPageChange={onPageChange}
-				totalPages={totalPages}
-			/> */}
+      <div className="mt-6 flex justify-between">
+        <Pagination
+          currentPage={currentPage}
+          onPageChange={safeOnPageChange}
+          totalPages={totalPages}
+        />
+        <SelectFilter
+          list={list}
+          setFilter={setFilter}
+          className="h-8 w-[87px]"
+          placeholder="Page Size"
+        />
+      </div>
     </div>
   );
 }

@@ -24,10 +24,10 @@ const DeleteContent: React.FC<iProps> = ({
       <p className="font-medium text-base text-[#A2A1A8] mb-6 text-center">
         {description}
       </p>
-      <div className="gap-4 justify-center flex">
+      <div className="gap-4 justify-center flex mx-10">
         <Button
           variant="outline"
-          className="w-auto py-3.5 px-[3rem] font-bold text-base"
+          className="w-full py-3.5 px-[3rem] font-bold text-base"
           size="xl"
           onClick={handleClose}
         >
@@ -35,7 +35,7 @@ const DeleteContent: React.FC<iProps> = ({
         </Button>
         <Button
           variant="warning"
-          className="w-auto px-[3rem] py-3.5 font-bold text-base"
+          className="w-full px-[3rem] py-3.5 font-bold text-base"
           size="xl"
           onClick={handleClick}
         >

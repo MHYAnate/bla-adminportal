@@ -7,17 +7,22 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 interface iProps {
   data: any;
+  currentPage: number;
+  onPageChange: (value: number) => void;
+  pageSize: number;
+  totalPages: number;
+  setPageSize: React.Dispatch<React.SetStateAction<string>>;
 }
 import { TableComponent } from "@/components/custom-table";
 import { formatMoney } from "@/lib/utils";
 
-const DataTable: React.FC<iProps> = ({ data }) => {
-  const pageSize = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const onPageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
+const DataTable: React.FC<iProps> = ({
+  data,
+  currentPage,
+  onPageChange,
+  pageSize,
+  totalPages,
+}) => {
   const tableData: ProductData[] = [
     {
       id: 1,

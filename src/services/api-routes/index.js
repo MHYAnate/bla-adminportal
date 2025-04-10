@@ -14,5 +14,19 @@ export const routes = {
     const params = new URLSearchParams(data);
     return `admin/orders?${params}`;
   },
+  ordersAnalytics: (data) => {
+    const params = new URLSearchParams(data);
+    return `admin/orders/sales?${params}`;
+  },
   getOrderInfo: (id) => `admin/orders/${id}`,
+  ordersSummary: () => "admin/orders/summary",
+  products: (data) => {
+    const params = new URLSearchParams(data);
+    return `admin/products?${params}`;
+  },
+  deleteProducts: (id) => `admin/products/${id}`,
+  manufacturers: (data) => {
+    const params = new URLSearchParams(data);
+    return `admin/manufacturers?${params}`;
+  },
 };

@@ -17,7 +17,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import DataTable from "./data-table";
 import { useGetOrderInfo } from "@/services/orders";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { capitalizeFirstLetter, formatDate, formatDateTime } from "@/lib/utils";
 
 export default function OrderDetails({ orderId }: { orderId: string }) {
@@ -28,6 +28,11 @@ export default function OrderDetails({ orderId }: { orderId: string }) {
     refetchOrderInfo,
     setOrderInfoFilter,
   } = useGetOrderInfo();
+  const [pageSize, setPageSize] = useState<string>("10");
+  const [currentPage, setCurrentPage] = useState(1);
+  const onPageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   useEffect(() => {
     setOrderInfoFilter(orderId);
@@ -224,7 +229,14 @@ export default function OrderDetails({ orderId }: { orderId: string }) {
                 </div>
               </CardContent>
             </Card>
-            <DataTable data={data?.items} />
+            <DataTable
+              data={data?.items}
+              currentPage={currentPage}
+              onPageChange={onPageChange}
+              pageSize={Number(pageSize)}
+              totalPages={40}
+              setPageSize={setPageSize}
+            />
           </div>
           <div className="w-[22.5rem]">
             <Card className="mb-4">

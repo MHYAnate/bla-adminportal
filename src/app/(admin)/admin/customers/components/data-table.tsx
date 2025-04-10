@@ -3,37 +3,31 @@
 import { Badge } from "@/components/ui/badge";
 import { CustomersData } from "@/types";
 import Image from "next/image";
-import { useState } from "react";
 import { TableComponent } from "@/components/custom-table";
-import { DeleteIcon, EditIcon, ViewIcon } from "../../../../../../public/icons";
-import { InputFilter } from "@/app/(admin)/components/input-filter";
-import { SelectFilter } from "@/app/(admin)/components/select-filter";
+import { DeleteIcon, ViewIcon } from "../../../../../../public/icons";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
 import { capitalizeFirstLetter } from "@/lib/utils";
 interface iProps {
   data?: any;
+  currentPage: number;
+  onPageChange: (value: number) => void;
+  handleDelete?: () => void;
+
+  pageSize: number;
+  totalPages: number;
+  setPageSize: React.Dispatch<React.SetStateAction<string>>;
 }
 
-const DataTable: React.FC<iProps> = ({ data }) => {
-  const pageSize = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const [role, setRole] = useState<string>("");
-  const [filter, setFilter] = useState<string>("");
-  const onPageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-  const roleList = [
-    {
-      text: "Admin",
-      value: "admin",
-    },
-    {
-      text: "Super Admin",
-      value: "super-admin",
-    },
-  ];
-
+const DataTable: React.FC<iProps> = ({
+  data,
+  currentPage,
+  onPageChange,
+  pageSize,
+  totalPages,
+  setPageSize,
+  handleDelete,
+}) => {
   const cellRenderers = {
     name: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">
@@ -88,7 +82,7 @@ const DataTable: React.FC<iProps> = ({ data }) => {
         >
           <ViewIcon />
         </Link>
-        <div className="bg-[#E03137] p-2.5 rounded-lg">
+        <div className="bg-[#E03137] p-2.5 rounded-lg" onClick={handleDelete}>
           <DeleteIcon />
         </div>
       </div>
@@ -115,23 +109,15 @@ const DataTable: React.FC<iProps> = ({ data }) => {
 
   return (
     <div>
-      <div className="flex items-center gap-4 mb-6">
-        <InputFilter setQuery={setFilter} />
-        <SelectFilter
-          setFilter={setRole}
-          placeholder="Select Role"
-          list={roleList}
-        />
-        <SelectFilter setFilter={setRole} list={roleList} />
-      </div>
       <TableComponent<CustomersData>
         tableData={data}
         currentPage={currentPage}
         onPageChange={onPageChange}
-        totalPages={Math.ceil(data.length / pageSize)}
+        totalPages={Math.ceil(totalPages / pageSize)}
         cellRenderers={cellRenderers}
         columnOrder={columnOrder}
         columnLabels={columnLabels}
+        setFilter={setPageSize}
       />
     </div>
   );

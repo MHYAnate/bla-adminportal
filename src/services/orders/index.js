@@ -36,3 +36,38 @@ export const useGetOrderInfo = () => {
     setOrderInfoFilter: setFilter,
   };
 };
+
+export const useGetOrdersSummary = () => {
+  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
+    queryKey: ["fetchOrdersSummary"],
+    queryFn: () => httpService.getData(routes.ordersSummary()),
+    // enabled,
+    retry: 2,
+  });
+
+  return {
+    getOrdersSummaryIsLoading: isLoading,
+    getOrdersSummaryData: data?.data || [],
+    getOrdersSummaryError: ErrorHandler(error),
+    refetchOrdersSummary: refetch,
+    setOrdersSummaryFilter: setFilter,
+  };
+};
+
+export const useGetOrdersAnalytics = () => {
+  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
+    queryKey: ["fetchOrdersAnalytics"],
+    queryFn: (queryParams) =>
+      httpService.getData(routes.ordersAnalytics(queryParams)),
+    // enabled,
+    retry: 2,
+  });
+
+  return {
+    getOrdersAnalyticsIsLoading: isLoading,
+    getOrdersAnalyticsData: data?.data || [],
+    getOrdersAnalyticsError: ErrorHandler(error),
+    refetchOrdersAnalytics: refetch,
+    setOrdersAnalyticsFilter: setFilter,
+  };
+};

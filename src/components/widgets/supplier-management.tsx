@@ -2,8 +2,8 @@ import Image from "next/image";
 import { Card, CardContent } from "../ui/card";
 import { HorizontalDots, MailIcon, PhoneIcon } from "../../../public/icons";
 import { Badge } from "../ui/badge";
-import { Switch } from "../ui/switch";
 import { ISupplierCard } from "@/types";
+
 interface iProps {
   item: ISupplierCard;
 }
@@ -60,9 +60,8 @@ const SupplierManagementCard: React.FC<iProps> = ({ item }) => {
             variant={item.isActive ? "success" : "destructive"}
             className="py-1 px-4 font-semibold rounded-[8px]"
           >
-            {item.isActive ? "ACTIVATE" : "DEACTIVATE"}
+            {item.isActive ? "ACTIVE" : "INACTIVE"}
           </Badge>
-          <Switch id={item?.id} />
         </div>
       </CardContent>
     </Card>
