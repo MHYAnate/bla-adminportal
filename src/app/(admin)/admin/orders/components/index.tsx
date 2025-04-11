@@ -90,7 +90,7 @@ export default function Orders() {
     //   title: "Payment Refund",
     // },
     {
-      value: "22",
+      value: getOrdersSummaryData?.data?.cancelled || 0,
       icon: <OrderCancelIcon />,
       title: "Order Cancelled",
     },
@@ -100,27 +100,27 @@ export default function Orders() {
       title: "Order Shipped",
     },
     {
-      value: 48,
+      value: getOrdersSummaryData?.data?.processing || 0,
       icon: <OrderDeliveringIcon />,
       title: "Order Delivering",
     },
     {
-      value: 48,
-      icon: <PendingReviewIcon />,
+      value: getOrdersSummaryData?.data?.pending || 0,
+      icon: <PendingPaymentIcon />,
       title: "Pending Orders",
     },
-    // {
-    //   value: 48,
-    //   icon: <PendingPaymentIcon />,
-    //   title: "Pending Payment",
-    // },
+    {
+      value: getOrdersSummaryData?.data?.scheduled || 0,
+      icon: <PendingReviewIcon />,
+      title: "Order Scheduled",
+    },
     {
       value: 48,
       icon: <DeliveredIcon />,
       title: "Delivered",
     },
     {
-      value: 48,
+      value: getOrdersSummaryData?.data?.totalRevenue || 0,
       icon: <PendingPaymentIcon />,
       title: "Total Revenue",
     },
@@ -145,6 +145,8 @@ export default function Orders() {
     setOrdersFilter(payload);
   }, [currentPage, pageSize, filter]);
 
+  console.log(getOrdersSummaryData);
+
   return (
     <section>
       <Card className="bg-white">
@@ -168,6 +170,7 @@ export default function Orders() {
           </div>
           <div className="flex gap-5">
             <OrderBarComponent
+              data={getOrdersAnalyticsData?.data || []}
               setFilter={setFilterSales}
               setStartDate={setStartDateSales}
               setEndDate={setEndDateSales}
@@ -205,7 +208,7 @@ export default function Orders() {
                 currentPage={currentPage}
                 onPageChange={onPageChange}
                 pageSize={Number(pageSize)}
-                totalPages={40}
+                totalPages={data?.total}
                 setPageSize={setPageSize}
                 handleDelete={() => {
                   setIsOpen(true);

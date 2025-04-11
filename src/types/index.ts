@@ -71,6 +71,7 @@ export interface OrdersData extends DataItem {
   amount: number | string;
   id?: string | number;
   email: string;
+  user?: Record<string | number, string | number> | any;
 }
 
 export interface ProductData extends DataItem {

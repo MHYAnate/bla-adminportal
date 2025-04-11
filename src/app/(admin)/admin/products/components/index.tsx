@@ -58,7 +58,7 @@ export default function Products() {
   ];
 
   const payload = {
-    search: filter,
+    // search: filter,
     page: currentPage,
     pageSize,
     type: status,

@@ -17,6 +17,7 @@ import {
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
+import { capitalizeFirstLetter } from "@/lib/utils";
 interface iProps {
   data?: any;
   currentPage: number;
@@ -70,26 +71,21 @@ const DataTable: React.FC<iProps> = ({
   const cellRenderers = {
     name: (item: OrdersData) => (
       <div className="font-normal flex items-center gap-3">
-        <Image
-          src="/images/user-avatar.png"
-          width={24}
-          height={24}
-          alt="Admin avatar"
-          className="w-6 h-6 rounded-full"
-        />
         <div>
-          <p>{item.name}</p>
-          <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
-            {item.email}
+          <p className="font-normal">{item?.user?.email || "----"}</p>
+          <p className="text-[0.75rem] text-[#A0AEC0]">
+            {item?.user?.id || "---"}
           </p>
         </div>
       </div>
     ),
     customertype: (item: OrdersData) => (
-      <div className="font-normal">{item.customertype}</div>
+      <div className="font-normal">
+        {capitalizeFirstLetter(item?.user?.type || "----")}
+      </div>
     ),
     orderid: (item: OrdersData) => (
-      <div className="font-normal">{item.orderid}</div>
+      <div className="font-normal">{item?.id}</div>
     ),
     amount: (item: OrdersData) => (
       <span className="font-normal">NGN {item.amount}</span>
@@ -143,10 +139,10 @@ const DataTable: React.FC<iProps> = ({
   return (
     <>
       <TableComponent<OrdersData>
-        tableData={tableData}
+        tableData={data}
         currentPage={currentPage}
         onPageChange={onPageChange}
-        totalPages={Math.ceil(tableData.length / pageSize)}
+        totalPages={Math.ceil(totalPages / pageSize)}
         cellRenderers={cellRenderers}
         columnOrder={columnOrder}
         columnLabels={columnLabels}

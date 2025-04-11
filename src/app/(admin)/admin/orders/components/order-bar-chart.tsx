@@ -21,12 +21,12 @@ const chartData = [
 ];
 
 const chartConfig = {
-  purchase: {
-    label: "Purchase",
+  amount: {
+    label: "Amount",
     color: "#134134",
   },
-  sales: {
-    label: "Sales",
+  orders: {
+    label: "Orders",
     color: "#FFBF3B",
   },
 } satisfies ChartConfig;
@@ -51,6 +51,7 @@ const list = [
 ];
 
 export function OrderBarComponent({
+  data,
   setFilter,
   setStartDate,
   setEndDate,
@@ -58,6 +59,7 @@ export function OrderBarComponent({
   setFilter: React.Dispatch<React.SetStateAction<string>>;
   setStartDate: React.Dispatch<React.SetStateAction<string | null>>;
   setEndDate: React.Dispatch<React.SetStateAction<string | null>>;
+  data: any;
 }) {
   return (
     <Card className="p-6 flex-1">
@@ -79,7 +81,7 @@ export function OrderBarComponent({
       </div>
       <CardContent className="p-0 mb-5">
         <ChartContainer config={chartConfig} className="max-h-[300px] w-full">
-          <BarChart accessibilityLayer data={chartData}>
+          <BarChart accessibilityLayer data={data}>
             <CartesianGrid vertical={false} />
             <YAxis tickLine={false} axisLine={false} tickMargin={10} />
 
@@ -94,19 +96,19 @@ export function OrderBarComponent({
               cursor={false}
               content={<ChartTooltipContent indicator="dashed" />}
             />
-            <Bar dataKey="purchase" fill="var(--color-purchase)" radius={4} />
-            <Bar dataKey="sales" fill="var(--color-sales)" radius={4} />
+            <Bar dataKey="amount" fill="var(--color-amount)" radius={4} />
+            <Bar dataKey="orders" fill="var(--color-orders)" radius={4} />
           </BarChart>
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex gap-6 ps-[125px]">
         <div className="flex items-center gap-2 text-xs text-[#667085] font-dmsans">
           <div className="h-[15px] w-[15px] rounded-full bg-[#134134]"></div>
-          <p>Purchase</p>
+          <p>Amount</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-[#667085] font-dmsans">
           <div className="h-[15px] w-[15px] rounded-full bg-[#FFBF3B]"></div>
-          <p>Sales</p>
+          <p>Orders</p>
         </div>
       </CardFooter>
     </Card>

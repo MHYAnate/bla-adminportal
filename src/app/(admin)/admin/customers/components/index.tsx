@@ -49,7 +49,7 @@ const Customers: React.FC = () => {
 
   useEffect(() => {
     setCustomersFilter(payload);
-  }, [filter, type, status, pageSize]);
+  }, [filter, type, status, pageSize, currentPage]);
 
   const customerList = [
     {
@@ -114,7 +114,7 @@ const Customers: React.FC = () => {
             currentPage={currentPage}
             onPageChange={onPageChange}
             pageSize={Number(pageSize)}
-            totalPages={40}
+            totalPages={data?.pagination?.total || 0}
             setPageSize={setPageSize}
             handleDelete={() => {
               setIsOpen(true);

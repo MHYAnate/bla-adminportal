@@ -7,7 +7,7 @@ interface iProps {
 const OrderCard: React.FC<iProps> = ({ report }) => {
   return (
     <Card>
-      <CardContent className="px-6 py-11">
+      <CardContent className="p-6">
         <div className="font-dmsans flex justify-between items-center">
           <div className="text-[#030C0A] font-medium">
             <p className="mb-[0.875rem] font-medium text-[1rem]">
