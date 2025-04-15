@@ -45,6 +45,7 @@ const Customers: React.FC = () => {
     pageSize,
     type,
     status,
+    search: filter,
   };
 
   useEffect(() => {
@@ -93,7 +94,9 @@ const Customers: React.FC = () => {
             </div>
           </div>
           <div className="flex items-center gap-4 mb-6">
-            <InputFilter setQuery={setFilter} />
+            <div className="w-1/2 me-auto">
+              <InputFilter setQuery={setFilter} />
+            </div>
             <SelectFilter
               setFilter={setType}
               placeholder="Customer type"
@@ -104,10 +107,10 @@ const Customers: React.FC = () => {
               list={kycList}
               placeholder="Kyc status"
             />
-            <DatePickerWithRange
+            {/* <DatePickerWithRange
               setFromDate={setStartDate}
               setToDate={setEndDate}
-            />
+            /> */}
           </div>
           <DataTable
             data={data?.data || []}
