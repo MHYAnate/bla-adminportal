@@ -37,18 +37,27 @@ const Dashboard: React.FC = () => {
             <div className="p-6 bg-[#FFCEDB] flex flex-col h-full">
               <DashboardTotalRevenueIcon />
               <h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
-                {data?.total_revenue?.value
-                  ? formatNumber(Number(data?.total_revenue?.value))
+                {data?.metrics?.revenue?.total
+                  ? formatNumber(Number(data?.metrics?.revenue?.total))
                   : "0.00"}
               </h1>
               <div className="mt-auto mb-1">
-                <div className="gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs">
-                  <ProgressIcon />{" "}
+                <div
+                  className={`${
+                    data?.metrics?.revenue?.trend.toLowerCase() !== "down"
+                      ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+                      : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+                  }`}
+                >
+                  {data?.metrics?.revenue?.trend.toLowerCase() === "down" ? (
+                    <DowngressIcon />
+                  ) : (
+                    <ProgressIcon />
+                  )}
                   <p>
-                    +{" "}
-                    {data?.total_revenue?.increase_percentage
+                    {data?.metrics?.revenue?.changePercentage
                       ? formatNumber(
-                          Number(data?.total_revenue?.increase_percentage)
+                          Number(data?.metrics?.revenue?.changePercentage)
                         )
                       : "0.00"}
                     %
@@ -62,18 +71,27 @@ const Dashboard: React.FC = () => {
             <div className="p-6 bg-[#FFE2B3] flex flex-col h-full">
               <DashboardTotalProductsIcon />
               <h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
-                {data?.total_products?.value
-                  ? formatNumber(Number(3767562112.66666))
+                {data?.metrics?.profits?.total
+                  ? formatNumber(Number(data?.metrics?.profits?.total))
                   : "0.00"}
               </h1>
               <div className="mt-auto mb-1">
-                <div className="gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs">
-                  <ProgressIcon />{" "}
+                <div
+                  className={`${
+                    data?.metrics?.revenue?.trend.toLowerCase() !== "down"
+                      ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+                      : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+                  }`}
+                >
+                  {data?.metrics?.profits?.trend.toLowerCase() === "down" ? (
+                    <DowngressIcon />
+                  ) : (
+                    <ProgressIcon />
+                  )}
                   <p>
-                    +{" "}
-                    {data?.total_products?.increase_percentage
+                    {data?.metrics?.profits?.changePercentage
                       ? formatNumber(
-                          Number(data?.total_products?.increase_percentage)
+                          Number(data?.metrics?.profits?.changePercentage)
                         )
                       : "0.00"}
                     %
@@ -81,24 +99,33 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
               <p className="font-semibold text-sm text-[#111827]">
-                Total Products
+                Total Profits
               </p>
             </div>
             <div className="p-6 bg-[#ABFFD5] flex flex-col h-full">
               <DashboardTotalOrderIcon />
               <h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
-                {data?.total_orders?.value
-                  ? formatNumber(Number(data?.total_orders?.value))
+                {data?.metrics?.orders?.total
+                  ? formatNumber(Number(data?.metrics?.orders?.total))
                   : "0.00"}
               </h1>
               <div className="mt-auto mb-1">
-                <div className="gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs">
-                  <ProgressIcon />{" "}
+                <div
+                  className={`${
+                    data?.metrics?.orders?.trend.toLowerCase() !== "down"
+                      ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+                      : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+                  }`}
+                >
+                  {data?.metrics?.orders?.trend.toLowerCase() === "down" ? (
+                    <DowngressIcon />
+                  ) : (
+                    <ProgressIcon />
+                  )}
                   <p>
-                    +{" "}
-                    {data?.total_orders?.increase_percentage
+                    {data?.metrics?.orders?.changePercentage
                       ? formatNumber(
-                          Number(data?.total_orders?.increase_percentage)
+                          Number(data?.orders?.revenue?.changePercentage)
                         )
                       : "0.00"}
                     %
@@ -112,18 +139,27 @@ const Dashboard: React.FC = () => {
             <div className="p-6 bg-[#B59BFD] flex flex-col h-full">
               <DashboardTotalCustomersIcon />
               <h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
-                {data?.total_customers?.value
-                  ? formatNumber(Number(data?.total_customers?.value))
+                {data?.metrics?.customers?.total
+                  ? formatNumber(Number(data?.metrics?.customers?.total))
                   : "0.00"}
               </h1>
               <div className="mt-auto mb-1">
-                <div className="gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs">
-                  <DowngressIcon />{" "}
+                <div
+                  className={`${
+                    data?.metrics?.customers?.trend.toLowerCase() !== "down"
+                      ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+                      : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+                  }`}
+                >
+                  {data?.metrics?.customers?.trend.toLowerCase() === "down" ? (
+                    <DowngressIcon />
+                  ) : (
+                    <ProgressIcon />
+                  )}
                   <p>
-                    +
-                    {data?.total_customers?.increase_percentage
+                    {data?.metrics?.customers?.changePercentage
                       ? formatNumber(
-                          Number(data?.total_customers?.increase_percentage)
+                          Number(data?.metrics?.customers?.changePercentage)
                         )
                       : "0.00"}
                     %
@@ -136,18 +172,18 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="flex-1 h-auto">
-            <LineGraphComponent data={data?.sales_performance || []} />
+            <LineGraphComponent data={data?.charts?.salesPerformance || []} />
           </div>
         </CardContent>
       </Card>
 
       <div className="flex gap-6 mb-6">
-        <TopOrdersChart data={data?.order_summary || []} />
-        <TopProductsChart data={data?.top_selling_products || []} />
-        <TopCustomersChart data={data?.top_customers || []} />
+        <TopOrdersChart data={data?.charts?.orderSummary || []} />
+        <TopProductsChart data={data?.topPerformers?.products || []} />
+        <TopCustomersChart data={data?.topPerformers?.customers || []} />
       </div>
 
-      <CustomersDataTable data={data?.recent_customers || []} />
+      <CustomersDataTable data={data?.recentActivity?.newCustomers || []} />
     </section>
   );
 };

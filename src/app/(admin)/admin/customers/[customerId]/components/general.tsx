@@ -1,4 +1,8 @@
-const General: React.FC = () => {
+interface iProps {
+  data: Record<string | number, string | number>;
+}
+
+const General: React.FC<iProps> = ({ data }) => {
   return (
     <>
       <div className="border border-[#F1F2F4] rounded-[1rem] p-6 mb-6">
@@ -20,9 +24,9 @@ const General: React.FC = () => {
               </p>
             </div>
             <div className="flex justify-between mb-4">
-              <p className="text-sm text-[#687588]">Email Address</p>
+              <p className="text-sm text-[#687588]">Email</p>
               <p className="text-sm text-[#111827] font-semibold">
-                mirabel@gmail.com{" "}
+                {data?.email || "----"}
               </p>
             </div>
           </div>
@@ -31,12 +35,14 @@ const General: React.FC = () => {
               <p className="text-sm text-[#687588]">Gender</p>
               <p className="text-sm text-[#111827] font-semibold">Female</p>
             </div>
-            <div className="flex justify-between mb-4">
-              <p className="text-sm text-[#687588]">CAC Number</p>
-              <p className="text-sm text-[#111827] font-semibold">
-                RC123456789
-              </p>
-            </div>
+            {data?.type === "business" && (
+              <div className="flex justify-between mb-4">
+                <p className="text-sm text-[#687588]">CAC Number</p>
+                <p className="text-sm text-[#111827] font-semibold">
+                  RC123456789
+                </p>
+              </div>
+            )}
             <div className="flex justify-between mb-4">
               <p className="text-sm text-[#687588]">Phone Number</p>
               <p className="text-sm text-[#111827] font-semibold">

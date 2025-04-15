@@ -13,7 +13,7 @@ import { formatNumber } from "@/lib/utils";
 interface CustomerData {
   email: string;
   totalSpent: number;
-  numberOfPurchases: number;
+  orderCount: number;
 }
 
 interface iProps {
@@ -73,7 +73,7 @@ export function TopCustomersChart({ data }: iProps) {
                     {formatNumber(totalSpent || 0.0)}
                   </tspan>
                   <tspan x={cx} y={cy + 24} className="fill-[#A0AEC0] text-xs">
-                    Total Purchases
+                    Total Customers
                   </tspan>
                 </text>
               )}
@@ -90,7 +90,7 @@ export function TopCustomersChart({ data }: iProps) {
               style={{ backgroundColor: data.fill }}
             ></div>
             <p className="text-[#687588] text-xs font-medium me-auto">
-              {data.numberOfPurchases || 0}
+              {data.orderCount || 0}
             </p>
             <h6 className="font-bold text-sm text-[#111827]">
               {data.totalSpent}

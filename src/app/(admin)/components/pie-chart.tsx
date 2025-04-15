@@ -60,7 +60,7 @@ export function PieChartComponent({ chartData, title, value }: iProps) {
       <div className="flex items-center justify-between">
         <h5 className="font-bold text-[#111827]">Top 3 Selling</h5>
         <div className="w-[72px]">
-          <SelectFilter setFilter={setFilter} list={list} customSize={false} />
+          <SelectFilter setFilter={setFilter} list={list} />
         </div>
       </div>
       <CardContent className="flex-1 pb-0">

@@ -65,11 +65,7 @@ export function PieActiveComponent({ showFilter = false }: iProps) {
         <h5 className="font-bold text-[#111827]">Order Summary</h5>
         {showFilter && (
           <div className="w-[72px]">
-            <SelectFilter
-              setFilter={setFilter}
-              list={list}
-              customSize={false}
-            />
+            <SelectFilter setFilter={setFilter} list={list} />
           </div>
         )}
       </div>

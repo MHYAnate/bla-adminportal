@@ -1,3 +1,5 @@
+"use client";
+
 import Header from "@/app/(admin)/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,9 +16,30 @@ import {
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import DataTable from "./data-table";
+import { useGetOrderInfo } from "@/services/orders";
+import { useEffect, useState } from "react";
+import { capitalizeFirstLetter, formatDate, formatDateTime } from "@/lib/utils";
 
-const OrderDetails: React.FC = () => {
+export default function OrderDetails({ orderId }: { orderId: string }) {
+  const {
+    getOrderInfoData: data,
+    getOrderInfoError,
+    getOrderInfoIsLoading,
+    refetchOrderInfo,
+    setOrderInfoFilter,
+  } = useGetOrderInfo();
+  const [pageSize, setPageSize] = useState<string>("10");
+  const [currentPage, setCurrentPage] = useState(1);
+  const onPageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  useEffect(() => {
+    setOrderInfoFilter(orderId);
+  }, [orderId]);
+
   const status = "Active";
+  console.log(data);
   return (
     <Card>
       <CardContent className="p-6">
@@ -34,10 +57,10 @@ const OrderDetails: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <h6 className="mb-2 font-dmsans font-semibold text-base text-[#0B0B0B]">
-                      Order#: 777892
+                      Order#: {data?.id || "--"}
                     </h6>
                     <p className="text-[#A0AEC0] text-[10px] font-normal">
-                      7th Feb., 2025 at 15:00pm
+                      {formatDateTime(data?.createdAt)}
                     </p>
                   </div>
                   <Button
@@ -206,7 +229,14 @@ const OrderDetails: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
-            <DataTable />
+            <DataTable
+              data={data?.items}
+              currentPage={currentPage}
+              onPageChange={onPageChange}
+              pageSize={Number(pageSize)}
+              totalPages={40}
+              setPageSize={setPageSize}
+            />
           </div>
           <div className="w-[22.5rem]">
             <Card className="mb-4">
@@ -242,7 +272,9 @@ const OrderDetails: React.FC = () => {
                   <p className="font-medium text-sm text-[#111827] me-auto">
                     Shipping Fee:
                   </p>
-                  <p className="font-medium text-sm text-[#111827]">₦77,000</p>
+                  <p className="font-medium text-sm text-[#111827]">
+                    ₦{data?.totalPrice || 0}
+                  </p>
                 </div>
                 <div className="px-4 py-5 flex gap-3.5 border-b border-[#EEF2F7] items-center">
                   <DiscountIcon />
@@ -276,10 +308,11 @@ const OrderDetails: React.FC = () => {
                     </div>
                     <h6 className="text-center text-[#111827] text-xl mb-2.5"></h6>
                     <p className="text-[#687588] text-sm mb-2.5 text-center">
-                      Business Owner
+                      Customer type:{" "}
+                      {capitalizeFirstLetter(data?.user?.type || "---")}
                     </p>
                     <p className="text-[#687588] text-sm mb-6 text-center">
-                      @mirable_store
+                      Customer Id: {data?.user?.id}
                     </p>
                     <div className="flex justify-center">
                       <Badge
@@ -299,10 +332,10 @@ const OrderDetails: React.FC = () => {
                   <div className="mb-6 pb-6 border-b border-[#F1F2F4]">
                     <div className="flex gap-10 justify-between items-center mb-4">
                       <p className="text-[#687588] font-normal text-base">
-                        Primary address
+                        Email
                       </p>
                       <p className="font-semibold text-sm text-[#111827]">
-                        mirablestore@gmail.com
+                        {data?.user?.email || "----"}
                       </p>
                     </div>
                     <div className="flex gap-10 justify-between items-center mb-4">
@@ -311,6 +344,14 @@ const OrderDetails: React.FC = () => {
                       </p>
                       <p className="font-semibold text-sm text-[#111827]">
                         09012345678
+                      </p>
+                    </div>
+                    <div className="flex gap-10 justify-between items-center mb-4">
+                      <p className="text-[#687588] font-normal text-base">
+                        Phone number
+                      </p>
+                      <p className="font-semibold text-sm text-[#111827]">
+                        {data?.user?.phoneNumber || "----"}
                       </p>
                     </div>
                     <div className="flex gap-10 justify-between items-center mb-4">
@@ -331,10 +372,10 @@ const OrderDetails: React.FC = () => {
                     </div>
                     <div className="flex justify-between gap-10 items-center mb-4">
                       <p className="text-[#687588] font-normal text-base">
-                        POstal Code
+                        Date joined
                       </p>
                       <p className="font-semibold text-sm text-[#111827]">
-                        112232
+                        {formatDate(data?.user?.createdAt)}
                       </p>
                     </div>
                   </div>
@@ -346,5 +387,4 @@ const OrderDetails: React.FC = () => {
       </CardContent>
     </Card>
   );
-};
-export default OrderDetails;
+}

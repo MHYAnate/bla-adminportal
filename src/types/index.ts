@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 
 export type CellValue =
   | string
@@ -7,6 +7,7 @@ export type CellValue =
   | Date
   | null
   | undefined
+  | object
   | ReactNode;
 
 export interface DataItem {
@@ -21,6 +22,12 @@ export interface ITableProps<T extends DataItem> {
   onPageChange?: (page: number) => void;
   statusKey?: keyof T;
   onRowClick?: (item: T) => void;
+  setFilter?: React.Dispatch<React.SetStateAction<string>>;
+}
+export interface IPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
 export interface AdminsData extends DataItem {
@@ -35,12 +42,15 @@ export interface AdminsData extends DataItem {
 export interface CustomersData extends DataItem {
   [key: string]: string | number | undefined;
   id?: string | number;
-  customername: string;
-  customertype: string;
+  name: string;
+  customerType: string;
   customerid: string;
   customerstatus: string;
-  kyc: string;
+  ststus?: string;
+  kycStatus: string;
+  kyc?: string;
   email?: string;
+  profile?: Record<string | number, string | number> | any;
 }
 
 export interface ReportsData extends DataItem {
@@ -61,6 +71,7 @@ export interface OrdersData extends DataItem {
   amount: number | string;
   id?: string | number;
   email: string;
+  user?: Record<string | number, string | number> | any;
 }
 
 export interface ProductData extends DataItem {
@@ -68,8 +79,9 @@ export interface ProductData extends DataItem {
   id?: string | number;
   price: number | string;
   quantity: number;
-  productid: string;
+  productid?: string;
   status: string;
+  product?: Record<string | number, string | number> | any;
 }
 
 export interface ManufacturerData extends DataItem {

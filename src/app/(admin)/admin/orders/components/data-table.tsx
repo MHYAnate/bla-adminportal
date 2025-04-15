@@ -2,11 +2,9 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { DeleteIcon, ViewIcon } from "../../../../../../public/icons";
 import { TableComponent } from "@/components/custom-table";
-import { SelectFilter } from "@/app/(admin)/components/select-filter";
-import { InputFilter } from "@/app/(admin)/components/input-filter";
+
 import { OrdersData } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import OrderDetails from "./order-details";
@@ -19,26 +17,26 @@ import {
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
+import { capitalizeFirstLetter } from "@/lib/utils";
+interface iProps {
+  data?: any;
+  currentPage: number;
+  handleDelete: () => void;
+  onPageChange: (value: number) => void;
+  pageSize: number;
+  totalPages: number;
+  setPageSize: React.Dispatch<React.SetStateAction<string>>;
+}
 
-const DataTable: React.FC = () => {
+const DataTable: React.FC<iProps> = ({
+  data,
+  currentPage,
+  onPageChange,
+  pageSize,
+  totalPages,
+  handleDelete,
+}) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const pageSize = 10;
-  const [currentPage, setCurrentPage] = useState(1);
-  const [role, setRole] = useState<string>("");
-  const [filter, setFilter] = useState<string>("");
-  const onPageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-  const roleList = [
-    {
-      text: "Admin",
-      value: "admin",
-    },
-    {
-      text: "Super Admin",
-      value: "super-admin",
-    },
-  ];
 
   const tableData: OrdersData[] = [
     {
@@ -73,26 +71,21 @@ const DataTable: React.FC = () => {
   const cellRenderers = {
     name: (item: OrdersData) => (
       <div className="font-normal flex items-center gap-3">
-        <Image
-          src="/images/user-avatar.png"
-          width={24}
-          height={24}
-          alt="Admin avatar"
-          className="w-6 h-6 rounded-full"
-        />
         <div>
-          <p>{item.name}</p>
-          <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
-            {item.email}
+          <p className="font-normal">{item?.user?.email || "----"}</p>
+          <p className="text-[0.75rem] text-[#A0AEC0]">
+            {item?.user?.id || "---"}
           </p>
         </div>
       </div>
     ),
     customertype: (item: OrdersData) => (
-      <div className="font-normal">{item.customertype}</div>
+      <div className="font-normal">
+        {capitalizeFirstLetter(item?.user?.type || "----")}
+      </div>
     ),
     orderid: (item: OrdersData) => (
-      <div className="font-normal">{item.orderid}</div>
+      <div className="font-normal">{item?.id}</div>
     ),
     amount: (item: OrdersData) => (
       <span className="font-normal">NGN {item.amount}</span>
@@ -114,14 +107,11 @@ const DataTable: React.FC = () => {
     action: (item: OrdersData) => (
       <div className="flex gap-2.5">
         <Link href={`${ROUTES.ADMIN.SIDEBAR.ORDERS}/1`}>
-          <div
-            className="bg-[#27A376] p-2.5 rounded-lg"
-            // onClick={() => setIsOpen(true)}
-          >
+          <div className="bg-[#27A376] p-2.5 rounded-lg">
             <ViewIcon />
           </div>
         </Link>
-        <div className="bg-[#E03137] p-2.5 rounded-lg">
+        <div className="bg-[#E03137] p-2.5 rounded-lg" onClick={handleDelete}>
           <DeleteIcon />
         </div>
       </div>
@@ -147,36 +137,17 @@ const DataTable: React.FC = () => {
   };
 
   return (
-    <div className="bg-white">
-      <div className="p-6">
-        <h6 className="font-semibold text-lg text-[#111827] mb-6">
-          Detailed Order Table
-        </h6>
+    <>
+      <TableComponent<OrdersData>
+        tableData={data}
+        currentPage={currentPage}
+        onPageChange={onPageChange}
+        totalPages={Math.ceil(totalPages / pageSize)}
+        cellRenderers={cellRenderers}
+        columnOrder={columnOrder}
+        columnLabels={columnLabels}
+      />
 
-        <div className="flex items-center gap-4 mb-6">
-          <InputFilter setQuery={setFilter} placeholder="Search customers" />
-
-          <SelectFilter
-            setFilter={setRole}
-            placeholder="Customer Type"
-            list={roleList}
-          />
-          <SelectFilter
-            setFilter={setRole}
-            placeholder="Order Status"
-            list={roleList}
-          />
-        </div>
-        <TableComponent<OrdersData>
-          tableData={tableData}
-          currentPage={currentPage}
-          onPageChange={onPageChange}
-          totalPages={Math.ceil(tableData.length / pageSize)}
-          cellRenderers={cellRenderers}
-          columnOrder={columnOrder}
-          columnLabels={columnLabels}
-        />
-      </div>
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
         <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-scroll">
           <DialogHeader>
@@ -190,7 +161,7 @@ const DataTable: React.FC = () => {
           <OrderDetails setClose={setIsOpen} />
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 

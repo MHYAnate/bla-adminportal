@@ -9,6 +9,7 @@ import { TableComponent } from "@/components/custom-table";
 import Link from "next/link";
 import { ViewIcon } from "../../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
+import { capitalizeFirstLetter } from "@/lib/utils";
 interface iProps {
   data?: any;
 }
@@ -19,51 +20,9 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
-  const tableData: CustomersData[] = [
-    {
-      id: "1",
-      customername: "Alice Johnson",
-      customertype: "Individual",
-      customerid: "CUST001",
-      customerstatus: "Active",
-      kyc: "Verified",
-    },
-    {
-      id: "2",
-      customername: "Bob Williams",
-      customertype: "Business Owner",
-      customerid: "CUST002",
-      customerstatus: "Inactive",
-      kyc: "Flagged",
-    },
-    {
-      id: "3",
-      customername: "Charlie Brown",
-      customertype: "Individual",
-      customerid: "CUST003",
-      customerstatus: "Active",
-      kyc: "Under Review",
-    },
-    {
-      id: "4",
-      customername: "Diana Smith",
-      customertype: "Individual",
-      customerid: "CUST004",
-      customerstatus: "Inactive",
-      kyc: "Verified",
-    },
-    {
-      id: "5",
-      customername: "Ethan Martinez",
-      customertype: "Business Owner",
-      customerid: "CUST005",
-      customerstatus: "Active",
-      kyc: "Flagged",
-    },
-  ];
 
   const cellRenderers = {
-    name: (item: CustomersData) => (
+    fullName: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">
         <Image
           src="/images/user-avatar.png"
@@ -73,7 +32,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
           className="w-6 h-6 rounded-full"
         />
         <div>
-          <p> {item.customername}</p>
+          <p> {item?.name || "----"}</p>
           <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
             {item?.email || "lincoln@unpixel.com"}
           </p>
@@ -81,7 +40,9 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
       </div>
     ),
     type: (item: CustomersData) => (
-      <span className="font-medium">{item?.type}</span>
+      <span className="font-medium">
+        {capitalizeFirstLetter(item?.type?.toString() || "customer")}
+      </span>
     ),
     id: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">{item?.id}</div>
@@ -89,25 +50,30 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
     kyc: (item: CustomersData) => (
       <Badge
         variant={
-          // item?.kyc?.toLowerCase() === "verified"
-          //   ? "success"
-          //   : item?.kyc?.toLowerCase() === "pending"
-          //   ? "tertiary"
-          //   : item?.kyc?.toLowerCase() === "flagged"
-          //   ? "destructive"
-          //   : "warning"
-          item?.isVerified ? "success" : "destructive"
+          item.kycStatus.toLowerCase() === "verified"
+            ? "success"
+            : item.kycStatus.toLowerCase() === "pending"
+            ? "tertiary"
+            : item.kycStatus.toLowerCase() === "flagged"
+            ? "destructive"
+            : "warning"
         }
         className="py-1 px-[26px] font-bold text-[10px]"
       >
-        {/* {item?.kyc?.toUpperCase()} */}
-        {item?.isVerified ? "Verified" : "Not Verified"}
+        {item?.kycStatus?.toString().toUpperCase()}
       </Badge>
     ),
-    customerstatus: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3">
-        {item.customerstatus}
-      </div>
+    status: (item: CustomersData) => (
+      <Badge
+        variant={
+          item?.status?.toString().toLowerCase() === "active"
+            ? "success"
+            : "destructive"
+        }
+        className="py-1 px-[26px] font-bold text-[10px]"
+      >
+        {item.status}
+      </Badge>
     ),
     action: (item: CustomersData) => (
       <div className="flex gap-2.5">
@@ -122,19 +88,19 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
   };
 
   const columnOrder: (keyof CustomersData)[] = [
-    "customername",
+    "fullName",
     "type",
     "id",
     "kyc",
-    "customerstatus",
+    "status",
     "action",
   ];
 
   const columnLabels = {
-    customername: "Name",
+    fullName: "Name",
     type: "Customer Type",
     id: "Customer ID",
-    customerstatus: "Customer Status",
+    status: "Customer Status",
     kyc: "KYC",
     action: "Action",
   };

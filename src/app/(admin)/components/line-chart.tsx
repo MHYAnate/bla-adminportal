@@ -52,7 +52,7 @@ export default function LineGraphComponent({ data }: iProps) {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              dataKey={"totalsales"}
+              dataKey={"total_sales"}
               tickFormatter={formatToKOrM}
             />
             <XAxis
@@ -64,7 +64,7 @@ export default function LineGraphComponent({ data }: iProps) {
             />
             <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
             <Line
-              dataKey="totalsales"
+              dataKey="total_sales"
               type="monotone"
               stroke="var(--color-totalsales)"
               strokeWidth={2}

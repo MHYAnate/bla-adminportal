@@ -18,7 +18,7 @@ export function InputFilter({
       }
       type="search"
       pos={true}
-      className="h-14 w-full"
+      className="h-11 w-full"
     />
   );
 }

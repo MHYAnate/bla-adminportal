@@ -16,23 +16,23 @@ interface selectType {
 interface IProps {
   list: selectType[];
   placeholder?: string;
-  setFilter: React.Dispatch<React.SetStateAction<string>>;
-  customSize?: boolean;
+  setFilter?: React.Dispatch<React.SetStateAction<string>>;
+  className?: string;
 }
 
 export function SelectFilter({
   list,
   placeholder = "Status",
   setFilter,
-  customSize = true,
+  className = "w-[186px] h-11",
 }: IProps) {
   return (
     <Select
       onValueChange={async (value) => {
-        await setFilter(value);
+        if (setFilter) await setFilter(value);
       }}
     >
-      <SelectTrigger className={customSize ? "w-[186px] h-14" : ""}>
+      <SelectTrigger className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent className="">

@@ -1,9 +1,13 @@
 import CustomerDetail from "./components";
 
-export default function CustomersDetailPage() {
+export default async function CustomersDetailPage({
+  params,
+}: {
+  params: { customerId: string };
+}) {
   return (
     <>
-      <CustomerDetail />
+      <CustomerDetail customerId={params && params?.customerId} />
     </>
   );
 }

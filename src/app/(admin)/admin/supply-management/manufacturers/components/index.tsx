@@ -3,7 +3,7 @@
 import Header from "@/app/(admin)/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import EmptyState from "../../../../components/empty";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
@@ -19,11 +19,25 @@ import {
 import { ChevronLeft } from "lucide-react";
 import AddManufacturer from "./add-manufacturer";
 import { StoreManagementIcon } from "../../../../../../../public/icons";
+import { useGetManufacturers } from "@/services/manufacturers";
+import { Pagination } from "@/components/ui/pagination";
 
 export default function Manufacturers() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [role, setRole] = useState<string>("");
   const [filter, setFilter] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const totalPages = 10;
+  const onPageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+  const {
+    getManufacturersData,
+    getManufacturersIsLoading,
+    refetchManufacturers,
+    setManufacturersFilter,
+  } = useGetManufacturers();
+
   const roleList = [
     {
       text: "Admin",
@@ -34,6 +48,7 @@ export default function Manufacturers() {
       value: "super-admin",
     },
   ];
+
   const list = [
     {
       isActive: true,
@@ -69,6 +84,15 @@ export default function Manufacturers() {
       phonenumber: "+2349011223321",
     },
   ];
+  useEffect(() => {
+    const payload = {
+      name: filter,
+      pageSize: 10,
+    };
+
+    setManufacturersFilter(payload);
+  }, [filter]);
+
   return (
     <section>
       <Card>
@@ -87,39 +111,50 @@ export default function Manufacturers() {
               + Add New Manufacturer
             </Button>
           </div>
-          <EmptyState
-            icon={<StoreManagementIcon />}
-            btnText="Add Manufacturer"
-            header="Manufacturer Records Await"
-            description="Start Managing Your Suppliers by Adding Your First Manufacturer."
-            onClick={() => setIsOpen(true)}
-          />
-          <div className="flex items-center gap-4 mb-6">
-            <InputFilter
-              setQuery={setFilter}
-              placeholder="Search Manufacturers"
+          {list.length < 1 ? (
+            <EmptyState
+              icon={<StoreManagementIcon />}
+              btnText="Add Manufacturer"
+              header="Manufacturer Records Await"
+              description="Start Managing Your Suppliers by Adding Your First Manufacturer."
+              onClick={() => setIsOpen(true)}
             />
-
-            <SelectFilter
+          ) : (
+            <>
+              <div className="flex items-center gap-4 mb-6 w-[50%]">
+                <InputFilter
+                  setQuery={setFilter}
+                  placeholder="Search manufacturers by name."
+                />
+                {/* <SelectFilter
               setFilter={setRole}
               placeholder="Select Role"
               list={roleList}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            {list.map((item, index) => (
-              <Link
-                key={index}
-                href={`${ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTMANUFACTURERS}/${
-                  index + 1
-                }`}
-              >
-                <SupplierManagementCard item={item} />
-              </Link>
-            ))}
-          </div>
+            /> */}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                {list.map((item, index) => (
+                  <Link
+                    key={index}
+                    href={`${
+                      ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTMANUFACTURERS
+                    }/${index + 1}`}
+                  >
+                    <SupplierManagementCard item={item} />
+                  </Link>
+                ))}
+              </div>
+              <div className="mt-6 flex items-center justify-center">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={30 / 10}
+                  onPageChange={onPageChange}
+                />
+              </div>
+            </>
+          )}
           <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
-            <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-scroll">
+            <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-y-scroll">
               <DialogHeader>
                 <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
                   <div
