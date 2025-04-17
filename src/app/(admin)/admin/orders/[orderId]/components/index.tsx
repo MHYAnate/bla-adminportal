@@ -236,6 +236,7 @@ export default function OrderDetails({ orderId }: { orderId: string }) {
               pageSize={Number(pageSize)}
               totalPages={40}
               setPageSize={setPageSize}
+              loading={getOrderInfoIsLoading}
             />
           </div>
           <div className="w-[22.5rem]">

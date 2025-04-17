@@ -26,6 +26,7 @@ interface iProps {
   pageSize: number;
   totalPages: number;
   setPageSize: React.Dispatch<React.SetStateAction<string>>;
+  loading: boolean;
 }
 
 const DataTable: React.FC<iProps> = ({
@@ -35,6 +36,7 @@ const DataTable: React.FC<iProps> = ({
   pageSize,
   totalPages,
   handleDelete,
+  loading,
 }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -146,6 +148,7 @@ const DataTable: React.FC<iProps> = ({
         cellRenderers={cellRenderers}
         columnOrder={columnOrder}
         columnLabels={columnLabels}
+        isLoading={loading}
       />
 
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>

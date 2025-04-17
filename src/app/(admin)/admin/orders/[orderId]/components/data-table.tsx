@@ -12,6 +12,7 @@ interface iProps {
   pageSize: number;
   totalPages: number;
   setPageSize: React.Dispatch<React.SetStateAction<string>>;
+  loading: boolean;
 }
 import { TableComponent } from "@/components/custom-table";
 import { formatMoney } from "@/lib/utils";
@@ -22,6 +23,7 @@ const DataTable: React.FC<iProps> = ({
   onPageChange,
   pageSize,
   totalPages,
+  loading,
 }) => {
   const tableData: ProductData[] = [
     {
@@ -110,6 +112,8 @@ const DataTable: React.FC<iProps> = ({
           cellRenderers={cellRenderers}
           columnOrder={columnOrder}
           columnLabels={columnLabels}
+          isLoading={loading}
+          showPagination={false}
         />
       </CardContent>
     </Card>

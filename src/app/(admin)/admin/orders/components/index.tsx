@@ -213,6 +213,7 @@ export default function Orders() {
                 handleDelete={() => {
                   setIsOpen(true);
                 }}
+                loading={getOrdersIsLoading}
               />
             </div>
           </div>
@@ -228,11 +229,7 @@ export default function Orders() {
             </DialogTitle>
           </DialogHeader>
           {/* <CreateCustomer setClose={() => setIsOpen(false)} /> */}
-          <DeleteContent
-            handleClose={() => setIsOpen(false)}
-            description="This action is irreversible and will permanently remove all associated data."
-            title="Order"
-          />
+          <DeleteContent handleClose={() => setIsOpen(false)} title="Order" />
         </DialogContent>
       </Dialog>
     </section>
