@@ -13,10 +13,10 @@ interface iProps {
   currentPage: number;
   onPageChange: (value: number) => void;
   handleDelete?: () => void;
-
   pageSize: number;
   totalPages: number;
   setPageSize: React.Dispatch<React.SetStateAction<string>>;
+  isLoading: boolean;
 }
 
 const DataTable: React.FC<iProps> = ({
@@ -27,6 +27,7 @@ const DataTable: React.FC<iProps> = ({
   totalPages,
   setPageSize,
   handleDelete,
+  isLoading,
 }) => {
   const cellRenderers = {
     name: (item: CustomersData) => (
@@ -118,6 +119,7 @@ const DataTable: React.FC<iProps> = ({
         columnOrder={columnOrder}
         columnLabels={columnLabels}
         setFilter={setPageSize}
+        isLoading={isLoading}
       />
     </div>
   );

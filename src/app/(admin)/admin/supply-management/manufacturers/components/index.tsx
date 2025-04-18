@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState } from "react";
 import EmptyState from "../../../../components/empty";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
-import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import SupplierManagementCard from "@/components/widgets/supplier-management";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
@@ -21,13 +20,15 @@ import AddManufacturer from "./add-manufacturer";
 import { StoreManagementIcon } from "../../../../../../../public/icons";
 import { useGetManufacturers } from "@/services/manufacturers";
 import { Pagination } from "@/components/ui/pagination";
+import { ISupplierCard } from "@/types";
+import SupplierManagementCardSkeleton from "@/components/skeletons/supply-management-card";
 
 export default function Manufacturers() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [role, setRole] = useState<string>("");
   const [filter, setFilter] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const totalPages = 10;
+
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -49,50 +50,16 @@ export default function Manufacturers() {
     },
   ];
 
-  const list = [
-    {
-      isActive: true,
-      url: "/images/bladmin-login.jpg",
-      total: "6,700",
-      status: "Verified",
-      name: "Mutiu",
-      email: "mutiu@gmail.com",
-      location: "Lagos, Nigeria",
-      id: "1122-3",
-      phonenumber: "+2349011223321",
-    },
-    {
-      isActive: false,
-      url: "/images/bladmin-login.jpg",
-      total: "6,700",
-      status: "Verified",
-      name: "Mutiu",
-      email: "mutiu@gmail.com",
-      location: "Lagos, Nigeria",
-      id: "1122-4",
-      phonenumber: "+2349011223321",
-    },
-    {
-      isActive: true,
-      url: "/images/bladmin-login.jpg",
-      total: "6,700",
-      status: "Verified",
-      name: "Mutiu",
-      email: "mutiu@gmail.com",
-      location: "Lagos, Nigeria",
-      id: "1122-5",
-      phonenumber: "+2349011223321",
-    },
-  ];
   useEffect(() => {
     const payload = {
       name: filter,
       pageSize: 10,
+      page: currentPage,
     };
 
     setManufacturersFilter(payload);
-  }, [filter]);
-
+  }, [filter, currentPage]);
+  console.log(getManufacturersData?.pagination?.totalItems);
   return (
     <section>
       <Card>
@@ -111,46 +78,62 @@ export default function Manufacturers() {
               + Add New Manufacturer
             </Button>
           </div>
-          {list.length < 1 ? (
-            <EmptyState
-              icon={<StoreManagementIcon />}
-              btnText="Add Manufacturer"
-              header="Manufacturer Records Await"
-              description="Start Managing Your Suppliers by Adding Your First Manufacturer."
-              onClick={() => setIsOpen(true)}
-            />
-          ) : (
-            <>
-              <div className="flex items-center gap-4 mb-6 w-[50%]">
-                <InputFilter
-                  setQuery={setFilter}
-                  placeholder="Search manufacturers by name."
-                />
-                {/* <SelectFilter
+          {!getManufacturersIsLoading && (
+            <div className="flex items-center gap-4 mb-6 w-[50%]">
+              <InputFilter
+                setQuery={setFilter}
+                placeholder="Search manufacturers by name."
+              />
+              {/* <SelectFilter
               setFilter={setRole}
               placeholder="Select Role"
               list={roleList}
             /> */}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                {list.map((item, index) => (
-                  <Link
-                    key={index}
-                    href={`${
-                      ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTMANUFACTURERS
-                    }/${index + 1}`}
-                  >
-                    <SupplierManagementCard item={item} />
-                  </Link>
-                ))}
-              </div>
-              <div className="mt-6 flex items-center justify-center">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={30 / 10}
-                  onPageChange={onPageChange}
+            </div>
+          )}
+          {getManufacturersIsLoading ? (
+            <div className="grid grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, idx: number) => (
+                <SupplierManagementCardSkeleton key={idx} />
+              ))}
+            </div>
+          ) : (
+            <>
+              {getManufacturersData?.data?.length < 1 ? (
+                <EmptyState
+                  icon={<StoreManagementIcon />}
+                  btnText="Add Manufacturer"
+                  header="Manufacturer Records Await"
+                  description="Start Managing Your Suppliers by Adding Your First Manufacturer."
+                  onClick={() => setIsOpen(true)}
                 />
-              </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    {getManufacturersData?.data?.map(
+                      (item: ISupplierCard, index: number) => (
+                        <Link
+                          key={index}
+                          href={`${
+                            ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTMANUFACTURERS
+                          }/${index + 1}`}
+                        >
+                          <SupplierManagementCard item={item} />
+                        </Link>
+                      )
+                    )}
+                  </div>
+                  <div className="mt-6 flex items-center justify-center">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={
+                        getManufacturersData?.pagination?.totalPages || 0
+                      }
+                      onPageChange={onPageChange}
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
           <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>

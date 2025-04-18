@@ -70,22 +70,19 @@ function CountryDropdownComponent(
   const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(
     undefined
   );
-
   useEffect(() => {
     if (defaultValue) {
       const initialCountry = options.find(
         (country) =>
-          country.alpha3 === defaultValue ||
+          country.name === defaultValue ||
           country.countryCallingCodes[0] === defaultValue
       );
       if (initialCountry) {
         setSelectedCountry(initialCountry);
       } else {
-        // Reset selected country if defaultValue is not found
         setSelectedCountry(undefined);
       }
     } else {
-      // Reset selected country if defaultValue is undefined or null
       setSelectedCountry(undefined);
     }
   }, [defaultValue, options]);

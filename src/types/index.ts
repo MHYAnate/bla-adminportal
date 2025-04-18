@@ -23,6 +23,8 @@ export interface ITableProps<T extends DataItem> {
   statusKey?: keyof T;
   onRowClick?: (item: T) => void;
   setFilter?: React.Dispatch<React.SetStateAction<string>>;
+  isLoading?: boolean;
+  showPagination?: boolean;
 }
 export interface IPaginationProps {
   currentPage: number;
@@ -157,15 +159,17 @@ export interface IOrderItem {
 }
 
 export interface ISupplierCard {
-  isActive: boolean;
-  url: string;
+  status: boolean;
   total: string | number;
-  status: string;
+  logo: string;
   name: string;
+  contactPerson: string;
   email: string;
-  location: string;
-  id: string;
-  phonenumber: string;
+  country: string;
+  id: string | number;
+  phone: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface IOrderDetails {

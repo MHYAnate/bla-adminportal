@@ -2,7 +2,7 @@
 
 import Header from "@/app/(admin)/components/header";
 import { Button } from "@/components/ui/button";
-import DataTable from "./data-table";
+import ProductDataTable from "./data-table";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,7 @@ import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { useDeleteProduct, useGetProducts } from "@/services/products";
 import DatePickerWithRange from "@/components/ui/date-picker";
+import { productTypeList } from "@/constant";
 
 export default function Products() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -45,17 +46,6 @@ export default function Products() {
       refetchProducts();
       setIsOpen(false);
     });
-
-  const productTypeList = [
-    {
-      text: "Platform",
-      value: "platform",
-    },
-    {
-      text: "Service",
-      value: "service",
-    },
-  ];
 
   const payload = {
     // search: filter,
@@ -113,7 +103,7 @@ export default function Products() {
             />
           </div>
 
-          <DataTable
+          <ProductDataTable
             handleEdit={() => {
               setCurrentTab("edit");
               setIsOpen(true);
@@ -132,6 +122,7 @@ export default function Products() {
             onPageChange={onPageChange}
             pageSize={Number(pageSize)}
             totalPages={40}
+            loading={getPRoductsIsLoading}
           />
         </CardContent>
       </Card>
@@ -168,7 +159,6 @@ export default function Products() {
           ) : (
             <DeleteContent
               handleClose={() => setIsOpen(false)}
-              description="This action is irreversible and will permanently remove all associated data."
               title="Product"
             />
           )}

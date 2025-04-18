@@ -29,4 +29,12 @@ export const routes = {
     const params = new URLSearchParams(data);
     return `admin/manufacturers?${params}`;
   },
+  getManufacturerInfo: (id) => `admin/manufacturers/${id}`,
+  manufacturerProducts: ({ manufacturerId, data }) => {
+    const params = new URLSearchParams(data);
+    return `admin/manufacturers/${manufacturerId}/products?${params}`;
+  },
+  deleteManufacturerProduct: (id) => `admin/manufacturers/${id}`,
+  updateManufacturerStatus: (manufacturerId) =>
+    `admin/manufacturers/${manufacturerId}/status`,
 };

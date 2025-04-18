@@ -12,9 +12,10 @@ import { ROUTES } from "@/constant/routes";
 import { capitalizeFirstLetter } from "@/lib/utils";
 interface iProps {
   data?: any;
+  loading: boolean;
 }
 
-const CustomersDataTable: React.FC<iProps> = ({ data }) => {
+const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const onPageChange = (page: number) => {
@@ -119,7 +120,6 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
             View All
           </Link>
         </div>
-
         <TableComponent<CustomersData>
           tableData={data}
           currentPage={currentPage}
@@ -128,6 +128,8 @@ const CustomersDataTable: React.FC<iProps> = ({ data }) => {
           cellRenderers={cellRenderers}
           columnOrder={columnOrder}
           columnLabels={columnLabels}
+          isLoading={loading}
+          showPagination={false}
         />
       </CardContent>
     </Card>

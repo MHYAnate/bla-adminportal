@@ -122,6 +122,7 @@ const Customers: React.FC = () => {
             handleDelete={() => {
               setIsOpen(true);
             }}
+            isLoading={getCustomersIsLoading}
           />
         </CardContent>
       </Card>
@@ -141,7 +142,6 @@ const Customers: React.FC = () => {
           {/* <CreateCustomer setClose={() => setIsOpen(false)} /> */}
           <DeleteContent
             handleClose={() => setIsOpen(false)}
-            description="This action is irreversible and will permanently remove all associated data."
             title="Customer"
           />
         </DialogContent>

@@ -1,3 +1,4 @@
+import { showErrorAlert } from "@/lib/utils";
 import { routes } from "../api-routes";
 import { ErrorHandler } from "../errorHandler";
 import httpService from "../httpService";
@@ -31,8 +32,7 @@ export const useDeleteProduct = (handleSuccess) => {
       //   showSuccessAlert(resData);
     },
     onError: (error) => {
-      console.log(error);
-      //   showErrorAlert(error?.response?.data?.errorMessages[0]);
+      showErrorAlert("An error occured");
     },
   });
 
