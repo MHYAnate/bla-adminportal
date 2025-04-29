@@ -16,7 +16,7 @@ export function InputFilter({
       onChange={async (event: ChangeEvent<HTMLInputElement>) =>
         setQuery(event.target.value)
       }
-      type="search"
+      // type="search"
       pos={true}
       className="h-11 w-full"
     />

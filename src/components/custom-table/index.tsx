@@ -13,9 +13,8 @@ import { DataItem, ITableProps } from "@/types";
 import { ReactNode } from "react";
 import { Pagination } from "../ui/pagination";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
-import { FileQuestion } from "lucide-react";
 import { EmptyProductIcon } from "../../../public/icons";
-// import { Pagination } from '../pagination'
+import TableSkeleton from "../skeletons/table";
 
 type CellRenderer<T> = (item: T, column: keyof T) => ReactNode;
 
@@ -35,7 +34,11 @@ export function TableComponent<T extends DataItem>({
   columnLabels = {},
   onRowClick,
   setFilter,
+  isLoading = true,
+  showPagination = true,
 }: EnhancedTableProps<T>) {
+  const columns = columnOrder || (Object.keys(tableData[0]) as (keyof T)[]);
+  if (isLoading) return <TableSkeleton columns={columns} />;
   if (tableData.length === 0)
     return (
       <div className="h-[50vh] flex flex-col items-center justify-center text-gray-500">
@@ -44,8 +47,6 @@ export function TableComponent<T extends DataItem>({
       </div>
     );
   const safeOnPageChange = onPageChange ?? (() => {});
-
-  const columns = columnOrder || (Object.keys(tableData[0]) as (keyof T)[]);
 
   const formatColumnName = (name: string) => {
     return (
@@ -120,19 +121,21 @@ export function TableComponent<T extends DataItem>({
           </TableBody>
         </Table>
       </div>
-      <div className="mt-6 flex justify-between">
-        <Pagination
-          currentPage={currentPage}
-          onPageChange={safeOnPageChange}
-          totalPages={totalPages}
-        />
-        <SelectFilter
-          list={list}
-          setFilter={setFilter}
-          className="h-8 w-[87px]"
-          placeholder="Page Size"
-        />
-      </div>
+      {showPagination && (
+        <div className="mt-6 flex justify-between">
+          <Pagination
+            currentPage={currentPage}
+            onPageChange={safeOnPageChange}
+            totalPages={totalPages}
+          />
+          <SelectFilter
+            list={list}
+            setFilter={setFilter}
+            className="h-8 w-[87px]"
+            placeholder="Page Size"
+          />
+        </div>
+      )}
     </div>
   );
 }

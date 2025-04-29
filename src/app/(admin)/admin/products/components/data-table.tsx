@@ -16,9 +16,10 @@ interface iProps {
   onPageChange: (value: number) => void;
   pageSize: number;
   totalPages: number;
+  loading: boolean;
 }
 
-const DataTable: React.FC<iProps> = ({
+const ProductDataTable: React.FC<iProps> = ({
   handleEdit,
   handleView,
   handleDelete,
@@ -28,6 +29,7 @@ const DataTable: React.FC<iProps> = ({
   onPageChange,
   pageSize,
   totalPages,
+  loading,
 }) => {
   const tableData: ProductData[] = [
     {
@@ -143,9 +145,10 @@ const DataTable: React.FC<iProps> = ({
         columnOrder={columnOrder}
         columnLabels={columnLabels}
         setFilter={setPageSize}
+        isLoading={loading}
       />
     </>
   );
 };
 
-export default DataTable;
+export default ProductDataTable;

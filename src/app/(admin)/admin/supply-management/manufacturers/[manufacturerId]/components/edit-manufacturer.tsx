@@ -9,13 +9,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -23,8 +16,8 @@ import { Button } from "@/components/ui/button";
 import { useCallback, useState } from "react";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
-import { UploadIcon } from "../../../../../../../public/icons";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
+import { UploadIcon } from "../../../../../../../../public/icons";
 
 const formSchema = z.object({
   manufacturername: z.string().min(5, "Name must be greater 4"),
@@ -44,7 +37,7 @@ interface iProps {
   setClose: () => void;
 }
 
-const AddManufacturer: React.FC<iProps> = ({ setClose }) => {
+const EditManufacturer: React.FC<iProps> = ({ setClose }) => {
   const [preview, setPreview] = useState<string | ArrayBuffer | null>("");
 
   const form = useForm<FormSchemaType>({
@@ -253,4 +246,4 @@ const AddManufacturer: React.FC<iProps> = ({ setClose }) => {
   );
 };
 
-export default AddManufacturer;
+export default EditManufacturer;

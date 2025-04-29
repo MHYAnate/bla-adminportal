@@ -4,14 +4,12 @@ interface iProps {
   handleClose: () => void;
   handleClick?: () => void;
   title: string;
-  description: string;
 }
 
 const DeleteContent: React.FC<iProps> = ({
   handleClose,
   handleClick,
   title,
-  description,
 }) => {
   return (
     <div>
@@ -22,7 +20,8 @@ const DeleteContent: React.FC<iProps> = ({
         Are you sure you want to delete this {title}
       </h5>
       <p className="font-medium text-base text-[#A2A1A8] mb-6 text-center">
-        {description}
+        This action is irreversible and will permanently remove all associated
+        data.
       </p>
       <div className="gap-4 justify-center flex mx-10">
         <Button

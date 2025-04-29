@@ -102,3 +102,14 @@ export const adminSidebarList = [
     ],
   },
 ];
+
+export const productTypeList = [
+  {
+    text: "Platform",
+    value: "platform",
+  },
+  {
+    text: "Service",
+    value: "service",
+  },
+];

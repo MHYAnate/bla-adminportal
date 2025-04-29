@@ -183,7 +183,10 @@ const Dashboard: React.FC = () => {
         <TopCustomersChart data={data?.topPerformers?.customers || []} />
       </div>
 
-      <CustomersDataTable data={data?.recentActivity?.newCustomers || []} />
+      <CustomersDataTable
+        data={data?.recentActivity?.newCustomers || []}
+        loading={isDashboardInfoLoading || isDashboardInfoLoading}
+      />
     </section>
   );
 };

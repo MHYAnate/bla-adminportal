@@ -196,7 +196,6 @@ const DataTable: React.FC<iProps> = () => {
           ) : (
             <DeleteContent
               handleClose={() => setIsOpen(false)}
-              description="This action is irreversible and will delete feedback."
               title="Feedback"
             />
           )}
