@@ -1,0 +1,6 @@
+{
+    "env": {
+      "NEXT_PUBLIC_API_URL": "https://buylocalapi-staging.up.railway.app/api/"
+    }
+  }
+  
