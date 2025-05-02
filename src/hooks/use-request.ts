@@ -1,10 +1,9 @@
-"use client";
+// "use client";
 
 import { Storage } from "@/lib/utils";
-/* eslint-disable style/quote-props */
 import type { AxiosInstance, AxiosRequestConfig } from "axios";
 import axios from "axios";
-import { getCookie, setCookie } from "cookies-next";
+import { getCookie } from "cookies-next";
 
 export type AxiosConfig = Partial<AxiosRequestConfig> & {
   url?: string;

@@ -1,5 +1,6 @@
-"use client";
+"use client"
 
+import React, { useEffect, useState } from "react";
 import {
   Form,
   FormControl,
@@ -20,20 +21,29 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { useCreateAdmin } from "@/services/admin/index";
+import { AdminsData, RoleData } from "@/types";
+import { toast } from "sonner";
 
 const formSchema = z.object({
-  email: z.string().min(5, "Name must be greater 4"),
+  email: z.string().email("Please enter a valid email address"),
   role: z.string({
     required_error: "Please select a role.",
   }),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
-interface iProps {
+interface IProps {
   setClose: () => void;
+  roles?: RoleData[];
 }
 
-const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
+const CreateAdmin: React.FC<IProps> = ({ setClose, roles = [] }) => {
+  const { createAdmin } = useCreateAdmin(() => {
+    toast.success("Admin user created successfully");
+    setClose();
+  });
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,8 +53,15 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
   });
 
   async function onSubmit(values: FormSchemaType) {
-    await Promise.resolve(true);
-    console.warn(values);
+    try {
+      await createAdmin({
+        email: values.email,
+        roleNames: [values.role]
+      });
+    } catch (error) {
+      toast.error("Failed to create admin user");
+      console.error(error);
+    }
   }
 
   return (
@@ -54,15 +71,22 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
           onSubmit={form.handleSubmit(onSubmit)}
           className="mb-8 flex flex-col h-full"
         >
-          <div className="mb-6">
+          <div className="mb-6 space-y-4">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Name</FormLabel>
+                  <FormLabel className="text-[#111827] font-medium text-base">
+                    Email Address <span className="text-[#E03137]">*</span>
+                  </FormLabel>
                   <FormControl>
-                    <Input type="text" placeholder="Admin name" {...field} />
+                    <Input 
+                      type="email" 
+                      placeholder="Enter admin email address" 
+                      className="h-14"
+                      {...field} 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -73,19 +97,24 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
               name="role"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  <FormLabel>Role</FormLabel>
+                  <FormLabel className="text-[#111827] font-medium text-base">
+                    Role <span className="text-[#E03137]">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
                       <SelectTrigger className="h-14">
-                        <SelectValue placeholder="Admin role" />
+                        <SelectValue placeholder="Select admin role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="usdc">USDC</SelectItem>
-                      <SelectItem value="usdt">USDT</SelectItem>
+                      {roles.map((role) => (
+                        <SelectItem key={role.id} value={role.name}>
+                          {role.name.replace(/_/g, " ")}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -109,6 +138,7 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"
+              type="submit"
             >
               Submit
             </Button>
@@ -120,3 +150,4 @@ const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
 };
 
 export default CreateAdmin;
+

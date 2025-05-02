@@ -1,9 +1,8 @@
-"use client";
-
+"use client"
+import React, { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { AdminsData } from "@/types";
+import { AdminsData, RoleData } from "@/types";
 import Image from "next/image";
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   CalendarIcon,
@@ -18,52 +17,127 @@ import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
+import { toast } from "sonner";
+import { DialogHeader, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@radix-ui/react-dialog";
 
-const DataTable: React.FC = () => {
+import { useDeleteAdmin } from "@/services/admin";
+import { AdminData } from "@/types";
+import { Button } from "@/components/ui/button"; // assuming you're using a custom/styled button
+import Permit from "../[adminId]/components/adminPermitNumber";
+
+
+interface DataTableProps {
+  rolesData: RoleData[];
+  loading: boolean;
+  refetch: () => void;
+}
+
+const DataTable: React.FC<DataTableProps> = ({ rolesData, loading, refetch }) => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
-  const [role, setRole] = useState<string>("");
-  const [filter, setFilter] = useState<string>("");
+  const [roleFilter, setRoleFilter] = useState<string>("");
+  const [statusFilter, setStatusFilter] = useState<string>("");
+  const [nameFilter, setNameFilter] = useState<string>("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState<null | AdminsData>(null);
+ 
+  
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
+
+ 
+  const filteredData = rolesData.filter(admin => {
+    const matchesName = !nameFilter || 
+      admin.name?.includes(nameFilter.toLowerCase());
+    
+    const matchesRole = !roleFilter || roleFilter === "select" || 
+      admin.role === roleFilter;
+    
+    const matchesStatus = !statusFilter || statusFilter === "select" || 
+      admin.status === statusFilter;
+    
+    return matchesName && matchesRole && matchesStatus;
+  });
+  
+  const handleDeleteAdmin = () => {
+    if (adminToDelete) {
+      try {
+        deleteAdminPayload(adminToDelete.id);
+      } catch (error) {
+        toast.error("Failed to delete admin");
+        console.error(error);
+      }
+    }
+  };
+
+  const permit = () =>{}
+
+  const openDeleteDialog = (admin: AdminsData) => {
+    setAdminToDelete(admin);
+    setDeleteDialogOpen(true);
+  };
+
+  const { deleteAdminPayload, deleteAdminIsLoading } = useDeleteAdmin(() => {
+    toast.success("Admin deleted successfully");
+    setDeleteDialogOpen(false);
+    refetch();
+  });
+  // Transform roles data into the format expected by the table
+  const tableData: any[] = filteredData?.map((role) => ({
+    id: role.id,
+    name: role?.name?.replace(/_/g, " "),
+    role: role?.roles[0]?.role.name === "super_admin" ? "Super Admin" : role?.roles[0]?.role.name === "admin" ? "Admin" : role?.roles[0]?.role.name?.replace(/_/g, " "),
+    description: role?.roles[0]?.role.description,
+    date: new Date(role.createdAt).toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    status: role?.roles[0]?.role.name === "active" ? "active" :  role?.roles[0]?.role.name !== "active" ? "inactive" : "pending",
+    rolecount: role?.roles[0]?.role.permissions?.length,
+  })) || [];
+  
   const roleList = [
+    {
+      text: "All Roles",
+      value: "select",
+    },
     {
       text: "Admin",
       value: "admin",
     },
     {
       text: "Super Admin",
-      value: "super-admin",
+      value: "super_admin",
+    },
+    {
+      text: "Customer",
+      value: "customer",
+    },
+    {
+      text: "Business Owner",
+      value: "business_owner",
     },
   ];
-  const tableData: AdminsData[] = [
+  
+  const statusList = [
     {
-      id: 1,
-      name: "Jennifer Lawal",
-      role: "Admin",
-      description: "Super Admin in charge",
-      date: "24 Mar 2023",
-      status: "active",
-      rolecount: 5,
+      text: "All Status",
+      value: "select",
     },
     {
-      id: 2,
-      name: "Jennifer Lawal",
-      role: "Inventory Management",
-      description: "Super Admin in charge",
-      date: "24 Mar 2023",
-      status: "pending",
-      rolecount: 5,
+      text: "Active",
+      value: "active",
     },
     {
-      id: 3,
-      name: "Jennifer Lawal",
-      role: "Admin",
-      description: "Super Admin in charge",
-      date: "24 Mar 2023",
-      status: "Inactive",
-      rolecount: 5,
+      text: "Pending",
+      value: "pending",
+    },
+    {
+      text: "Inactive",
+      value: "inactive",
     },
   ];
 
@@ -82,8 +156,8 @@ const DataTable: React.FC = () => {
     ),
     role: (item: AdminsData) => (
       <div className="font-medium flex items-center gap-3">
-        {item.role.toLowerCase() === "admin" ? <PersonIcon /> : <RepIcon />}
-        {item.role}
+        {item?.role?.toLowerCase().includes("admin") ? <PersonIcon /> : <RepIcon />}
+        {item?.role}
       </div>
     ),
     description: (item: AdminsData) => (
@@ -106,13 +180,12 @@ const DataTable: React.FC = () => {
         }
         className="py-1 px-[26px] font-medium"
       >
-        {item.status.toUpperCase()}
+        {item.status?.toUpperCase()}
       </Badge>
     ),
-    rolecount: (item: AdminsData) => (
-      <span className="font-medium">{item.rolecount}</span>
+    rolecount: (item: AdminData) => (
+      <span className="font-medium">{<Permit id={item?.roles?.role?.id}/>}</span>
     ),
-
     action: (item: AdminsData) => (
       <div className="flex gap-2.5">
         <Link
@@ -121,10 +194,10 @@ const DataTable: React.FC = () => {
         >
           <ViewIcon />
         </Link>
-        <div className="bg-[#2F78EE] p-2.5 rounded-lg">
+        <Link  href={`${ROUTES.ADMIN.SIDEBAR.ADMINS}/${item?.id}?tab=general`} className="bg-[#2F78EE] p-2.5 rounded-lg cursor-pointer">
           <EditIcon />
-        </div>
-        <div className="bg-[#E03137] p-2.5 rounded-lg">
+        </Link>
+        <div onClick={()=> openDeleteDialog(item)} className="bg-[#E03137] p-2.5 rounded-lg cursor-pointer">
           <DeleteIcon />
         </div>
       </div>
@@ -142,35 +215,41 @@ const DataTable: React.FC = () => {
   ];
 
   const columnLabels = {
-    status: "Admin Status",
+    status: "Role Status",
     name: "Name",
     role: "Role",
     description: "Description",
     action: "",
     date: "Created Date",
-    rolecount: "Number of roles",
+    rolecount: "Number of Permissions",
   };
 
   return (
     <Card className="bg-white">
       <CardContent className="p-6">
         <h6 className="font-semibold text-lg text-[#111827] mb-1">
-          Total users with their roles
+          All Admin Roles
         </h6>
         <p className="text-[#687588] font-medium text-sm mb-6">
-          Find all administrator accounts and their associate roles.
+          Manage administrator roles and their associated permissions.
         </p>
         <div className="flex items-center gap-4 mb-6">
-          <InputFilter setQuery={setFilter} />
-
+          <InputFilter 
+            setQuery={setNameFilter} 
+            placeholder="Search by role name"
+          />
           <SelectFilter
-            setFilter={setRole}
+            setFilter={ setStatusFilter}
             placeholder="Select Role"
             list={roleList}
           />
-          <SelectFilter setFilter={setRole} list={roleList} />
+          <SelectFilter 
+            setFilter={setRoleFilter} 
+            placeholder="Status"
+            list={statusList} 
+          />
         </div>
-        <TableComponent<AdminsData>
+        <TableComponent<AdminData>
           tableData={tableData}
           currentPage={currentPage}
           onPageChange={onPageChange}
@@ -178,10 +257,41 @@ const DataTable: React.FC = () => {
           cellRenderers={cellRenderers}
           columnOrder={columnOrder}
           columnLabels={columnLabels}
+          isLoading={loading}
         />
       </CardContent>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="sm:max-w-[425px] w-full bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-slate-900">Confirm deletion</DialogTitle>
+            <DialogDescription className="text-sm text-slate-600 mt-1">
+              Are you sure you want to delete {adminToDelete?.name}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-6 flex justify-end space-x-3">
+            <Button 
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteAdminIsLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+               variant="destructive"
+              onClick={handleDeleteAdmin}
+              
+            >
+              {deleteAdminIsLoading ? "Deleting..." : "Delete Admin"}
+            </Button>
+          </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
-  );
+  )
+  
 };
 
 export default DataTable;
+

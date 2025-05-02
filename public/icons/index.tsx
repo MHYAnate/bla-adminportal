@@ -1,6 +1,61 @@
 interface iFill {
   fill?: string;
 }
+export const AdminIcon = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M12 4a4 4 0 100 8 4 4 0 000-8zM8 4a4 4 0 118 0 4 4 0 01-8 0z"
+        fill="currentColor"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M6.75 16.25a6.25 6.25 0 1010.5 0H19a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2a1 1 0 011-1h1.75z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+};
+
+export const UserGroupIcon = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 9a2 2 0 100-4 2 2 0 000 4z"
+        fill="currentColor"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M4.5 18.25a6.5 6.5 0 0113 0H21a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2a1 1 0 011.5-1h.5z"
+        fill="currentColor"
+      />
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M9 14a3 3 0 116 0 3 3 0 01-6 0z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+};
 
 export function EyeOutlineIcon() {
   return (

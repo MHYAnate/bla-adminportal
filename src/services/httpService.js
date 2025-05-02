@@ -1,5 +1,7 @@
 import axios from "axios";
 import { useRequest } from "@/hooks/use-request";
+import dotenv from 'dotenv';
+dotenv.config();
 
 class HttpService {
   constructor() {

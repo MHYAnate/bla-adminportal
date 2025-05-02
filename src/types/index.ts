@@ -32,7 +32,7 @@ export interface IPaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export interface AdminsData extends DataItem {
+export interface AdminsData extends DataItem   {
   id: string | number;
   name: string;
   role: string;
@@ -40,7 +40,59 @@ export interface AdminsData extends DataItem {
   date: string;
   status: string;
   rolecount: number;
+  action?: any;
+ 
+  // avatar?: string;
+  // roles?: string[];
+  // permissions?: string[];
 }
+
+export interface AdminData  extends DataItem   {
+  id:any;
+  email:string;
+  createdAt:any;
+  status:string;
+  profile:any;
+  roles:{
+    role:{
+      id:number;
+      name:string;
+      discription:string;
+    }
+  }
+  name:string;
+  role:string;
+  description:string;
+  date:string;
+  rolecount:string;
+  action:any;
+ 
+
+}
+
+export interface RoleData {
+  [x: string]: any;
+  toLowerCase(): unknown;
+  email: any;
+  data:{
+    name:string;
+  }
+  id: number;
+  name: string;
+  description: string;
+  permissions: Array<{
+    id: number;
+    name: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    users: number;
+  };
+}
+
+
+
 export interface CustomersData extends DataItem {
   [key: string]: string | number | undefined;
   id?: string | number;
@@ -188,4 +240,85 @@ export interface IFinancialReportCard {
   isProgressive: boolean;
   count: number;
   title: string;
+}
+
+// Admin interfaces
+// export interface AdminsData {
+//   id: string | number;
+//   name: string;
+//   email?: string;
+//   role: string;
+//   description: string;
+//   date: string;
+//   status: string;
+//   rolecount: number;
+//   avatar?: string;
+//   roles?: string[];
+//   permissions?: string[];
+// }
+
+export interface AdminRole {
+  id: number;
+  name: string;
+  description: string;
+  permissions: Array<{
+    id: number;
+    name: string;
+  }>;
+  createdAt: string;
+  updatedAt: string;
+  _count: {
+    users: number;
+  };
+}
+
+export interface AdminPermission {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+}
+
+export interface AdminFormData {
+  email: string;
+  name?: string;
+  roleNames: string[];
+  status?: string;
+}
+
+export interface AdminInviteData {
+  email: string;
+  roleNames: string[];
+}
+
+
+// export interface AdminsData {
+//   id: string | number;
+//   name: string;
+//   role: string;
+//   description: string;
+//   date: string;
+//   status: string;
+//   rolecount: number;
+//   action?: any;
+// }
+
+// export interface RoleData {
+//   id: number;
+//   name: string;
+//   description: string;
+//   createdAt: string;
+//   updatedAt: string;
+//   permissions: {
+//     id: number;
+//     name: string;
+//   }[];
+//   _count: {
+//     users: number;
+//   };
+// }
+
+export interface Permission {
+  id: number;
+  name: string;
 }
