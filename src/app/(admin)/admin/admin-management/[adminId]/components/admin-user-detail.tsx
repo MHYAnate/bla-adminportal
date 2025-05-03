@@ -24,7 +24,7 @@ import { AdminData } from "@/types";
 
 interface AdminUserDetailProps {
   adminId: string;
-  roles: RoleData[];
+  roles: any;
 }
 
 const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => {
@@ -37,6 +37,7 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
    console.log(adminId, "id", adminsData);
 
 
+   console.log("compare to saferroledata", roles)
 
    const admin = adminsData.find(
 		(admin: {id:string}) => admin.id == adminId
@@ -171,7 +172,7 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
               </TabsList>
 
               <TabsContent value="general">
-                <GeneralInfo adminData={admin} roles={roles} />
+                <GeneralInfo adminData={admin} roles={roles.data} />
               </TabsContent>
               <TabsContent value="permissions">
                 <PermissionsTab adminData={admin} />

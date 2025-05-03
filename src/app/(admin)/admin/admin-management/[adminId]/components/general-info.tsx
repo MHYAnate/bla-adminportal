@@ -149,37 +149,124 @@ interface EditRolesDialogProps {
   onClose: () => void;
 }
 
+// const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onClose }) => {
+//   const adminId = adminData?.id;
+//   const currentRoles = adminData?.roles?.map((role: any) => role.name) || [];
+//   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
+  
+//   const { updateRolesPayload, updateRolesIsLoading } = useUpdateAdminRoles(() => {
+//     toast.success("Admin roles updated successfully");
+//     onClose();
+//   });
+
+//   const handleRoleToggle = (roleName: string) => {
+//     if (selectedRoles.includes(roleName)) {
+//       setSelectedRoles(selectedRoles.filter(role => role !== roleName));
+//     } else {
+//       setSelectedRoles([...selectedRoles, roleName]);
+//     }
+//   };
+
+//   const handleSubmit = async () => {
+//     if (adminId) {
+//       try {
+//         await updateRolesPayload(adminId, selectedRoles);
+//       } catch (error) {
+//         toast.error("Failed to update roles");
+//         console.error(error);
+//       }
+//     }
+//   };
+
+//   return (
+//     <Dialog open={true} onOpenChange={onClose}>
+//       <DialogContent className="right-[30px] p-8 max-w-[35.56rem]">
+//         <DialogHeader>
+//           <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
+//             <div onClick={onClose} className="cursor-pointer">
+//               <ChevronLeft size={24} />
+//             </div>
+//             Edit Admin Roles
+//           </DialogTitle>
+//         </DialogHeader>
+        
+//         <div className="mb-6">
+//           <h3 className="text-lg font-semibold mb-4">
+//             Select roles for {adminData?.name || "this administrator"}
+//           </h3>
+          
+//           <div className="space-y-4">
+//             {Array.isArray(roles) ? roles?.map((role) => (
+//               <div key={role.id} className="flex items-center space-x-3 p-3 border rounded-md">
+//                 <input
+//                   type="checkbox"
+//                   id={`role-${role.id}`}
+//                   className="h-5 w-5 rounded border-gray-300"
+//                   checked={selectedRoles.includes(role.name)}
+//                   onChange={() => handleRoleToggle(role.name)}
+//                 />
+//                 <div>
+//                   <label htmlFor={`role-${role.id}`} className="font-medium text-sm text-gray-900">
+//                     {role?.name.replace(/_/g, " ")}
+//                   </label>
+//                   <p className="text-sm text-gray-500">{role.description}</p>
+//                 </div>
+//               </div>
+//             )):<>load fail</>}
+//           </div>
+//         </div>
+        
+//         <div className="flex justify-end gap-4 mt-6">
+//           <Button
+//             variant="outline"
+//             className="px-6"
+//             onClick={onClose}
+//           >
+//             Cancel
+//           </Button>
+//           <Button
+//             variant="warning"
+//             className="px-6"
+//             onClick={handleSubmit}
+//             disabled={updateRolesIsLoading}
+//           >
+//             {updateRolesIsLoading ? "Updating..." : "Save Changes"}
+//           </Button>
+//         </div>
+//       </DialogContent>
+//     </Dialog>
+//   );
+// };
 const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onClose }) => {
   const adminId = adminData?.id;
   const currentRoles = adminData?.roles?.map((role: any) => role.name) || [];
   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
-  
+
   const { updateRolesPayload, updateRolesIsLoading } = useUpdateAdminRoles(() => {
     toast.success("Admin roles updated successfully");
     onClose();
   });
 
   const handleRoleToggle = (roleName: string) => {
-    if (selectedRoles.includes(roleName)) {
-      setSelectedRoles(selectedRoles.filter(role => role !== roleName));
-    } else {
-      setSelectedRoles([...selectedRoles, roleName]);
-    }
+    setSelectedRoles((prev) =>
+      prev.includes(roleName)
+        ? prev.filter((r) => r !== roleName)
+        : [...prev, roleName]
+    );
   };
 
   const handleSubmit = async () => {
-    if (adminId) {
-      try {
-        await updateRolesPayload(adminId, selectedRoles);
-      } catch (error) {
-        toast.error("Failed to update roles");
-        console.error(error);
-      }
+    if (!adminId) return;
+    try {
+      await updateRolesPayload(adminId, selectedRoles);
+    } catch (error) {
+      toast.error("Failed to update roles");
+      console.error("Update roles error:", error);
     }
   };
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
+    <Dialog open onOpenChange={onClose}>
       <DialogContent className="right-[30px] p-8 max-w-[35.56rem]">
         <DialogHeader>
           <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
@@ -189,39 +276,39 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
             Edit Admin Roles
           </DialogTitle>
         </DialogHeader>
-        
+
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-4">
             Select roles for {adminData?.name || "this administrator"}
           </h3>
-          
-          <div className="space-y-4">
-            {Array.isArray(roles) ? roles?.map((role) => (
-              <div key={role.id} className="flex items-center space-x-3 p-3 border rounded-md">
-                <input
-                  type="checkbox"
-                  id={`role-${role.id}`}
-                  className="h-5 w-5 rounded border-gray-300"
-                  checked={selectedRoles.includes(role.name)}
-                  onChange={() => handleRoleToggle(role.name)}
-                />
-                <div>
-                  <label htmlFor={`role-${role.id}`} className="font-medium text-sm text-gray-900">
-                    {role?.name.replace(/_/g, " ")}
-                  </label>
-                  <p className="text-sm text-gray-500">{role.description}</p>
+
+          {roles && roles.length > 0 ? (
+            <div className="space-y-4">
+              {roles.map((role) => (
+                <div key={role.id} className="flex items-center space-x-3 p-3 border rounded-md">
+                  <input
+                    type="checkbox"
+                    id={`role-${role.id}`}
+                    className="h-5 w-5 rounded border-gray-300"
+                    checked={selectedRoles.includes(role.name)}
+                    onChange={() => handleRoleToggle(role.name)}
+                  />
+                  <div>
+                    <label htmlFor={`role-${role.id}`} className="font-medium text-sm text-gray-900">
+                      {role.name.replace(/_/g, " ")}
+                    </label>
+                    <p className="text-sm text-gray-500">{role.description}</p>
+                  </div>
                 </div>
-              </div>
-            )):<>load fail</>}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-red-500">Failed to load roles</p>
+          )}
         </div>
-        
+
         <div className="flex justify-end gap-4 mt-6">
-          <Button
-            variant="outline"
-            className="px-6"
-            onClick={onClose}
-          >
+          <Button variant="outline" className="px-6" onClick={onClose}>
             Cancel
           </Button>
           <Button

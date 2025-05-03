@@ -41,6 +41,8 @@ const PermissionsTab: React.FC<PermissionsTabProps> = ({ adminData }) => {
     );
   }
 
+  
+
   return (
     <div className="space-y-6">
       <div className="border border-[#F1F2F4] rounded-[1rem] p-6">

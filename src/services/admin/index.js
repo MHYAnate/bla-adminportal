@@ -159,38 +159,38 @@ export const useCreateAdmin = (onSuccess = () => {}) => {
   };
 };
 
-export const useUpdateAdminRoles = (onSuccess) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
+// export const useUpdateAdminRoles = (onSuccess) => {
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [error, setError] = useState(null);
+//   const [data, setData] = useState(null);
 
-  const updateRolesPayload = async (adminId, roles) => {
-    setIsLoading(true);
-    setError(null);
+//   const updateRolesPayload = async (adminId, roles) => {
+//     setIsLoading(true);
+//     setError(null);
     
-    try {
-      const response = await httpService.putData(
-        { roleNames: roles }, 
-        routes.updateAdminRoles(adminId)
-      );
-      setData(response.data);
-      if (onSuccess) onSuccess(response.data);
-      return response.data;
-    } catch (error) {
-      setError(error);
-      return error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+//     try {
+//       const response = await httpService.putData(
+//         { roleNames: roles }, 
+//         routes.updateAdminRoles(adminId)
+//       );
+//       setData(response.data);
+//       if (onSuccess) onSuccess(response.data);
+//       return response.data;
+//     } catch (error) {
+//       setError(error);
+//       return error;
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
 
-  return {
-    updateRolesIsLoading: isLoading,
-    updateRolesError: ErrorHandler(error),
-    updateRolesData: data,
-    updateRolesPayload
-  };
-};
+//   return {
+//     updateRolesIsLoading: isLoading,
+//     updateRolesError: ErrorHandler(error),
+//     updateRolesData: data,
+//     updateRolesPayload
+//   };
+// };
 
 
 
@@ -298,5 +298,78 @@ export const useDeleteAdmin = (onSuccess) => {
     deleteAdminError: ErrorHandler(error),
     deleteAdminData: data,
     deleteAdminPayload,
+  };
+};
+
+// export const useUpdateAdminRoles = (onSuccess) => {
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [error, setError] = useState(null); // Use 'any' or a more specific type
+//   const [data, setData] = useState(null);    // Use 'any' or a more specific type
+
+//   const updateRolesPayload = async (adminId, roleNames) => {
+//     setIsLoading(true);
+//     setError(null);
+
+//     try {
+//       const response = await httpService.putData(
+//         { roleNames }, // Ensure this matches the expected body structure
+//         routes.updateAdminRoles(adminId) // Use the route function
+//       );
+//       setData(response.data);
+//       if (onSuccess) {
+//         onSuccess(response.data);
+//       }
+//       return response.data;
+//     } catch (error) {
+//       const handledError = ErrorHandler(error); // Use your error handler
+//       setError(handledError);
+//       return Promise.reject(handledError); // Re-throw for further handling if needed
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   return {
+//     updateRolesIsLoading: isLoading,
+//     updateRolesError: error,
+//     updateRolesData: data,
+//     updateRolesPayload,
+//   };
+// };
+
+
+export const useUpdateAdminRoles = (onSuccess) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  const updateRolesPayload = async (adminId, roleNames) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await httpService.putData(
+        { roleNames },
+        routes.updateAdminRoles(adminId)
+      );
+      setData(response.data);
+      if (onSuccess) {
+        onSuccess(response.data);
+      }
+      return response.data;
+    } catch (err) {
+      const handledError = ErrorHandler(err);
+      setError(handledError);
+      return Promise.reject(handledError);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    updateRolesIsLoading: isLoading,
+    updateRolesError: error,
+    updateRolesData: data,
+    updateRolesPayload,
   };
 };

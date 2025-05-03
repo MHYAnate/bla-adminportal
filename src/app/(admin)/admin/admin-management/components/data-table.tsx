@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@radix-ui/react-dialog";
 
-import { useDeleteAdmin, useGetAdminRoles } from "@/services/admin";
+import { useDeleteAdmin, useGetAdminRoles, useUpdateAdminRoles } from "@/services/admin";
 import { AdminData } from "@/types";
 import { Button } from "@/components/ui/button"; // assuming you're using a custom/styled button
 import Permit from "../[adminId]/components/adminPermitNumber";
@@ -43,6 +43,7 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
   const [adminToDelete, setAdminToDelete] = useState<null | AdminsData>(null);
   
 
+  
  
 
   console.log(adminToDelete, "admintodelet")
@@ -293,6 +294,7 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
           isLoading={loading}
         />
       </CardContent>
+      
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="fixed inset-0 flex items-center justify-center z-50">
           <div className="sm:max-w-[425px] w-full bg-white p-6 rounded-2xl shadow-xl border border-slate-200">

@@ -44,6 +44,8 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, roles = [] }) => {
     setClose();
   });
 
+
+  console.log("inviteRolesss", roles)
   // Initialize form with react-hook-form
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
