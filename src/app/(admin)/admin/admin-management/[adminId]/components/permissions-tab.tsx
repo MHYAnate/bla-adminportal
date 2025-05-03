@@ -94,3 +94,4 @@ const PermissionsTab: React.FC<PermissionsTabProps> = ({ adminData }) => {
 };
 
 export default PermissionsTab;
+

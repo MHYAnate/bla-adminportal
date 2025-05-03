@@ -64,7 +64,7 @@ export default function Admins() {
       </div>
 
       {/* Admin table */}
-      <DataTable rolesData={safeAdminData} loading={isAdminsLoading} refetch={refetchAdmins}/>
+      <DataTable adminData={safeAdminData} loading={isAdminsLoading} refetch={refetchAdmins}/>
 
       {/* Dialog modal */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>

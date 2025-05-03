@@ -50,6 +50,6 @@ export const routes = {
   inviteAdmin: () => "admin/manage/invite",
   updateAdminRoles: (adminId) => `admin/manage/${adminId}/roles`,
   checkAdminStatus: () => "admin/manage/status",
-  deleteAdmin: (adminId) => `admin/manage/${adminId}`,
+  deleteAdmin: () => `admin/manage/${adminId}`,
   createAdmin: () => "admin/manage/create",
 };

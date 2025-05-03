@@ -21,19 +21,19 @@ import { toast } from "sonner";
 import { DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@radix-ui/react-dialog";
 
-import { useDeleteAdmin } from "@/services/admin";
+import { useDeleteAdmin, useGetAdminRoles } from "@/services/admin";
 import { AdminData } from "@/types";
 import { Button } from "@/components/ui/button"; // assuming you're using a custom/styled button
 import Permit from "../[adminId]/components/adminPermitNumber";
 
 
 interface DataTableProps {
-  rolesData: RoleData[];
+  adminData: RoleData[];
   loading: boolean;
   refetch: () => void;
 }
 
-const DataTable: React.FC<DataTableProps> = ({ rolesData, loading, refetch }) => {
+const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
   const [roleFilter, setRoleFilter] = useState<string>("");
@@ -41,6 +41,10 @@ const DataTable: React.FC<DataTableProps> = ({ rolesData, loading, refetch }) =>
   const [nameFilter, setNameFilter] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [adminToDelete, setAdminToDelete] = useState<null | AdminsData>(null);
+  
+
+ 
+
  
   
   const onPageChange = (page: number) => {
@@ -48,23 +52,28 @@ const DataTable: React.FC<DataTableProps> = ({ rolesData, loading, refetch }) =>
   };
 
  
-  const filteredData = rolesData.filter(admin => {
+  const filteredData = adminData.filter(admin => {
     const matchesName = !nameFilter || 
-      admin.name?.includes(nameFilter.toLowerCase());
+      admin?.roles?.role?.name?.includes(nameFilter.toLowerCase());
     
     const matchesRole = !roleFilter || roleFilter === "select" || 
-      admin.role === roleFilter;
+    admin?.roles?.role?.name === roleFilter;
     
     const matchesStatus = !statusFilter || statusFilter === "select" || 
       admin.status === statusFilter;
     
     return matchesName && matchesRole && matchesStatus;
   });
+
+  console.log(adminData, "forsearch")
+ 
+
+
   
-  const handleDeleteAdmin = () => {
+  async function handleDeleteAdmin ()  {
     if (adminToDelete) {
       try {
-        deleteAdminPayload(adminToDelete.id);
+        await deleteAdminPayload(adminToDelete.id);
       } catch (error) {
         toast.error("Failed to delete admin");
         console.error(error);
@@ -72,7 +81,7 @@ const DataTable: React.FC<DataTableProps> = ({ rolesData, loading, refetch }) =>
     }
   };
 
-  const permit = () =>{}
+
 
   const openDeleteDialog = (admin: AdminsData) => {
     setAdminToDelete(admin);
@@ -96,7 +105,7 @@ const DataTable: React.FC<DataTableProps> = ({ rolesData, loading, refetch }) =>
       year: "numeric",
     }),
     status: role?.roles[0]?.role.name === "active" ? "active" :  role?.roles[0]?.role.name !== "active" ? "inactive" : "pending",
-    rolecount: role?.roles[0]?.role.permissions?.length,
+    rolecount: 1,
   })) || [];
   
   const roleList = [

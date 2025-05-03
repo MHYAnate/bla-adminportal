@@ -21,7 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { useCreateAdmin } from "@/services/admin/index";
+import {  useInviteAdmin } from "@/services/admin/index";
 import { AdminsData, RoleData } from "@/types";
 import { toast } from "sonner";
 
@@ -39,11 +39,12 @@ interface IProps {
 }
 
 const CreateAdmin: React.FC<IProps> = ({ setClose, roles = [] }) => {
-  const { createAdmin } = useCreateAdmin(() => {
-    toast.success("Admin user created successfully");
+  const { inviteAdminPayload, inviteAdminIsLoading } = useInviteAdmin(() => {
+    toast.success("Admin invitation sent successfully");
     setClose();
   });
 
+  // Initialize form with react-hook-form
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -52,17 +53,19 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, roles = [] }) => {
     },
   });
 
+  // Handle form submission
   async function onSubmit(values: FormSchemaType) {
     try {
-      await createAdmin({
+      await inviteAdminPayload({
         email: values.email,
         roleNames: [values.role]
       });
     } catch (error) {
-      toast.error("Failed to create admin user");
+      toast.error("Failed to send admin invitation");
       console.error(error);
     }
   }
+
 
   return (
     <div>
@@ -135,6 +138,7 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, roles = [] }) => {
               Cancel
             </Button>
             <Button
+              disabled={inviteAdminIsLoading}
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"
