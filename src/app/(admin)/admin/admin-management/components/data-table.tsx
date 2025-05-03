@@ -45,6 +45,7 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
 
  
 
+  console.log(adminToDelete, "admintodelet")
  
   
   const onPageChange = (page: number) => {
@@ -70,7 +71,37 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
 
 
   
-  async function handleDeleteAdmin ()  {
+  // const handleDeleteAdmin = () => {
+  //   if (adminToDelete) {
+  //     try {
+  //       deleteAdminPayload(adminToDelete.id);
+  //     } catch (error) {
+  //       toast.error("Failed to delete admin");
+  //       console.error(error);
+  //     }
+  //   }
+  // };
+
+
+
+  // const openDeleteDialog = (admin: AdminsData) => {
+  //   setAdminToDelete(admin);
+  //   setDeleteDialogOpen(true);
+  // };
+
+  // const { deleteAdminPayload, deleteAdminIsLoading } = useDeleteAdmin(() => {
+  //   toast.success("Admin deleted successfully");
+  //   setDeleteDialogOpen(false);
+  //   refetch();
+  // });
+
+  const { deleteAdminPayload, deleteAdminIsLoading } = useDeleteAdmin(() => {
+    toast.success("Admin deleted successfully");
+    setDeleteDialogOpen(false);
+    refetch();
+  });
+  
+  const handleDeleteAdmin = async () => {
     if (adminToDelete) {
       try {
         await deleteAdminPayload(adminToDelete.id);
@@ -80,19 +111,12 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
       }
     }
   };
-
-
-
+  
   const openDeleteDialog = (admin: AdminsData) => {
     setAdminToDelete(admin);
     setDeleteDialogOpen(true);
   };
-
-  const { deleteAdminPayload, deleteAdminIsLoading } = useDeleteAdmin(() => {
-    toast.success("Admin deleted successfully");
-    setDeleteDialogOpen(false);
-    refetch();
-  });
+  
   // Transform roles data into the format expected by the table
   const tableData: any[] = filteredData?.map((role) => ({
     id: role.id,
