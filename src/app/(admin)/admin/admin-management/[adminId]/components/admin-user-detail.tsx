@@ -75,9 +75,14 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
   }
 
   // If we have data, determine the status
-  const status =admin?.roles[0]?.role.name === "active" ? "active" :  admin?.roles[0]?.role.name !== "active" ? "inactive" : "pending";
+  const status =admin?.status && admin?.status;
   const adminRoles = admin?.roles || [];
-  const adminName = admin?.name || "Administrator";
+  const adminName = admin?.adminProfile
+.username
+|| "Administrator";
+const adminPhone = admin?.adminProfile
+.phone
+|| "number";
   const adminEmail = admin?.email || "admin@example.com";
 
   return (
@@ -93,13 +98,13 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
                     height={100}
                     width={100}
                     alt="Admin avatar"
-                    src="/images/user-avatar.png"
+                    src="/images/user-avatar.jpg"
                     className="w-[100px] h-[100px] rounded-full object-cover"
                   />
                 </div>
                 <h6 className="text-center text-[#111827] text-xl mb-2.5">{adminName}</h6>
                 <p className="text-[#687588] text-sm mb-2.5 text-center">
-                  {admin?.roles[0]?.role.name}
+                  {admin?.roles[0]?.role?.name}
                   
                 </p>
                 <p className="text-[#687588] text-sm mb-6 text-center">
@@ -130,7 +135,7 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
                 <div className="flex gap-3 items-center mb-4">
                   <CallIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                    {admin?.phone || "Not provided"}
+                    {adminPhone || "Not provided"}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
@@ -186,4 +191,3 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
 };
 
 export default AdminUserDetail;
-

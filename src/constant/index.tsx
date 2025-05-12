@@ -19,14 +19,14 @@ export const adminSidebarList = [
         sidebar: "Admins",
         href: ROUTES.ADMIN.SIDEBAR.ADMINS,
       },
-      {
-        sidebar: "Roles",
-        href: ROUTES.ADMIN.SIDEBAR.ROLES,
-      },
-      {
-        sidebar: "Permissions",
-        href: ROUTES.ADMIN.SIDEBAR.PERMISSIONS,
-      },
+      // {
+      //   sidebar: "Roles",
+      //   href: ROUTES.ADMIN.SIDEBAR.ROLES,
+      // },
+      // {
+      //   sidebar: "Permissions",
+      //   href: ROUTES.ADMIN.SIDEBAR.PERMISSIONS,
+      // },
     ],
   },
   {

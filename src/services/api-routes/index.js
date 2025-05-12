@@ -52,4 +52,16 @@ export const routes = {
   checkAdminStatus: () => "admin/manage/status",
   deleteAdmin: (id) => `admin/manage/${id}`,
   removeAdmin: () => `admin/manage`,
+  // registerInvitedAdmin: (data) =>{  const params = new URLSearchParams(data);
+  //   return `admin/manage?${params}`;}, 
+
+  // registerInvitedAdmin: ({ email, userId, expires, signature }) => {
+  //   const params = new URLSearchParams({ email, userId, expires, signature });
+  //   return `admin/manage?${params.toString()}`;  
+  // },
+
+
+  registerInvitedAdmin: () => "admin/manage/register",
+  createAdmin: () => "admin/manage/create",
+ 
 };

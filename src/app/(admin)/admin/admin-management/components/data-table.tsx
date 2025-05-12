@@ -46,55 +46,36 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
   
  
 
-  console.log(adminToDelete, "admintodelet")
+  console.log(adminToDelete, "admintodelet", adminData, "filtersearch")
  
   
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
 
+   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
+
  
-  const filteredData = adminData.filter(admin => {
+   const filteredData = adminData.filter(admin => {
+    // Name filter (search in username)
     const matchesName = !nameFilter || 
-      admin?.roles?.role?.name?.includes(nameFilter.toLowerCase());
-    
-    const matchesRole = !roleFilter || roleFilter === "select" || 
-    admin?.roles?.role?.name === roleFilter;
-    
-    const matchesStatus = !statusFilter || statusFilter === "select" || 
-      admin.status === statusFilter;
-    
+      admin?.adminProfile?.username?.toLowerCase().includes(nameFilter.toLowerCase());
+  
+    // Role filter (match exact role name)
+    const matchesRole = !roleFilter || 
+      roleFilter === "select" || 
+      admin?.roles?.[0]?.role?.name?.toLowerCase() === roleFilter.toLowerCase();
+  
+    // Status filter (case insensitive match)
+    const matchesStatus = !statusFilter || 
+      statusFilter === "select" || 
+      admin?.status?.toLowerCase() === statusFilter.toLowerCase();
+  
     return matchesName && matchesRole && matchesStatus;
   });
 
-  console.log(adminData, "forsearch")
+  console.log(filteredData, "forsearch")
  
-
-
-  
-  // const handleDeleteAdmin = () => {
-  //   if (adminToDelete) {
-  //     try {
-  //       deleteAdminPayload(adminToDelete.id);
-  //     } catch (error) {
-  //       toast.error("Failed to delete admin");
-  //       console.error(error);
-  //     }
-  //   }
-  // };
-
-
-
-  // const openDeleteDialog = (admin: AdminsData) => {
-  //   setAdminToDelete(admin);
-  //   setDeleteDialogOpen(true);
-  // };
-
-  // const { deleteAdminPayload, deleteAdminIsLoading } = useDeleteAdmin(() => {
-  //   toast.success("Admin deleted successfully");
-  //   setDeleteDialogOpen(false);
-  //   refetch();
-  // });
 
   const { deleteAdminPayload, deleteAdminIsLoading } = useDeleteAdmin(() => {
     toast.success("Admin deleted successfully");
@@ -119,42 +100,21 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
   };
   
   // Transform roles data into the format expected by the table
-  const tableData: any[] = filteredData?.map((role) => ({
-    id: role.id,
-    name: role?.name?.replace(/_/g, " "),
-    role: role?.roles[0]?.role.name === "super_admin" ? "Super Admin" : role?.roles[0]?.role.name === "admin" ? "Admin" : role?.roles[0]?.role.name?.replace(/_/g, " "),
-    description: role?.roles[0]?.role.description,
-    date: new Date(role.createdAt).toLocaleDateString("en-US", {
+  const tableData: any[] = filteredData?.map((admin) => ({
+    id: admin.id,
+    // Directly access adminProfile.username
+    name: admin?.adminProfile?.username || "N/A", // Fallback for missing username
+    role: admin?.roles[0]?.role?.name === "super_admin" 
+      ? "Super Admin" 
+      : admin?.roles[0]?.role?.name?.replace(/_/g, " "),
+    description: admin?.roles[0]?.role?.description,
+    date: new Date(admin.createdAt).toLocaleDateString("en-US", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     }),
-    status: role?.roles[0]?.role.name === "active" ? "active" :  role?.roles[0]?.role.name !== "active" ? "inactive" : "pending",
-    rolecount: 1,
+    status: admin?.status,
   })) || [];
-  
-  const roleList = [
-    {
-      text: "All Roles",
-      value: "select",
-    },
-    {
-      text: "Admin",
-      value: "admin",
-    },
-    {
-      text: "Super Admin",
-      value: "super_admin",
-    },
-    {
-      text: "Customer",
-      value: "customer",
-    },
-    {
-      text: "Business Owner",
-      value: "business_owner",
-    },
-  ];
   
   const statusList = [
     {
@@ -166,7 +126,7 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
       value: "active",
     },
     {
-      text: "Pending",
+      text: "Pending", 
       value: "pending",
     },
     {
@@ -174,17 +134,35 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
       value: "inactive",
     },
   ];
+  
+  // 4. Ensure roleList matches actual role names in data
+  const roleList = [
+    {
+      text: "All Roles",
+      value: "select",
+    },
+    {
+      text: "Super Admin",
+      value: "super_admin",
+    },
+    {
+      text: "Admin",
+      value: "admin",
+    },
+    {
+      text: "Business Owner",
+      value: "business_owner",
+    },
+    {
+      text: "Customer",
+      value: "customer",
+    },
+  ];
 
   const cellRenderers = {
-    name: (item: AdminsData) => (
+    name: (item: any) => (
       <div className="font-medium flex items-center gap-3">
-        <Image
-          src="/images/user-avatar.png"
-          width={24}
-          height={24}
-          alt="Admin avatar"
-          className="w-6 h-6 rounded-full"
-        />
+        {/* Use the pre-mapped name property */}
         {item.name}
       </div>
     ),
@@ -206,19 +184,19 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
     status: (item: AdminsData) => (
       <Badge
         variant={
-          item.status.toLowerCase() === "active"
+          item?.status.toLowerCase() === "active"
             ? "success"
-            : item.status.toLowerCase() === "pending"
+            : item?.status?.toLowerCase() === "pending"
             ? "tertiary"
             : "warning"
         }
         className="py-1 px-[26px] font-medium"
       >
-        {item.status?.toUpperCase()}
+        {item?.status?.toUpperCase()}
       </Badge>
     ),
     rolecount: (item: AdminData) => (
-      <span className="font-medium">{<Permit id={item?.roles?.role?.id}/>}</span>
+      <span className="font-medium">{item?.rolecount}</span>
     ),
     action: (item: AdminsData) => (
       <div className="flex gap-2.5">
@@ -244,7 +222,7 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
     "description",
     "date",
     "status",
-    "rolecount",
+    // "rolecount",
     "action",
   ];
 
@@ -255,7 +233,7 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
     description: "Description",
     action: "",
     date: "Created Date",
-    rolecount: "Number of Permissions",
+    // rolecount: "Number of Permissions",
   };
 
   return (
@@ -268,21 +246,21 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
           Manage administrator roles and their associated permissions.
         </p>
         <div className="flex items-center gap-4 mb-6">
-          <InputFilter 
-            setQuery={setNameFilter} 
-            placeholder="Search by role name"
-          />
-          <SelectFilter
-            setFilter={ setStatusFilter}
-            placeholder="Select Role"
-            list={roleList}
-          />
-          <SelectFilter 
-            setFilter={setRoleFilter} 
-            placeholder="Status"
-            list={statusList} 
-          />
-        </div>
+  <InputFilter 
+    setQuery={setNameFilter} 
+    placeholder="Search by name"
+  />
+  <SelectFilter
+    setFilter={setRoleFilter}  // Changed to setRoleFilter
+    placeholder="Select Role"
+    list={roleList}
+  />
+  <SelectFilter 
+    setFilter={setStatusFilter}  // Changed to setStatusFilter
+    placeholder="Status"
+    list={statusList} 
+  />
+</div>
         <TableComponent<AdminData>
           tableData={tableData}
           currentPage={currentPage}
@@ -294,7 +272,7 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
           isLoading={loading}
         />
       </CardContent>
-      
+
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent className="fixed inset-0 flex items-center justify-center z-50">
           <div className="sm:max-w-[425px] w-full bg-white p-6 rounded-2xl shadow-xl border border-slate-200">

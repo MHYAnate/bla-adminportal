@@ -8,6 +8,13 @@ export default {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
+    container: {
+            center: true,
+            padding: "2rem",
+            screens: {
+              "2xl": "1400px",
+            },
+          },
     extend: {
       screens: {
         sm: "400px",
@@ -17,6 +24,10 @@ export default {
         "2xl": "1400px",
       },
       colors: {
+        buylocal: {
+                    green: "#0F3D30",
+                    orange: "#EC9F01",
+                  },
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
@@ -81,6 +92,10 @@ export default {
           ring: "hsl(var(--sidebar-ring))",
         },
       },
+              card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
+        },
       borderRadius: {
         lg: "8px",
         md: "6px",

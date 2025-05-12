@@ -25,6 +25,7 @@ import {  useInviteAdmin } from "@/services/admin/index";
 import { AdminsData, RoleData } from "@/types";
 import { toast } from "sonner";
 
+
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   role: z.string({
@@ -36,12 +37,19 @@ type FormSchemaType = z.infer<typeof formSchema>;
 interface IProps {
   setClose: () => void;
   roles?: RoleData[];
+  setUrl:(data:string)=>void;
 }
 
-const CreateAdmin: React.FC<IProps> = ({ setClose, roles = [] }) => {
-  const { inviteAdminPayload, inviteAdminIsLoading } = useInviteAdmin(() => {
+const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
+
+ 
+  const { inviteAdminPayload, inviteAdminIsLoading} = useInviteAdmin((data: any) => {
     toast.success("Admin invitation sent successfully");
+    console.log(data, "check reg data");
+    setUrl(data.data.inviteUrl)
+     // Use the response data passed to onSuccess
     setClose();
+
   });
 
 
@@ -150,10 +158,10 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, roles = [] }) => {
             </Button>
           </div>
         </form>
+    
       </Form>
     </div>
   );
 };
 
 export default CreateAdmin;
-
