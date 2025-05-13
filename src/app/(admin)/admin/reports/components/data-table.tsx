@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { DeleteIcon, ViewIcon } from "../../../../../../public/icons";
 import { TableComponent } from "@/components/custom-table";
+import { ReportTableComponent } from "@/components/custom-table/reportIndex";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { ReportsData } from "@/types";
@@ -136,7 +137,7 @@ const DataTable: React.FC = () => {
           />
           <SelectFilter setFilter={setRole} list={roleList} placeholder="AOV" />
         </div>
-        <TableComponent<ReportsData>
+        <ReportTableComponent<ReportsData>
           tableData={tableData}
           currentPage={currentPage}
           onPageChange={onPageChange}

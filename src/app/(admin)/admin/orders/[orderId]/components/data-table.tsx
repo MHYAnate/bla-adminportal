@@ -15,6 +15,7 @@ interface iProps {
   loading: boolean;
 }
 import { TableComponent } from "@/components/custom-table";
+import { ProductTableComponent } from "@/components/custom-table/productIndex";
 import { formatMoney } from "@/lib/utils";
 
 const DataTable: React.FC<iProps> = ({
@@ -104,7 +105,7 @@ const DataTable: React.FC<iProps> = ({
   return (
     <Card className="bg-white">
       <CardContent className="p-6">
-        <TableComponent<ProductData>
+        <ProductTableComponent<ProductData>
           tableData={data || []}
           currentPage={currentPage}
           onPageChange={onPageChange}
