@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { CustomersData } from "@/types";
 import Image from "next/image";
-import { TableComponent } from "@/components/custom-table";
+import { CustomerTableComponent } from "@/components/custom-table/index2";
 import { DeleteIcon, ViewIcon } from "../../../../../../public/icons";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
@@ -110,7 +110,7 @@ const DataTable: React.FC<iProps> = ({
 
   return (
     <div>
-      <TableComponent<CustomersData>
+      < CustomerTableComponent<CustomersData>
         tableData={data}
         currentPage={currentPage}
         onPageChange={onPageChange}
