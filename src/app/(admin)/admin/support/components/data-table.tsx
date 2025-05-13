@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { FeedbackData } from "@/types";
 import Image from "next/image";
 import { useState } from "react";
-import { TableComponent } from "@/components/custom-table";
 import { FeedBackTableComponent } from "@/components/custom-table/feedBackIndex";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { DeleteIcon, ViewIcon } from "../../../../../../public/icons";
