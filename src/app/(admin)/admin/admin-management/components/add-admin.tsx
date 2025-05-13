@@ -24,6 +24,8 @@ import { Button } from "@/components/ui/button";
 import {  useInviteAdmin } from "@/services/admin/index";
 import { AdminsData, RoleData } from "@/types";
 import { toast } from "sonner";
+import { useGetAdmins } from "@/services/admin";
+import { useSearchParams } from 'next/navigation';
 
 
 const formSchema = z.object({
@@ -42,6 +44,14 @@ interface IProps {
 
 const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email');
+
+  const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
+  const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
+
+  //super_admin 
+  // admin.roles.role.name !==super_admin
  
   const { inviteAdminPayload, inviteAdminIsLoading} = useInviteAdmin((data: any) => {
     toast.success("Admin invitation sent successfully");
@@ -148,7 +158,7 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
               Cancel
             </Button>
             <Button
-              disabled={inviteAdminIsLoading}
+              disabled={inviteAdminIsLoading || admin?.roles?.role?.name !== "super_admin"}
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"

@@ -129,3 +129,17 @@ export function formatMoney(amount: number, currency: string = "NGN"): string {
     maximumFractionDigits: 2,
   }).format(amount);
 }
+
+
+export function getAdminIdFromToken(): string | null {
+  const token = Storage.get("token");
+  if (!token) return null;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.adminId || payload.sub; // Adjust based on your JWT structure
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    return null;
+  }
+}

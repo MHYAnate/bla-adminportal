@@ -17,20 +17,30 @@ import { formatNumber } from "@/lib/utils";
 import { TopCustomersChart } from "./top-customers-chart";
 import { TopProductsChart } from "./top-products";
 import { TopOrdersChart } from "./total-orders";
+import { useGetAdmins } from "@/services/admin";
+import { useSearchParams } from 'next/navigation';
 
 const Dashboard: React.FC = () => {
+  
   const {
     isDashboardInfoLoading,
     isFetchingDashboardInfo,
     dashboardData: data,
   } = useGetDashboardInfo({ enabled: true });
+  const searchParams = useSearchParams();
+  const email = searchParams.get('email');
+
+  const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
+  const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
 
   return (
     <section>
       <Header
-        title="Good morning, Evelyn."
-        subtext="Welcome to Buylocal Admin. Manage Inventory, Store and Assign Roles. "
-      />
+      title={`Good morning, ${admin?.adminProfile?.
+        fullName
+        || 'Admin'}.`}
+      subtext="Welcome to Buylocal Admin. Manage Inventory, Store and Assign Roles."
+    />
       <Card className="mt-[26px] mb-6">
         <CardContent className="p-4 gap-4 flex">
           <div className="grid grid-cols-2 flex-1 h-full">

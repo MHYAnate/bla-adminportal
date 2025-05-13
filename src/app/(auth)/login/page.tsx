@@ -18,6 +18,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useRouter } from "next/navigation"; 
 const formSchema = z.object({
   email: z.string().email("Invalid email provided"),
   password: z.string(),
@@ -27,9 +28,15 @@ const formSchema = z.object({
 type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
+  const router = useRouter();  // Initialize router
+  
+  // Modify success callback to use router
   const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
     Storage.set("token", res?.data?.token);
-    window.location.href = "/admin";
+    // Get email from form values
+    const email = form.getValues().email;
+    // Push to admin route with email query param
+    router.push(`/admin?email=${encodeURIComponent(email)}`);
   });
 
   const form = useForm<FormSchemaType>({

@@ -6,6 +6,8 @@ import { ChevronLeft } from "lucide-react";
 import { useUpdateAdminRoles } from "@/services/admin/index";
 import { toast } from "sonner";
 import { AdminsData, RoleData } from "@/types";
+import { useGetAdmins } from "@/services/admin";
+import { useSearchParams } from 'next/navigation';
 
 interface GeneralInfoProps {
   adminData: any;
@@ -17,6 +19,15 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
   const adminRoles = adminData?.roles || [];
 
   console.log("props role", roles, "inrole", adminRoles, "adminData", adminData);
+
+    const searchParams = useSearchParams();
+    const email = searchParams.get('email');
+  
+    const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
+    const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
+  
+    //super_admin 
+    // admin.roles.role.name !==super_admin
   
   const colors = [
     { bg: "#E7F7EF", color: "#0CAF60" },
@@ -91,6 +102,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
           <h5 className="text-[#111827] font-semibold">Role</h5>
           <div className="flex gap-2">
             <Button 
+            disabled={admin.roles.role.name !=="super_admin"}
               variant="outline" 
               size="sm" 
               onClick={() => setIsEditDialogOpen(true)}
