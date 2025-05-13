@@ -102,7 +102,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
           <h5 className="text-[#111827] font-semibold">Role</h5>
           <div className="flex gap-2">
             <Button 
-            disabled={admin.roles.role.name !=="super_admin"}
+            disabled={admin?.roles?.role?.name !=="super_admin"}
               variant="outline" 
               size="sm" 
               onClick={() => setIsEditDialogOpen(true)}
