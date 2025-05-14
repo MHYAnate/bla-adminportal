@@ -19,19 +19,34 @@ import { TopProductsChart } from "./top-products";
 import { TopOrdersChart } from "./total-orders";
 import { useGetAdmins } from "@/services/admin";
 import { useSearchParams } from 'next/navigation';
+import { Storage } from "@/lib/utils";
+import { useEffect,useState } from "react";
 
 const Dashboard: React.FC = () => {
+
+  const[email, setEmail] = useState("");
   
   const {
     isDashboardInfoLoading,
     isFetchingDashboardInfo,
     dashboardData: data,
   } = useGetDashboardInfo({ enabled: true });
-  const searchParams = useSearchParams();
-  const email = searchParams.get('email');
+  
+  const userEmail = Storage.get("userEmail");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const email = localStorage.getItem("userEmail") || 
+                   sessionStorage.getItem("userEmail");
+      // Use the email
+      setEmail(email? email : "")
+    }
+  }, []);
 
   const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
   const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
+
+  console.log(email, "email", adminsData, "data", admin, "filter" )
 
   return (
     <section>

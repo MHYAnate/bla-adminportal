@@ -108,20 +108,20 @@ const adminPhone = admin?.adminProfile
                   
                 </p>
                 <p className="text-[#687588] text-sm mb-6 text-center">
-                  @{adminName.toLowerCase().replace(/\s+/g, "_")}
+                  @{adminName?.toLowerCase().replace(/\s+/g, "_")}
                 </p>
                 <div className="flex justify-center">
                   <Badge
                     variant={
-                      status.toLowerCase() === "active"
+                      status?.toLowerCase() === "active"
                         ? "success"
-                        : status.toLowerCase() === "pending"
+                        : status?.toLowerCase() === "pending"
                         ? "tertiary"
                         : "warning"
                     }
                     className="py-1 px-[26px] font-medium"
                   >
-                    {status.toUpperCase()}
+                    {status?.toUpperCase()}
                   </Badge>
                 </div>
               </div>

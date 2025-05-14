@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { AdminsData, RoleData } from "@/types";
 import Image from "next/image";
@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@radix-ui/react-dialog";
 
-import { useDeleteAdmin, useGetAdminRoles, useUpdateAdminRoles } from "@/services/admin";
+import { useDeleteAdmin, useGetAdminRoles, useGetAdmins, useUpdateAdminRoles } from "@/services/admin";
 import { AdminData } from "@/types";
 import { Button } from "@/components/ui/button"; // assuming you're using a custom/styled button
 import Permit from "../[adminId]/components/adminPermitNumber";
@@ -44,6 +44,21 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
   
 
   
+     const[email, setEmail] = useState("");
+  
+     useEffect(() => {
+      if (typeof window !== "undefined") {
+        const email = localStorage.getItem("userEmail") || 
+                     sessionStorage.getItem("userEmail");
+        // Use the email
+        setEmail(email? email : "")
+      }
+    }, []);
+  
+    const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
+    const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
+  
+    console.log(email, "email", adminsData, "data", admin, "filter" )
  
 
   console.log(adminToDelete, "admintodelet", adminData, "filtersearch")
@@ -286,7 +301,7 @@ const DataTable: React.FC<DataTableProps> = ({ adminData, loading, refetch }) =>
             <Button 
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
-              disabled={deleteAdminIsLoading}
+              disabled={deleteAdminIsLoading ||admin?.roles[0]?.role?.name !=="super_admin"}
             >
               Cancel
             </Button>
