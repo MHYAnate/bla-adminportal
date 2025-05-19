@@ -51,7 +51,12 @@ export const adminSidebarList = [
     id: 5,
     sidebar: "Reports",
     icon: <ReportIcon />,
-    href: ROUTES.ADMIN.SIDEBAR.REPORTS,
+    child: [
+      {
+        sidebar: "Report Metrics",
+        href: ROUTES.ADMIN.SIDEBAR.REPORTS,
+      },
+    ],
   },
   {
     id: 11,

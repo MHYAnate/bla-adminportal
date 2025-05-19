@@ -31,6 +31,8 @@ const Dashboard: React.FC = () => {
     isFetchingDashboardInfo,
     dashboardData: data,
   } = useGetDashboardInfo({ enabled: true });
+
+  console.log( data, "compareData")
   
   const userEmail = Storage.get("userEmail");
 

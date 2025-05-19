@@ -107,16 +107,75 @@ export interface CustomersData extends DataItem {
   profile?: Record<string | number, string | number> | any;
 }
 
+// export interface ReportsData extends DataItem {
+//   name: string;
+//   customertype: string;
+//   totalsales: number | string;
+//   aov: number | string;
+//   ordercount: number;
+//   email: string;
+//   id?: string | number;
+// }
+
+// export interface ReportsData extends DataItem {
+//   name: string;
+//   status: string; // Changed from 'customertype'
+//   totalsales: number | string;
+//   aov: number | string;
+//   ordercount: number;
+//   email: string;
+//   id?: string | number;
+// }
+
 export interface ReportsData extends DataItem {
+  id: string | number;
   name: string;
-  customertype: string;
-  totalsales: number | string;
-  aov: number | string;
+  status: string;
   ordercount: number;
+  totalsales: string;
+  aov: string;
   email: string;
-  id?: string | number;
+  lastOrderDate?: string;
 }
 
+export interface RegisteredReportsData extends DataItem {
+  id: string | number;
+  name: string;
+  email: string;
+  type: string;
+  status: string;
+  kycStatus: string;
+  joinDate: string;
+  role: string;
+}
+
+// types/reports.ts
+export interface FinancialReport {
+  customerId: string;
+  name: string;
+  email: string;
+  type: string;
+  totalSales: number;
+  orderCount: number;
+  aov: number;
+}
+
+export interface DashboardMetrics {
+  revenue: Metric;
+  sales: Metric;
+  profit: Metric;
+}
+
+interface Metric {
+  value: number;
+  dailyChange: number;
+  trend: 'up' | 'down';
+}
+
+export interface ChartData {
+  month: string;
+  value: number;
+}
 export interface OrdersData extends DataItem {
   name: string;
   customertype: string;

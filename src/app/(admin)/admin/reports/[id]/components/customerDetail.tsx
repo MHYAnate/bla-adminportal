@@ -1,44 +1,64 @@
 "use client";
-
-import { useEffect, useState } from "react";
 import Header from "@/app/(admin)/components/header";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Image from "next/image";
 import {
+  CalendarIcon,
   CallIcon,
   LocationIcon,
   MailIcon,
+  PersonIcon,
 } from "../../../../../../../public/icons";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import GeneralInfo from "../components/general-info";
+import GeneralInfo from "../components/customerGenaralInfo";
 import { useSearchParams } from "next/navigation";
 import { useHandlePush } from "@/hooks/use-handle-push";
 import { ROUTES } from "@/constant/routes";
-import PermissionsTab from "./permissions-tab";
+import PermissionsTab from "./permitTab";
 import { useGetAdmins } from "@/services/admin";
-interface AdminUserDetailProps {
+import { useGetDashboardInfo } from "@/services/dashboard";
+import { useGetAdminRoles } from "@/services/admin/index";
+
+
+
+interface UserDetailProps {
   adminId: string;
   roles: any;
 }
 
-const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => {
+const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
   const params = useSearchParams();
   const tabParam = params.get("tab");
   const { handlePush } = useHandlePush();
+  
+  console.log("customerId", adminId)
 
-   const{adminsData, isAdminsLoading,refetchAdmins }= useGetAdmins({ enabled: true });
-   console.log(adminId, "id", adminsData);
 
+     console.log("compare to saferroledata", roles)
 
-   console.log("compare to saferroledata", roles)
+     const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
+    const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
+    const {
+      isDashboardInfoLoading,
+      isFetchingDashboardInfo,
+      dashboardData: data,
+      refetchDashboardData,
+    } = useGetDashboardInfo({ enabled: true });
 
-   const admin = adminsData.find(
-		(admin: {id:string}) => admin.id == adminId
-	);
+  //  const User = data .find(
+  //   (admin:any) => admin.recentActivity.
+  //   newCustomers.id == adminId
+  // );
 
-  console.log("adminData", admin);
+  console.log("fixCheckerCustomerData", data?.recentActivity?.newCustomers)
+
+  const User = data?.recentActivity?.newCustomers?.find(
+    (customer: any) => customer.id == adminId
+  );
+
+  console.log("CustomerData", User,"data" ,data);
 
   const tabs = [
     {
@@ -52,15 +72,15 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
   ];
 
   // If still loading, show a simple loading state
-  if (isAdminsLoading) {
+  if (isDashboardInfoLoading) {
     return (
       <div>
-        <Header title="Administrator Information" showBack={true} />
+        <Header title="Customer Information" showBack={true} />
         <div className="mt-5">
           <Card>
             <CardContent className="p-6">
               <div className="flex justify-center items-center h-60">
-                <p className="text-muted-foreground">Loading admin information...</p>
+                <p className="text-muted-foreground">Loading information...</p>
               </div>
             </CardContent>
           </Card>
@@ -70,15 +90,13 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
   }
 
   // If we have data, determine the status
-  const status =admin?.status && admin?.status;
-  const adminRoles = admin?.roles || [];
-  const adminName = admin?.adminProfile
-.username
-|| "Administrator";
-const adminPhone = admin?.adminProfile
-.phone
-|| "number";
-  const adminEmail = admin?.email || "admin@example.com";
+  const status =User?.status;
+  const UserRole = User?.role;
+  const UserName = User?.name;
+  const UserType = User?.type;
+  const UserKyc = User?.kycStatus;
+  const UserJD = User?.joinDate;
+  const UserEmail = User?.email || "admin@example.com";
 
   return (
     <div>
@@ -97,13 +115,13 @@ const adminPhone = admin?.adminProfile
                     className="w-[100px] h-[100px] rounded-full object-cover"
                   />
                 </div>
-                <h6 className="text-center text-[#111827] text-xl mb-2.5">{adminName}</h6>
+                <h6 className="text-center text-[#111827] text-xl mb-2.5">{UserName}</h6>
                 <p className="text-[#687588] text-sm mb-2.5 text-center">
-                  {admin?.roles[0]?.role?.name}
+                  {UserRole}
                   
                 </p>
                 <p className="text-[#687588] text-sm mb-6 text-center">
-                  @{adminName?.toLowerCase().replace(/\s+/g, "_")}
+                  @{UserName?.toLowerCase().replace(/\s+/g, "_")}
                 </p>
                 <div className="flex justify-center">
                   <Badge
@@ -124,19 +142,25 @@ const adminPhone = admin?.adminProfile
                 <div className="flex gap-3 items-center mb-4">
                   <MailIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                    {adminEmail}
+                    {UserEmail}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
                   <CallIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                    {adminPhone || "Not provided"}
+                    {UserType || "Not provided"}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
-                  <LocationIcon />
+                 <CalendarIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                    {admin?.location || "Not specified"}
+                    {UserJD || "Not specified"}
+                  </p>
+                </div>
+                <div className="flex gap-3 items-center mb-4">
+                  <PersonIcon />
+                  <p className="font-semibold text-sm text-[#111827]">
+                    {UserKyc || "Not specified"}
                   </p>
                 </div>
               </div>
@@ -154,7 +178,7 @@ const adminPhone = admin?.adminProfile
                     className={`w-2/12 flex-col pb-0`}
                     onClick={() =>
                       handlePush(
-                        `${ROUTES.ADMIN.SIDEBAR.ADMINS}/${adminId}?tab=${tab.value}`
+                        `${ROUTES.ADMIN.SIDEBAR.REPORTS}/${adminId}?tab=${tab.value}`
                       )
                     }
                   >
@@ -172,10 +196,10 @@ const adminPhone = admin?.adminProfile
               </TabsList>
 
               <TabsContent value="general">
-                <GeneralInfo adminData={admin} roles={roles.data} />
+                <GeneralInfo Data={User} roles={roles.data} />
               </TabsContent>
               <TabsContent value="permissions">
-                <PermissionsTab adminData={admin} />
+                <PermissionsTab Data={User} />
               </TabsContent>
             </Tabs>
           </CardContent>
@@ -185,4 +209,4 @@ const adminPhone = admin?.adminProfile
   );
 };
 
-export default AdminUserDetail;
+export default  UserDetail;

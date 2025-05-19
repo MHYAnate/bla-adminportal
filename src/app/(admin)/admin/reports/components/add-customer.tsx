@@ -42,7 +42,7 @@ interface IProps {
   setUrl:(data:string)=>void;
 }
 
-const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
+const AddCustomer: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
    const[email, setEmail] = useState("");
 
@@ -58,13 +58,10 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
   const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
   const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
 
-  console.log(email, "email", adminsData, "data", admin, "filter" )
-
-  //super_admin 
-  // admin.roles.role.name !==super_admin
+ 
  
   const { inviteAdminPayload, inviteAdminIsLoading} = useInviteAdmin((data: any) => {
-    toast.success("Admin invitation sent successfully");
+    toast.success("Customer invitation sent successfully");
     console.log(data, "check reg data");
     setUrl(data.data.inviteUrl)
      // Use the response data passed to onSuccess
@@ -139,7 +136,7 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                   >
                     <FormControl>
                       <SelectTrigger className="h-14">
-                        <SelectValue placeholder="Select admin role" />
+                        <SelectValue placeholder="Select role" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -184,4 +181,4 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
   );
 };
 
-export default CreateAdmin;
+export default AddCustomer;
