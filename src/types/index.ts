@@ -26,12 +26,16 @@ export interface ITableProps<T extends DataItem> {
   isLoading?: boolean;
   showPagination?: boolean;
 }
+// export interface IPaginationProps {
+//   currentPage: number;
+//   totalPages: number;
+//   onPageChange: (page: number) => void;
+// }
 export interface IPaginationProps {
   currentPage: number;
   totalPages: number;
-  onPageChange: (page: number) => void;
+  onPageChange: (page: number) => void; // Remove optional modifier
 }
-
 export interface AdminsData extends DataItem   {
   id: string | number;
   name: string;
@@ -126,6 +130,51 @@ export interface CustomersData extends DataItem {
 //   email: string;
 //   id?: string | number;
 // }
+
+
+// File: @/types/index.ts
+
+export interface EnhancedTableProps<T extends DataItem> extends ITableProps<T> {
+  // ... other props
+  onPageChange: (page: number) => void; // Make required
+  onPageSizeChange: (size: number) => void;
+}
+
+export type DashboardData = {
+  metrics: {
+    customers: MetricSummary;
+    orders: MetricSummary;
+    profits: MetricSummary;
+    revenue: MetricSummary;
+  };
+  charts: {
+    orderSummary: OrderSummaryItem[];
+    salesPerformance: SalesPerformanceItem[];
+  };
+  lastUpdated: string; // ISO date string
+};
+
+
+
+type MetricSummary = {
+  total: number;
+  currentMonth: number;
+  previousMonth: number;
+  changePercentage: number;
+  trend: "up" | "down";
+};
+
+type OrderSummaryItem = {
+  status: "SCHEDULED" | "PROCESSING" | "PENDING"; // Extend if needed
+  sales: number;
+};
+
+type SalesPerformanceItem = {
+  month: string; // Format: YYYY-MM
+  total_sales: number;
+  orders_count: number;
+};
+
 
 export interface ReportsData extends DataItem {
   id: string | number;
