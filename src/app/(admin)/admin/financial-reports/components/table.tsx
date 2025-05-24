@@ -265,12 +265,12 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 
 			{/* Mobile view */}
 			<div className="md:hidden p-4">
-				{currentPosts.length === 0 ? (
+				{currentPosts?.length === 0 ? (
 					<div className="text-center py-8 text-gray-500">
 						No matching records found.
 					</div>
 				) : (
-					currentPosts.map((customer, index) => (
+					currentPosts?.map((customer, index) => (
 						<CustomerCard key={index} customer={customer} />
 					))
 				)}
@@ -303,7 +303,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 							</tr>
 						</thead>
 						<tbody className="divide-y divide-gray-100 bg-white">
-							{currentPosts.length === 0 ? (
+							{currentPosts?.length === 0 ? (
 								<tr>
 									<td
 										colSpan={6}
@@ -313,7 +313,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 									</td>
 								</tr>
 							) : (
-								currentPosts.map((customer, index) => (
+								currentPosts?.map((customer, index) => (
 									<tr
 										key={index}
 										className="hover:bg-gray-50 transition-colors"
@@ -330,14 +330,14 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 													customer.type
 												)}`}
 											>
-												{customer.type}
+												{customer?.type}
 											</span>
 										</td>
 										<td className="px-4 py-3 text-sm font-medium text-gray-900">
-											₦{customer.totalSales.toLocaleString()}
+											₦{customer?.totalSales.toLocaleString()}
 										</td>
 										<td className="px-4 py-3 text-sm text-gray-600">
-											{customer.orderCount ?? "N/A"}
+											{customer?.orderCount ?? "N/A"}
 										</td>
 										<td className="px-4 py-3 text-sm">
 											<div className="flex space-x-3">
@@ -370,14 +370,14 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 			<div className="px-4 py-3 border-t border-gray-100">
 				<div className="flex flex-col sm:flex-row justify-between items-center gap-4">
 					<div className="text-sm text-gray-500 w-full sm:w-auto text-center sm:text-left">
-						Showing {currentPosts.length > 0 ? indexOfFirstPost + 1 : 0} to{" "}
-						{Math.min(indexOfLastPost, filteredData.length)} of{" "}
-						{filteredData.length} entries
+						Showing {currentPosts?.length > 0 ? indexOfFirstPost + 1 : 0} to{" "}
+						{Math.min(indexOfLastPost, filteredData?.length)} of{" "}
+						{filteredData?.length} entries
 					</div>
 
 					<Pagination
 						postsPerPage={postsPerPage}
-						totalPosts={filteredData.length}
+						totalPosts={filteredData?.length}
 						paginate={paginate}
 						currentPage={currentPage}
 					/>
@@ -435,31 +435,31 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 							<div>
 								<p className="text-sm text-gray-500">Name</p>
 								<p className="text-base font-medium text-gray-900">
-									{selectedCustomer.name ?? "N/A"}
+									{selectedCustomer?.name ?? "N/A"}
 								</p>
 							</div>
 							<div>
 								<p className="text-sm text-gray-500">Email</p>
 								<p className="text-base font-medium text-gray-900">
-									{selectedCustomer.email}
+									{selectedCustomer?.email}
 								</p>
 							</div>
 							<div>
 								<p className="text-sm text-gray-500">Type</p>
 								<p className="text-base font-medium text-gray-900 capitalize">
-									{selectedCustomer.type}
+									{selectedCustomer?.type}
 								</p>
 							</div>
 							<div>
 								<p className="text-sm text-gray-500">Total Sales</p>
 								<p className="text-base font-medium text-gray-900">
-									₦{selectedCustomer.totalSales.toLocaleString()}
+									₦{selectedCustomer?.totalSales.toLocaleString()}
 								</p>
 							</div>
 							<div>
 								<p className="text-sm text-gray-500">Order Count</p>
 								<p className="text-base font-medium text-gray-900">
-									{selectedCustomer.orderCount ?? "N/A"}
+									{selectedCustomer?.orderCount ?? "N/A"}
 								</p>
 							</div>
 						</div>
