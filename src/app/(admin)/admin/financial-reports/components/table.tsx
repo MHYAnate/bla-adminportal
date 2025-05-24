@@ -124,7 +124,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 
 	const handleDelete = () => {
 		if (customerToDelete) {
-			alert(`Deleting customer: ${customerToDelete.name ?? "N/A"}`);
+			alert(`Deleting customer: 	${customerToDelete.name ?? "N/A"}`);
 			setIsDeleteModalOpen(false);
 			setCustomerToDelete(null);
 		}
@@ -152,7 +152,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 					<p className="text-sm text-gray-600">{customer.email}</p>
 				</div>
 				<span
-					className={`px-2.5 py-1 text-xs font-medium rounded-full border ${getTypeBadgeClass(
+					className={`px-2.5 py-1 text-xs font-medium rounded-full border 	${getTypeBadgeClass(
 						customer.type
 					)}`}
 				>
@@ -164,7 +164,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 				<div>
 					<p className="text-xs text-gray-500">Total Sales</p>
 					<p className="text-sm font-medium">
-						${customer.totalSales.toLocaleString()}
+							₦{customer.totalSales.toLocaleString()}
 					</p>
 				</div>
 				<div>
@@ -209,7 +209,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 
 			{/* Filters - responsive */}
 			<div
-				className={`border-b border-gray-100 ${
+				className={`border-b border-gray-100 	${
 					showFilters ? "block" : "hidden md:block"
 				}`}
 			>
@@ -326,7 +326,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 										</td>
 										<td className="px-4 py-3">
 											<span
-												className={`px-2.5 py-1 text-xs font-medium rounded-full border ${getTypeBadgeClass(
+												className={`px-2.5 py-1 text-xs font-medium rounded-full border 	${getTypeBadgeClass(
 													customer.type
 												)}`}
 											>

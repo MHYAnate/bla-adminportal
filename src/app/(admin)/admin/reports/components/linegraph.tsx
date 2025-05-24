@@ -168,7 +168,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
               Total Sales
             </span>
             <span className="text-lg font-bold leading-none sm:text-3xl">
-              ${totalSales?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+            ₦{totalSales?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </span>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
         })
       }
       formatter={(value) => [
-        `$${Number(value)?.toLocaleString(undefined, { 
+        `	₦${Number(value)?.toLocaleString(undefined, { 
           maximumFractionDigits: 2,
           minimumFractionDigits: 2
         })}`,
