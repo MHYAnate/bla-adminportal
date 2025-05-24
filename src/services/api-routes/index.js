@@ -67,11 +67,11 @@ export const routes = {
   delete: (id) => `admin/${id}`,
 
    // Financial Reports
-   dashboardReports: () => "admin/reports/dashboard",
-   financialReports: (params = {}) => {
-     const query = new URLSearchParams(params);
-     return `admin/reports?${query}`;
-   },
+  //  dashboardReports: () => "admin/reports/dashboard",
+  //  financialReports: (params = {}) => {
+  //    const query = new URLSearchParams(params);
+  //    return `admin/reports?${query}`;
+  //  },
    financialReport: (customerId) => `admin/reports/${customerId}`,
    deleteFinancialData: (customerId) => `admin/reports/${customerId}`,
  
