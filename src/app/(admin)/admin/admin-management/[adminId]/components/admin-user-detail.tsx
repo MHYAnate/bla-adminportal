@@ -72,11 +72,9 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({ adminId, roles }) => 
   // If we have data, determine the status
   const status =admin?.status && admin?.status;
   const adminRoles = admin?.roles || [];
-  const adminName = admin?.adminProfile
-.username
+  const adminName = admin?.adminProfile?.username
 || "Administrator";
-const adminPhone = admin?.adminProfile
-.phone
+const adminPhone = admin?.adminProfile?.phone
 || "number";
   const adminEmail = admin?.email || "admin@example.com";
 

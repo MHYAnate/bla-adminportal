@@ -96,7 +96,7 @@ const FinancialReport: React.FC = () => {
 								title="Monthly Orders"
 								value={dashboardData?.metrics?.orders?.currentMonth}
 								changePercentage={
-									dashboardData?.metrics?.orders.changePercentage
+									dashboardData?.metrics?.orders?.changePercentage
 								}
 								trend={dashboardData?.metrics?.orders?.trend}
 							/>

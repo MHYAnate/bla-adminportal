@@ -143,9 +143,9 @@ const chartConfig = {
 
 export default function MultiLineGraphComponent({ salesData }: MultiLineGraphProps) {
   // Transform data to match expected format
-  const chartData = salesData.map((item) => ({
-    date: item.month,
-    value: item.total_sales,
+  const chartData = salesData?.map((item) => ({
+    date: item?.month,
+    value: item?.total_sales,
   }));
 
   // Parse month strings into Date objects for proper formatting
@@ -154,7 +154,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
     return new Date(parseInt(year), parseInt(month) - 1);
   };
 
-  const totalSales = salesData.reduce((acc, curr) => acc + curr.total_sales, 0);
+  const totalSales = salesData?.reduce((acc, curr) => acc + curr.total_sales, 0);
 
   return (
     <Card className="flex-1">
@@ -168,7 +168,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
               Total Sales
             </span>
             <span className="text-lg font-bold leading-none sm:text-3xl">
-              ${totalSales.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+              ${totalSales?.toLocaleString(undefined, { maximumFractionDigits: 2 })}
             </span>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
               tickMargin={8}
               minTickGap={32}
               tickFormatter={(value) => 
-                parseMonth(value).toLocaleDateString("en-US", {
+                parseMonth(value)?.toLocaleDateString("en-US", {
                   month: "short",
                   year: "2-digit"
                 })
@@ -203,13 +203,13 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
       className="w-[150px]"
       nameKey="sales"
       labelFormatter={(value) =>
-        parseMonth(value).toLocaleDateString("en-US", {
+        parseMonth(value)?.toLocaleDateString("en-US", {
           month: "long",
           year: "numeric"
         })
       }
       formatter={(value) => [
-        `$${Number(value).toLocaleString(undefined, { 
+        `$${Number(value)?.toLocaleString(undefined, { 
           maximumFractionDigits: 2,
           minimumFractionDigits: 2
         })}`,
