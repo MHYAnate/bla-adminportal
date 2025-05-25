@@ -18,6 +18,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { useRouter } from "next/navigation"; 
+import { useEffect } from "react"; 
+
 const formSchema = z.object({
   email: z.string().email("Invalid email provided"),
   password: z.string(),
@@ -26,10 +29,51 @@ const formSchema = z.object({
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
+// export default function LoginPage() {
+//   const router = useRouter();  // Initialize router
+  
+//   // Modify success callback to use router
+//   const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
+//     Storage.set("token", res?.data?.token);
+//     // Get email from form values
+//     const email = form.getValues().email;
+//     // Push to admin route with email query param
+//     router.push(`/admin?email=${encodeURIComponent(email)}`);
+//   });
+
+//   const form = useForm<FormSchemaType>({
+//     resolver: zodResolver(formSchema),
+//     defaultValues: {
+//       email: "",
+//       password: "",
+//       remember: false,
+//     },
+//   });
+
+//   async function onSubmit(values: FormSchemaType) {
+//     loginPayload(values);
+//   }
+
 export default function LoginPage() {
+  const router = useRouter();
+
+  // Modify success callback to use storage
   const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
-    Storage.set("token", res?.data?.token);
-    window.location.href = "/admin";
+    // Store token in localStorage/sessionStorage
+    localStorage.setItem("token", res?.data?.token);
+    // or sessionStorage.setItem("token", res?.data?.token);
+    
+    const email = form.getValues().email;
+    const remember = form.getValues().remember;
+    
+    // Store email based on remember me preference
+    if (remember) {
+      localStorage.setItem("userEmail", email); // Persistent across sessions
+    } else {
+      sessionStorage.setItem("userEmail", email); // Only for current session
+    }
+    
+    router.push(`/admin`);
   });
 
   const form = useForm<FormSchemaType>({
@@ -41,9 +85,20 @@ export default function LoginPage() {
     },
   });
 
+  // Pre-fill email if remembered
+  useEffect(() => {
+    const rememberedEmail = localStorage.getItem("userEmail") || 
+                          sessionStorage.getItem("userEmail");
+    if (rememberedEmail) {
+      form.setValue("email", rememberedEmail);
+      form.setValue("remember", localStorage.getItem("userEmail") !== null);
+    }
+  }, [form]);
+
   async function onSubmit(values: FormSchemaType) {
     loginPayload(values);
   }
+
 
   return (
     <section className="flex gap-[60px]">

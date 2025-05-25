@@ -13,16 +13,25 @@ import { ChevronDown } from "lucide-react";
 import { ChatIcon, EmailIcon } from "../../../../public/icons";
 import { Input } from "@/components/ui/input";
 import { ChangeEvent, useState } from "react";
+import { useSearchParams, usePathname} from "next/navigation";
+
 
 const Navbar: React.FC = () => {
   const [query, setQuery] = useState<string>("");
+  const searchParams = useSearchParams();
+  const path = usePathname();
+ 
+
+
+  const signature = searchParams.get('signature') ?? '';
   return (
+    (path === "/admin/register"?<></>:
     <section
       className={cn(
         "flex items-center justify-between border-b border-[#E9EAEC] px-8 py-6 sticky top-0 z-10 bg-white"
       )}
     >
-      <div>
+      <div className={``}>
         <Input
           placeholder="Search anything…"
           onChange={async (event: ChangeEvent<HTMLInputElement>) =>
@@ -49,7 +58,7 @@ const Navbar: React.FC = () => {
               size="xl"
             >
               <Image
-                src="/images/user-avatar.png"
+                src="/images/user-avatar.jpg"
                 height={32}
                 width={32}
                 alt="User avatar"
@@ -63,7 +72,7 @@ const Navbar: React.FC = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </section>
+    </section>)
   );
 };
 

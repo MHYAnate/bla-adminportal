@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge";
 import { VendorsData } from "@/types";
 import { useState } from "react";
-import { TableComponent } from "@/components/custom-table";
+import { VendorTableComponent } from "@/components/custom-table/vendorIndex";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import {
@@ -136,7 +136,7 @@ const DataTable: React.FC = () => {
           list={roleList}
         />
       </div>
-      <TableComponent<VendorsData>
+      <VendorTableComponent<VendorsData>
         tableData={tableData}
         currentPage={currentPage}
         onPageChange={onPageChange}

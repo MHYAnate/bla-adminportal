@@ -2,7 +2,7 @@
 
 import { StockData } from "@/types";
 import { useState } from "react";
-import { TableComponent } from "@/components/custom-table";
+import { StockTableComponent } from "@/components/custom-table/stockIndex";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import {
@@ -159,7 +159,7 @@ const DataTable: React.FC = () => {
           list={roleList}
         />
       </div>
-      <TableComponent<StockData>
+      <StockTableComponent<StockData>
         tableData={tableData}
         currentPage={currentPage}
         onPageChange={onPageChange}

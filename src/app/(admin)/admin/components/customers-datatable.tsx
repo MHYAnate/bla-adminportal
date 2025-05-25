@@ -5,7 +5,7 @@ import { CustomersData } from "@/types";
 import Image from "next/image";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { TableComponent } from "@/components/custom-table";
+import { CustomerTableComponent } from "@/components/custom-table/index2";
 import Link from "next/link";
 import { ViewIcon } from "../../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
@@ -120,7 +120,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
             View All
           </Link>
         </div>
-        <TableComponent<CustomersData>
+        <CustomerTableComponent<CustomersData>
           tableData={data}
           currentPage={currentPage}
           onPageChange={onPageChange}

@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { ChevronUp } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname} from "next/navigation";
 import {
   DashboardIcon,
   NotificationIcon,
@@ -32,12 +32,15 @@ import { ROUTES } from "@/constant/routes";
 
 const AdminSidebar: React.FC = () => {
   const path = usePathname();
+  
+
+
 
   return (
-    <Sidebar className="w-[280px]">
+    (path === "/admin/register"?<></>: <Sidebar className="w-[280px]">
       <SidebarContent className={cn("bg-[#fff] py-6 px-8")}>
         <SidebarGroup>
-          <SidebarGroupLabel className="mb-6">
+         <SidebarGroupLabel className="mb-6">
             <div className="mb-6">
               <Image
                 alt="Company logo"
@@ -200,7 +203,8 @@ const AdminSidebar: React.FC = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-    </Sidebar>
+    </Sidebar>)
+   
   );
 };
 export default AdminSidebar;

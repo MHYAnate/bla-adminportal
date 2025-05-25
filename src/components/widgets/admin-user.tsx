@@ -1,41 +1,40 @@
-import Image from "next/image";
-import { Card, CardContent } from "../ui/card";
+import React from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { AdminIcon, UserGroupIcon } from "../../../public/icons";
 
-interface iProps {
-  count: number;
+interface AdminUsersCardProps {
   rolename: string;
   total: number;
+  count: number;
 }
-const AdminUsersCard: React.FC<iProps> = ({ count, rolename, total }) => {
+
+const AdminUsersCard: React.FC<AdminUsersCardProps> = ({ rolename, total, count }) => {
   return (
-    <Card className="w-full">
-      <CardContent className="py-4 px-6">
-        <p className="font-bold text-base text-[#111827] mb-6">
-          {count} Active
-        </p>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex gap-2 items-center">
-            <div className="flex">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className={index !== 0 ? `-ml-2` : ""}>
-                  <Image
-                    height={32}
-                    width={32}
-                    alt="Admin user avatar"
-                    src="/images/bladmin-login.jpg"
-                    className="rounded-full w-8 h-8"
-                  />
-                </div>
-              ))}
+    <Card className="bg-white mb-6 flex-1">
+      <CardContent className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="bg-[#FFC94D] p-3 rounded-full">
+            <AdminIcon />
+          </div>
+          <div>
+            <h2 className="font-semibold text-base text-[#111827]">{rolename}</h2>
+            <p className="text-[#6B7280] text-xs font-medium">Admin with permission to manage products</p>
+          </div>
+        </div>
+        <div className="flex gap-[14px]">
+          <div className="py-2 px-4 bg-[#F9FAFB] rounded-lg">
+            <div className="flex items-center gap-2">
+              <AdminIcon />
+              <p className="font-medium text-sm text-[#111827]">{count} administrators</p>
             </div>
           </div>
-          <p className="font-dmsans font-normal text-[#676767] text-xs">
-            {total} members
-          </p>
+          <div className="py-2 px-4 bg-[#F9FAFB] rounded-lg">
+            <div className="flex items-center gap-2">
+              <UserGroupIcon />
+              <p className="font-medium text-sm text-[#111827]">{total} permissions</p>
+            </div>
+          </div>
         </div>
-        <p className="font-dmsans font-semibold text-[#030C0A] text-sm">
-          {rolename}
-        </p>
       </CardContent>
     </Card>
   );

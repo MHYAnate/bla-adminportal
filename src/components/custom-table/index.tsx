@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { DataItem, ITableProps } from "@/types";
+import { AdminData, DataItem, ITableProps } from "@/types";
 import { ReactNode } from "react";
 import { Pagination } from "../ui/pagination";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
@@ -19,12 +19,12 @@ import TableSkeleton from "../skeletons/table";
 type CellRenderer<T> = (item: T, column: keyof T) => ReactNode;
 
 export interface EnhancedTableProps<T extends DataItem> extends ITableProps<T> {
-  cellRenderers?: Partial<Record<keyof T, CellRenderer<T>>>;
+  cellRenderers?:any;
   columnOrder?: (keyof T)[];
   columnLabels?: Partial<Record<keyof T, string>>;
 }
 
-export function TableComponent<T extends DataItem>({
+export function TableComponent<T extends AdminData>({
   tableData,
   currentPage = 1,
   totalPages = 10,

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { DeleteIcon, ViewIcon } from "../../../../../../public/icons";
 import { TableComponent } from "@/components/custom-table";
+import { OrderTableComponent } from "@/components/custom-table/orderIndex";
 
 import { OrdersData } from "@/types";
 import { Badge } from "@/components/ui/badge";
@@ -140,7 +141,7 @@ const DataTable: React.FC<iProps> = ({
 
   return (
     <>
-      <TableComponent<OrdersData>
+      <OrderTableComponent<OrdersData>
         tableData={data}
         currentPage={currentPage}
         onPageChange={onPageChange}
