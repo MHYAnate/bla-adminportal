@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface iProps {
-  item: ISupplierCard;
+  item: any;
   handleUpdateManufacturerStatus?: () => void;
   showToggle?: boolean;
   showOptions?: boolean;
@@ -27,12 +27,13 @@ interface iProps {
 const SupplierManagementCard: React.FC<iProps> = ({
   item,
   handleUpdateManufacturerStatus,
-  showToggle = false,
-  showOptions = false,
+  showToggle,
+  showOptions,
   setTab,
   setOpen,
-  loading = false,
+  loading,
 }) => {
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -43,7 +44,7 @@ const SupplierManagementCard: React.FC<iProps> = ({
               height={76}
               className="object-cover"
               alt="Supplier image"
-              src={"/images/bladmin-login.jpg"}
+              src={item?.logo && item.logo.includes("res.cloudinary.com") ?item.logo:"/images/bladmin-login.jpg"}
               // img=item.logo ||
             />
           </div>
@@ -89,7 +90,7 @@ const SupplierManagementCard: React.FC<iProps> = ({
             </h5>
             <div className="flex gap-2 mb-2.5 text-semibold text-sm items-center">
               <MailIcon />
-              <p>{item.email || "----"}</p>
+              <p>{item?.email || "----"}</p>
             </div>
             <div className="flex gap-2 mb-[10px] text-semibold text-sm items-center">
               <PhoneIcon />
@@ -122,7 +123,7 @@ const SupplierManagementCard: React.FC<iProps> = ({
         </div>
         <div className="flex justify-between items-center">
           <h5 className="mb-2.5 font-bold text-xl text-[#111827]">
-            {item?.total || 0} Product(s)
+            {item?._count?.products || 0} Product(s)
           </h5>
         </div>
       </CardContent>

@@ -4,12 +4,14 @@ interface iProps {
   handleClose: () => void;
   handleClick?: () => void;
   title: string;
+  isLoading:any
 }
 
 const DeleteContent: React.FC<iProps> = ({
   handleClose,
   handleClick,
   title,
+  isLoading
 }) => {
   return (
     <div>
@@ -29,6 +31,7 @@ const DeleteContent: React.FC<iProps> = ({
           className="w-full py-3.5 px-[3rem] font-bold text-base"
           size="xl"
           onClick={handleClose}
+          disabled={isLoading}
         >
           No
         </Button>
@@ -37,8 +40,10 @@ const DeleteContent: React.FC<iProps> = ({
           className="w-full px-[3rem] py-3.5 font-bold text-base"
           size="xl"
           onClick={handleClick}
+          disabled={isLoading}
         >
-          Yes
+          {isLoading?"loading...":"Yes"}
+       
         </Button>
       </div>
     </div>

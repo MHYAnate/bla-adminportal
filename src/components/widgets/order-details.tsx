@@ -3,7 +3,7 @@ import { HorizontalDots } from "../../../public/icons";
 import { Badge } from "../ui/badge";
 import { IOrderDetails } from "@/types";
 interface iProps {
-  item: IOrderDetails;
+  item: any;
 }
 
 const OrderDetailsCard: React.FC<iProps> = ({ item }) => {
@@ -27,6 +27,7 @@ const OrderDetailsCard: React.FC<iProps> = ({ item }) => {
         </Badge>
         <HorizontalDots />
       </div>
+      <p className="font-medium text-sm text-[#687588] mb-4">X{item.quantity}</p>
       <p className="font-medium text-sm text-[#687588] mb-4">N{item.price}</p>
       <div className="flex items-center gap-4 mb-4">
         <div>

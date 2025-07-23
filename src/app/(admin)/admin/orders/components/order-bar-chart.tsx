@@ -66,7 +66,7 @@ export function OrderBarComponent({
       <h5 className="font-bold text-[#383E49] text-2xl mb-6">
         Sales & Purchases
       </h5>
-      <div className="flex items-center justify-between mb-6 flex justify-between items-center">
+      <div className="mb-6 flex justify-between items-center">
         <div className="w-[110px]">
           <SelectFilter
             setFilter={setFilter}

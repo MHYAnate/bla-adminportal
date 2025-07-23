@@ -40,7 +40,7 @@ export const useGetOrderInfo = () => {
 export const useGetOrdersSummary = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchOrdersSummary"],
-    queryFn: () => httpService.getData(routes.ordersSummary()),
+    queryFn: () => httpService.getData(routes.orderSummaryChart()),
     // enabled,
     retry: 2,
   });
@@ -69,5 +69,53 @@ export const useGetOrdersAnalytics = () => {
     getOrdersAnalyticsError: ErrorHandler(error),
     refetchOrdersAnalytics: refetch,
     setOrdersAnalyticsFilter: setFilter,
+  };
+};
+
+export const useGetSalesData = ({ year, enabled = true } = {}) => {
+  const {
+    isLoading,
+    isFetching,
+    data,
+    error,
+    refetch,
+  } = useFetchItem({
+    queryKey: ["sales-data", year],
+    queryFn: () => httpService.getData(routes.salesData(year)),
+    enabled,
+    retry: 2,
+  });
+
+  return {
+    isSalesLoading: isLoading,
+    isFetchingSales: isFetching,
+    salesData: data?.data || [],
+    salesYear: data?.year,
+    salesError: ErrorHandler(error),
+    refetchSales: refetch,
+  };
+};
+
+export const useGetOrderSummaryChart = ({ timeframe = '5m', enabled = true } = {}) => {
+  const {
+    data,
+    isLoading,
+    isFetching,
+    error,
+    refetch
+  } = useFetchItem({
+    queryKey: ['order-summary-chart', timeframe],
+    queryFn: () => httpService.getData(routes.orderSummaryChart(timeframe)),
+    enabled,
+    retry: 2,
+  });
+
+  return {
+    isOrderSummaryLoading: isLoading,
+    isFetchingOrderSummary: isFetching,
+    orderSummary: data?.data || [],
+    orderSummarySummary: data?.summary || {},
+    orderSummaryError: ErrorHandler(error),
+    refetchOrderSummary: refetch,
   };
 };

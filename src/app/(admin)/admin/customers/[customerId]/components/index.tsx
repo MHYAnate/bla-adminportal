@@ -18,10 +18,12 @@ import { useSearchParams } from "next/navigation";
 import { useHandlePush } from "@/hooks/use-handle-push";
 import { ROUTES } from "@/constant/routes";
 import { useGetCustomerInfo } from "@/services/customers";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { capitalizeFirstLetter, formatDate } from "@/lib/utils";
 
+
 export default function CustomerDetail({ customerId }: { customerId: string }) {
+  const [status, setStatus] = useState("")
   const param = useSearchParams();
   const tabber = param.get("tab");
   const { handlePush } = useHandlePush();
@@ -32,7 +34,8 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
     refetchCustomerInfo,
   } = useGetCustomerInfo();
   const customer = "Individuals";
-  const status = "Active";
+  // const status = "Active";
+  console.log("customerDetail", data)
   const list = [
     {
       value: "general",
@@ -50,7 +53,16 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
 
   useEffect(() => {
     setCustomerInfoFilter(customerId);
+   
   }, [customerId]);
+
+  useEffect(() => {
+    
+    setStatus(data?.customerStatus);
+    
+  }, [data?.customerStatus]);
+
+  const address = data?.addresses?.find((addr: { isDefault: any; }) => addr.isDefault) || data?.addresses?.[0];
 
   return (
     <div>
@@ -65,29 +77,29 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
                     height={100}
                     width={100}
                     alt="Customer avatar"
-                    src="/images/bladmin-login.jpg"
+                    src="/images/user-avatar.jpg"
                     className="w-[100px] h-[100px] rounded-full object-cover"
                   />
                 </div>
-                <h6 className="text-center text-[#111827] text-xl mb-2.5"></h6>
+                <h6 className="text-center text-[#111827] text-xl mb-2.5">{data?.personalInfo?.fullName}</h6>
                 <p className="text-[#687588] text-sm mb-2.5 text-center">
-                  Customer type: {capitalizeFirstLetter(data?.type)}
+                {capitalizeFirstLetter(data?.customerType)}
                 </p>
-                <p className="text-[#687588] text-sm mb-6 text-center">
-                  Id: {data?.id}
-                </p>
+                {/* <p className="text-[#687588] text-sm mb-6 text-center">
+                {data?.customerStatus}
+                </p> */}
                 <div className="flex justify-center">
                   <Badge
                     variant={
-                      status.toLowerCase() === "active"
+                      status?.toLowerCase() === "active"
                         ? "success"
-                        : status.toLowerCase() === "pending"
+                        : status?.toLowerCase() === "pending"
                         ? "tertiary"
                         : "warning"
                     }
                     className="py-1 px-[26px] font-medium"
                   >
-                    {status.toUpperCase()}
+                    {status?.toUpperCase()}
                   </Badge>
                 </div>
               </div>
@@ -101,15 +113,28 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
                 <div className="flex gap-3 items-center mb-4">
                   <CallIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                    09012345678
+                    {data?.personalInfo?.phone}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
                   <LocationIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                    Lagos, Nigeria.
+                    {`${address?.city}, ${address?.country}`}
                   </p>
                 </div>
+              </div>
+              <div>
+              <div>
+                <p className="text-xs text-[#687588] mb-1">Referral Code</p>
+                <p className="font-semibold text-sm text-[#111827] mb-4">
+                  {data?.referralInfo?.referralCode}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-[#687588] mb-1">Number of Referrals</p>
+                <p className="font-semibold text-sm text-[#111827] mb-4">
+                {data?.referralInfo?.totalReferrals}
+                </p>
               </div>
               <div>
                 <p className="text-xs text-[#687588] mb-1">Date Joined</p>
@@ -117,6 +142,8 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
                   {formatDate(data?.createdAt)}
                 </p>
               </div>
+              </div>
+             
               {/* <div>
                 <p className="text-xs text-[#687588] mb-1">Referral Code</p>
                 <p className="font-semibold text-sm text-[#111827] mb-4">

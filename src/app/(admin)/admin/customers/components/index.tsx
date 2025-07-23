@@ -19,6 +19,9 @@ import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import DeleteContent from "@/app/(admin)/components/delete-content";
 import DatePickerWithRange from "@/components/ui/date-picker";
+import { useGetAdminRoles } from "@/services/admin";
+import { RoleData } from "@/types";
+import RoleCard from "./roleCard";
 
 const Customers: React.FC = () => {
   const {
@@ -31,6 +34,7 @@ const Customers: React.FC = () => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [type, setType] = useState<string>("");
   const [status, setStatus] = useState<string>("");
+  const [kycStatus, setkycStatus] = useState<string>("");
   const [pageSize, setPageSize] = useState<string>("10");
   const [currentPage, setCurrentPage] = useState(1);
   const [currentTab, setCurrentTab] = useState<string>("delete");
@@ -45,14 +49,21 @@ const Customers: React.FC = () => {
     pageSize,
     type,
     status,
+    kycStatus,
     search: filter,
   };
 
   useEffect(() => {
     setCustomersFilter(payload);
-  }, [filter, type, status, pageSize, currentPage]);
+  }, [filter, type, status, pageSize, currentPage, kycStatus]);
+
+  console.log("customers", data)
 
   const customerList = [
+    {
+      text: "All",
+      value: "all",
+    },
     {
       text: "Individual",
       value: "individual",
@@ -65,14 +76,30 @@ const Customers: React.FC = () => {
 
   const kycList = [
     {
+      text: "All",
+      value: "all",
+    },
+    {
       text: "Verified",
-      value: "verified",
+      value: "Verified",
     },
     {
       text: "Not Verified",
-      value: "not verified",
+      value: "Not Verified",
     },
   ];
+
+   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
+    
+  
+  
+  
+    // Debug: log to see what rolesData contains
+    console.log("rolesData:", rolesData);
+  
+  
+    // Ensure rolesData is an array
+    const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
 
   return (
     <div>
@@ -92,7 +119,13 @@ const Customers: React.FC = () => {
                 <ExportIcon /> Download
               </Button>
             </div>
+             
           </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+                    {safeRolesData.map((role: RoleData) => (
+                      <RoleCard key={role.id} role={role} />
+                    ))}
+                  </div>
           <div className="flex items-center gap-4 mb-6">
             <div className="w-1/2 me-auto">
               <InputFilter setQuery={setFilter} />
@@ -103,7 +136,7 @@ const Customers: React.FC = () => {
               list={customerList}
             />
             <SelectFilter
-              setFilter={setStatus}
+              setFilter={setkycStatus}
               list={kycList}
               placeholder="Kyc status"
             />
@@ -141,6 +174,8 @@ const Customers: React.FC = () => {
           </DialogHeader>
           {/* <CreateCustomer setClose={() => setIsOpen(false)} /> */}
           <DeleteContent
+          isLoading={getCustomersIsLoading}
+          handleClick={() => setIsOpen(false)}
             handleClose={() => setIsOpen(false)}
             title="Customer"
           />

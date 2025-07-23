@@ -23,6 +23,8 @@ import {
   useGetOrders,
   useGetOrdersAnalytics,
   useGetOrdersSummary,
+  useGetOrderSummaryChart,
+  useGetSalesData,
 } from "@/services/orders";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
@@ -35,8 +37,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import DatePickerWithRange from "@/components/ui/date-picker";
+import SalesChart from "./orderSales";
+import OrderSummary from "./orderSummarySide";
+import DetailedOrderTable from "./orderTable";
 
 export default function Orders() {
+  const {
+    orderSummary,
+    orderSummarySummary,
+    isOrderSummaryLoading,
+    orderSummaryError
+  } = useGetOrderSummaryChart({ timeframe: '6m' });
   const {
     getOrdersData: data,
     getOrdersError,
@@ -51,12 +62,23 @@ export default function Orders() {
     setOrdersSummaryFilter,
   } = useGetOrdersSummary();
 
+  const { salesData, isSalesLoading, salesError, salesYear } = useGetSalesData();
+
+  console.log(salesData, "sale Data sale")
+
+  console.log(orderSummary, "orderSummaryies", orderSummarySummary, "againS")
+
   const {
     getOrdersAnalyticsData,
     getOrdersAnalyticsIsLoading,
     refetchOrdersAnalytics,
     setOrdersAnalyticsFilter,
   } = useGetOrdersAnalytics();
+
+
+  console.log(data, "orderData");
+  console.log( getOrdersSummaryData, "orderSummary");
+  console.log(getOrdersAnalyticsData, "orderAnalytic");
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [filter, setFilter] = useState<string>("");
@@ -168,15 +190,17 @@ export default function Orders() {
               <OrderCard report={report} key={index} />
             ))}
           </div>
-          <div className="flex gap-5">
-            <OrderBarComponent
-              data={getOrdersAnalyticsData?.data || []}
-              setFilter={setFilterSales}
-              setStartDate={setStartDateSales}
-              setEndDate={setEndDateSales}
-            />
-            {/* <LineGraphComponent /> */}
-          </div>
+          {/* <div className="flex gap-5">
+         <SalesChart/>
+         <OrderSummary/>
+           
+          </div> */}
+         <div className="min-h-screen bg-gray-50">
+      <div className="flex align-middle justify-center">
+        <SalesChart />
+        <OrderSummary />
+      </div>
+    </div>
           <div className="bg-white">
             <div className="p-6">
               <h6 className="font-semibold text-lg text-[#111827] mb-6">
@@ -203,18 +227,7 @@ export default function Orders() {
                   setToDate={setEndDate}
                 />
               </div>
-              <DataTable
-                data={data?.data || []}
-                currentPage={currentPage}
-                onPageChange={onPageChange}
-                pageSize={Number(pageSize)}
-                totalPages={data?.total}
-                setPageSize={setPageSize}
-                handleDelete={() => {
-                  setIsOpen(true);
-                }}
-                loading={getOrdersIsLoading}
-              />
+              <DetailedOrderTable/>
             </div>
           </div>
         </CardContent>
@@ -229,7 +242,7 @@ export default function Orders() {
             </DialogTitle>
           </DialogHeader>
           {/* <CreateCustomer setClose={() => setIsOpen(false)} /> */}
-          <DeleteContent handleClose={() => setIsOpen(false)} title="Order" />
+          <DeleteContent isLoading={()=>{}} handleClick={()=>{}} handleClose={() => setIsOpen(false)} title="Order" />
         </DialogContent>
       </Dialog>
     </section>
