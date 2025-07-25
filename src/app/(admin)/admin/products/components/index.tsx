@@ -23,11 +23,9 @@ import { useDeleteProduct, useGetAllCategories, useGetProducts } from "@/service
 import DatePickerWithRange from "@/components/ui/date-picker";
 import { productTypeList } from "@/constant";
 import { useGetManufacturers } from "@/services/manufacturers";
-import { capitalizeFirstLetter, showSuccessAlert } from "@/lib/utils";
+import { capitalizeFirstLetter } from "@/lib/utils";
 
 export default function Products() {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [currentTab, setCurrentTab] = useState<string>("view");
   const [filter, setFilter] = useState<string>("");
   const [status, setStatus] = useState<string>("");
   const [pageSize, setPageSize] = useState<string>("10");
@@ -36,17 +34,19 @@ export default function Products() {
   const [open, setOpen] = useState<boolean>(false);
   const [tab, setTab] = useState<string>("");
   const [endDate, setEndDate] = useState<string | null>(null);
-    const [selectedProduct, setSelectedProduct] = useState<any>(null);
-  
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
-    const {
-      getManufacturersData,
-      getManufacturersIsLoading,
-      refetchManufacturers,
-      setManufacturersFilter,
-    } = useGetManufacturers();
+
+  const {
+    getManufacturersData,
+    getManufacturersIsLoading,
+    refetchManufacturers,
+    setManufacturersFilter,
+  } = useGetManufacturers();
+
   const {
     getPRoductsIsLoading,
     getProductsData,
@@ -60,72 +60,8 @@ export default function Products() {
     getAllCategoriesError,
     setAllCategoriesFilter
   } = useGetAllCategories();
-  
-  // Accessing data
+
   const { categories, pagination } = getAllCategoriesData;
-
-  console.log(getAllCategoriesData, "categories")
-
-  console.log(categories, "catcheck")
-  
-  const categories1 = [
-    {
-        "id": 12,
-        "name": "International & Ethnic Ingredients",
-        "productCount": 5,
-        "createdAt": "2025-05-21T15:03:46.057Z",
-        "updatedAt": "2025-05-21T15:03:46.057Z"
-    },
-    {
-        "id": 10,
-        "name": "Instant & Convenience Foods",
-        "productCount": 2,
-        "createdAt": "2025-05-21T15:03:42.900Z",
-        "updatedAt": "2025-05-21T15:03:42.900Z"
-    },
-    {
-        "id": 4,
-        "name": "Oils, Fats & Condiments",
-        "productCount": 2,
-        "createdAt": "2025-05-21T15:03:32.859Z",
-        "updatedAt": "2025-05-21T15:03:32.859Z"
-    },
-    {
-        "id": 3,
-        "name": "Baking & Sweeteners",
-        "productCount": 2,
-        "createdAt": "2025-05-21T15:03:31.235Z",
-        "updatedAt": "2025-05-21T15:03:31.235Z"
-    },
-    {
-        "id": 2,
-        "name": "Processed & Packaged Foods",
-        "productCount": 10,
-        "createdAt": "2025-05-21T15:03:29.638Z",
-        "updatedAt": "2025-05-21T15:03:29.638Z"
-    },
-    {
-        "id": 1,
-        "name": "Dry Staples & Grains",
-        "productCount": 7,
-        "createdAt": "2025-05-21T15:03:27.395Z",
-        "updatedAt": "2025-05-21T15:03:27.395Z"
-    }
-]
-  // Setting filters
-  const handleSearch = (term: any) => {
-    setAllCategoriesFilter({ search: term, page: 1 });
-  };
-  
-  // Pagination control
-  const handlePageChange = (newPage: any) => {
-    setAllCategoriesFilter((prev: any) => ({ ...prev, page: newPage }));
-  };
-
-
-// const categories= [{id:1, name:"catea"},{id:2, name:"catb"}, {id:3,name:"catc"}]
-
-  console.log(getProductsData)
 
   const {
     deleteProduct,
@@ -134,86 +70,86 @@ export default function Products() {
     data: deleteProductPayload,
   } = useDeleteProduct((res: any) => {
     refetchProducts();
-    setIsOpen(false);
+    setOpen(false);
   });
 
   const payload = {
-    // search: filter,
     page: currentPage,
     pageSize,
     type: status,
+    search: filter,
+    startDate,
+    endDate,
   };
 
-    // Handlers for product actions
-    const handleViewProduct = (product: any) => {
-      setSelectedProduct(product);
-      setTab("view");
-      setOpen(true);
-    };
-  
-    const handleEditProduct = (product: any) => {
-      setSelectedProduct(product);
-      setTab("edit");
-      setOpen(true);
-    };
-  
-    const handleDeleteProduct = (product: any) => {
-      setSelectedProduct(product);
-      setTab("delete-product");
-      setOpen(true);
-    };
-    const handleConfirmDelete = () => {
-      if (selectedProduct) {
-        deleteProduct(selectedProduct.id);
-      }
-    };
-  
+  // Handlers for product actions
+  const handleViewProduct = (product: any) => {
+    setSelectedProduct(product);
+    setTab("view");
+    setOpen(true);
+  };
+
+  const handleEditProduct = (product: any) => {
+    setSelectedProduct(product);
+    setTab("edit");
+    setOpen(true);
+  };
+
+  const handleDeleteProduct = (product: any) => {
+    setSelectedProduct(product);
+    setTab("delete-product");
+    setOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedProduct) {
+      deleteProduct(selectedProduct.id);
+    }
+  };
 
   useEffect(() => {
     setProductsFilter(payload);
-  }, [filter, status, pageSize]);
+  }, [filter, status, pageSize, currentPage, startDate, endDate]);
 
   const renderItem = () => {
-      switch (tab) {
-     
-        case "view":
-          return (
-            <ViewProduct 
-              setClose={() => setOpen(false)} 
-              productData={selectedProduct} 
-            />
-          );
-        case "edit":
-          return (
-            <>
-              <EditProduct
-              categories={categories1 || []}
-              setClose={() => setOpen(false)} 
-              product={selectedProduct} 
-              manufacturers={getManufacturersData?.data || []}
-               />
-            </>
-          );
-        case "delete-product":
-          return (
-            <DeleteContent 
-              handleClose={() => setOpen(false)} 
-              title="Product" 
-              handleClick={handleConfirmDelete}
-              isLoading={isLoading}
-            />
-          );
-        default:
-          return     <ViewProduct 
-          setClose={() => setOpen(false)} 
-          productData={selectedProduct} 
-        />;
-      }
-    };
-  
+    switch (tab) {
+      case "view":
+        return (
+          <ViewProduct
+            setClose={() => setOpen(false)}
+            productData={selectedProduct}
+          />
+        );
+      case "edit":
+        return (
+          <EditProduct
+            categories={categories || []}
+            setClose={() => setOpen(false)}
+            product={selectedProduct}
+            manufacturers={getManufacturersData?.data || []}
+          />
+        );
+      case "delete-product":
+        return (
+          <DeleteContent
+            handleClose={() => setOpen(false)}
+            title="Product"
+            handleClick={handleConfirmDelete}
+            isLoading={isLoading}
+          />
+        );
+      default:
+        return (
+          <ViewProduct
+            setClose={() => setOpen(false)}
+            productData={selectedProduct}
+          />
+        );
+    }
+  };
 
   return (
-    <section>
+    <section className="bg-[#FFFFFF] rounded-lg shadow-sm">
       <div className="p-4 flex justify-between items-center mb-8">
         <Header title="Products" subtext="Manage Products." />
 
@@ -235,15 +171,16 @@ export default function Products() {
           </Button>
         </div>
       </div>
+
       <Card className="bg-white">
         <CardContent className="p-6">
-          <h6 className="font-semibold text-lg text-[#111827] mb-6">
+          <h6 className="font-normal text-[#111827] mb-6">
             Detailed Product Table
           </h6>
           <div className="flex items-center gap-4 mb-6">
             <InputFilter
               setQuery={setFilter}
-              placeholder="Search by customer name, categoryId, manufacturerId"
+              placeholder="Search by product name, category, manufacturer"
             />
 
             <SelectFilter
@@ -251,10 +188,7 @@ export default function Products() {
               placeholder="Product Type"
               list={productTypeList}
             />
-            <DatePickerWithRange
-              setFromDate={setStartDate}
-              setToDate={setEndDate}
-            />
+
           </div>
 
           <ProductDataTable
@@ -272,28 +206,27 @@ export default function Products() {
         </CardContent>
       </Card>
 
-       <Dialog open={open} onOpenChange={() => setOpen(!open)}>
-              <DialogContent
-                className={`${
-                  tab !== "delete" && tab !== "delete-product"
-                    ? "right-0 p-8 max-w-[47.56rem] h-screen overflow-y-scroll"
-                    : "max-w-[33.75rem] left-[50%] translate-x-[-50%] py-10"
-                }`}
-              >
-                {tab !== "delete" && tab !== "delete-product" && (
-                  <DialogHeader>
-                    <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
-                      <div onClick={() => setOpen(false)} className="cursor-pointer">
-                        <ChevronLeft size={24} />
-                      </div>
-                      {capitalizeFirstLetter(tab)}{" "}
-                      {tab === "update" ? "Manufacturer" : "Product"}
-                    </DialogTitle>
-                  </DialogHeader>
-                )}
-                {renderItem()}
-              </DialogContent>
-            </Dialog>
+      <Dialog open={open} onOpenChange={() => setOpen(!open)}>
+        <DialogContent
+          className={`${tab !== "delete" && tab !== "delete-product"
+            ? "right-0 p-8 max-w-[47.56rem] h-screen overflow-y-scroll"
+            : "max-w-[33.75rem] left-[50%] translate-x-[-50%] py-10"
+            }`}
+        >
+          {tab !== "delete" && tab !== "delete-product" && (
+            <DialogHeader>
+              <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
+                <div onClick={() => setOpen(false)} className="cursor-pointer">
+                  <ChevronLeft size={24} />
+                </div>
+                {capitalizeFirstLetter(tab)}{" "}
+                {tab === "update" ? "Manufacturer" : "Product"}
+              </DialogTitle>
+            </DialogHeader>
+          )}
+          {renderItem()}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

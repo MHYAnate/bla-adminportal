@@ -19,7 +19,7 @@ export default function SidebarLayout({
         <AdminSidebar />
         <section className="flex-1">
           <Navbar />
-          <section className="p-8">{children}</section>
+          <section className="p-8 bg-[#F8F8F8]">{children}</section>
         </section>
       </section>
     </SidebarProvider>
