@@ -1,3 +1,6 @@
+// services/categories/index.js
+"use client";
+
 import { showErrorAlert } from "@/lib/utils";
 import { routes } from "../api-routes";
 import { ErrorHandler } from "../errorHandler";

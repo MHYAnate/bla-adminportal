@@ -4,7 +4,7 @@ import Header from "@/app/(admin)/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useEffect, useState } from "react";
-import EmptyState from "../../../../components/empty";
+import EmptyState from "../../../components/empty";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import SupplierManagementCard from "@/components/widgets/supplier-management";
 import Link from "next/link";
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { ChevronLeft } from "lucide-react";
 import AddManufacturer from "./add-manufacturer";
-import { StoreManagementIcon } from "../../../../../../../public/icons";
+import { StoreManagementIcon } from "../../../../../../public/icons";
 import { useGetManufacturers } from "@/services/manufacturers";
 import { Pagination } from "@/components/ui/pagination";
 import { ISupplierCard } from "@/types";
@@ -32,6 +32,7 @@ export default function Manufacturers() {
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
+
   const {
     getManufacturersData,
     getManufacturersIsLoading,
@@ -58,8 +59,10 @@ export default function Manufacturers() {
     };
 
     setManufacturersFilter(payload);
-  }, [filter, currentPage]);
+  }, [filter, currentPage, setManufacturersFilter]);
+
   console.log(getManufacturersData?.pagination?.totalItems);
+
   return (
     <section>
       <Card>
@@ -67,7 +70,7 @@ export default function Manufacturers() {
           <div className="flex justify-between items-center mb-6">
             <Header
               title="Manufacturers"
-              subtext="Manage Manufacturers and  Suppliers"
+              subtext="Manage Manufacturers and Suppliers"
             />
             <Button
               variant={"outline"}
@@ -78,19 +81,16 @@ export default function Manufacturers() {
               + Add New Manufacturer
             </Button>
           </div>
+
           {!getManufacturersIsLoading && (
             <div className="flex items-center gap-4 mb-6 w-[50%]">
               <InputFilter
                 setQuery={setFilter}
                 placeholder="Search manufacturers by name."
               />
-              {/* <SelectFilter
-              setFilter={setRole}
-              placeholder="Select Role"
-              list={roleList}
-            /> */}
             </div>
           )}
+
           {getManufacturersIsLoading ? (
             <div className="grid grid-cols-2 gap-4">
               {Array.from({ length: 4 }).map((_, idx: number) => (
@@ -109,21 +109,20 @@ export default function Manufacturers() {
                 />
               ) : (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {getManufacturersData?.data?.map(
                       (item: ISupplierCard, index: number) => (
                         <Link
                           key={index}
-                          href={`${
-                            ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTMANUFACTURERS
-                          }/${index + 1}`}
+                          href={`${ROUTES.ADMIN.SIDEBAR.MANUFACTURERS}/${item.id}`}
+                          className="block h-full"
                         >
                           <SupplierManagementCard item={item} />
                         </Link>
                       )
                     )}
                   </div>
-                  <div className="mt-6 flex items-center justify-center">
+                  <div className="mt-8 flex items-center justify-center">
                     <Pagination
                       currentPage={currentPage}
                       totalPages={
@@ -136,7 +135,8 @@ export default function Manufacturers() {
               )}
             </>
           )}
-          <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
+
+          <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
             <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-y-scroll">
               <DialogHeader>
                 <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">

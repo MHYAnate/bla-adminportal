@@ -591,7 +591,7 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
   calculatePricingMetrics
 }) => {
   return (
-    <div className="p-4 border rounded-lg space-y-4 relative bg-slate-50">
+    <div className="p-4 border rounded-lg space-y-4 relative ">
       <div className="absolute top-2 right-2 flex gap-2">
         <Button
           type="button"
@@ -661,8 +661,8 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
       </div>
 
       {/* Pricing Section */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
+      <div className="border rounded-lg p-4">
+        <h4 className="font-medium mb-3 flex items-center gap-2">
           <Info size={16} />
           Pricing Configuration
         </h4>
@@ -673,9 +673,9 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
             name={`options.${index}.stockPrice`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-blue-900">
+                <FormLabel className="">
                   Stock Price (₦)
-                  <span className="text-xs font-normal text-blue-600 block">What you pay manufacturer</span>
+                  <span className="text-xs font-normal block">What you pay manufacturer</span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -687,7 +687,6 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
                       field.onChange(e);
                       calculatePricingMetrics(index);
                     }}
-                    className="border-blue-300 focus:border-blue-500"
                   />
                 </FormControl>
                 <FormMessage />
@@ -700,9 +699,9 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
             name={`options.${index}.price`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-blue-900">
+                <FormLabel >
                   Retail Price (₦)
-                  <span className="text-xs font-normal text-blue-600 block">What customers pay individually</span>
+                  <span className="text-xs font-normal block">What customers pay individually</span>
                 </FormLabel>
                 <FormControl>
                   <Input
@@ -714,7 +713,7 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
                       field.onChange(e);
                       calculatePricingMetrics(index);
                     }}
-                    className="border-blue-300 focus:border-blue-500"
+
                   />
                 </FormControl>
                 <FormMessage />
@@ -724,7 +723,7 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
         </div>
 
         {/* Profit Margin Display */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="bg-white p-3 rounded border">
             <div className="text-sm text-gray-600">Retail Profit Margin</div>
             <div id={`retail-margin-${index}`} className="text-lg font-bold text-gray-800">
@@ -737,7 +736,7 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
               0%
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Bulk Pricing Configuration */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -746,7 +745,7 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
             name={`options.${index}.discountType`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-blue-900">Bulk Discount Type</FormLabel>
+                <FormLabel className="">Bulk Discount Type</FormLabel>
                 <Select
                   onValueChange={(value) => {
                     field.onChange(value);
@@ -755,7 +754,7 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
                   value={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger className="border-blue-300 focus:border-blue-500">
+                    <SelectTrigger >
                       <SelectValue />
                     </SelectTrigger>
                   </FormControl>
@@ -775,7 +774,7 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
             name={`options.${index}.bulkDiscount`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-blue-900">
+                <FormLabel className="">
                   {form.watch(`options.${index}.discountType`) === "PERCENTAGE"
                     ? "Discount Percentage (%)"
                     : "Discount Amount (₦)"}
@@ -792,7 +791,7 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
                       calculatePricingMetrics(index);
                     }}
                     disabled={form.watch(`options.${index}.discountType`) === "NONE"}
-                    className="border-blue-300 focus:border-blue-500"
+                    className=""
                   />
                 </FormControl>
                 <FormMessage />
@@ -805,14 +804,14 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
             name={`options.${index}.minimumBulkQuantity`}
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-blue-900">Minimum Bulk Quantity</FormLabel>
+                <FormLabel>Minimum Bulk Quantity</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     min="1"
                     {...field}
                     disabled={form.watch(`options.${index}.discountType`) === "NONE"}
-                    className="border-blue-300 focus:border-blue-500"
+
                   />
                 </FormControl>
                 <FormMessage />
@@ -823,12 +822,12 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
 
         {/* Calculated Bulk Price Display */}
         {form.watch(`options.${index}.discountType`) !== "NONE" && (
-          <div className="mt-4 bg-green-50 border border-green-200 rounded p-3">
-            <div className="text-sm text-green-700 font-medium">Calculated Bulk Price:</div>
-            <div id={`bulk-price-display-${index}`} className="text-lg font-bold text-green-800">
+          <div className="mt-4 rounded p-3">
+            <div className="text-sm font-medium">Calculated Bulk Price:</div>
+            <div id={`bulk-price-display-${index}`} className="text-lg font-bold">
               ₦0.00
             </div>
-            <div className="text-xs text-green-600 mt-1">
+            <div className="text-xs mt-1">
               This price will be automatically calculated and applied for bulk orders
             </div>
           </div>
