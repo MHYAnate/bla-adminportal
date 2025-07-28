@@ -9,6 +9,7 @@ export const ROUTES = {
       BUSINNES: "/admin/business",
       INDIVIDUALS: "/admin/customers",
       PRODUCTS: "/admin/products",
+      CATEGORIES: "/admin/categories",
       ORDERS: "/admin/orders",
       MANUFACTURERS: "/admin/manufacturers",
       CUSTOMERSREPORTS: "/admin/reports",

@@ -21,13 +21,13 @@ import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { useDeleteProduct, useGetAllCategories, useGetProducts } from "@/services/products";
 import DatePickerWithRange from "@/components/ui/date-picker";
-import { productTypeList } from "@/constant";
+import { productFilterList, productTypeList } from "@/constant";
 import { useGetManufacturers } from "@/services/manufacturers";
 import { capitalizeFirstLetter } from "@/lib/utils";
 
 export default function Products() {
   const [filter, setFilter] = useState<string>("");
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<string>("all");
   const [pageSize, setPageSize] = useState<string>("10");
   const [currentPage, setCurrentPage] = useState(1);
   const [startDate, setStartDate] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export default function Products() {
     setAllCategoriesFilter
   } = useGetAllCategories();
 
-  const { categories, pagination } = getAllCategoriesData;
+  const { categories, pagination } = getAllCategoriesData || { categories: [], pagination: {} };
 
   const {
     deleteProduct,
@@ -81,6 +81,56 @@ export default function Products() {
     startDate,
     endDate,
   };
+
+  // ✅ Initial load effect
+  useEffect(() => {
+    console.log('🎬 Component mounted - triggering initial load');
+    const initialPayload = {
+      page: 1,
+      pageSize: "10",
+      type: "all",
+      search: "",
+      startDate: null,
+      endDate: null,
+    };
+    setProductsFilter(initialPayload);
+  }, [setProductsFilter]);
+
+  // ✅ Debug the data in component
+  useEffect(() => {
+    console.log('🔍 Component Debug:', {
+      loading: getPRoductsIsLoading,
+      data: getProductsData,
+      dataType: typeof getProductsData,
+      hasData: !!getProductsData?.data,
+      isArray: Array.isArray(getProductsData?.data),
+      length: getProductsData?.data?.length,
+      firstItem: getProductsData?.data?.[0],
+      pagination: getProductsData?.pagination
+    });
+  }, [getPRoductsIsLoading, getProductsData]);
+
+  // ✅ API test effect
+  useEffect(() => {
+    const testAPI = async () => {
+      try {
+        console.log('🧪 Testing API directly...');
+        const response = await fetch('/api/admin/products?page=1&pageSize=10');
+        const result = await response.json();
+        console.log('🧪 Direct API result:', result);
+      } catch (error) {
+        console.error('🧪 Direct API error:', error);
+      }
+    };
+
+    testAPI();
+  }, []);
+
+  // Filter change effect
+  useEffect(() => {
+    console.log('🔄 Filter changed, updating with payload:', payload);
+    setProductsFilter(payload);
+  }, [filter, status, pageSize, currentPage, startDate, endDate, setProductsFilter]);
 
   // Handlers for product actions
   const handleViewProduct = (product: any) => {
@@ -106,10 +156,6 @@ export default function Products() {
       deleteProduct(selectedProduct.id);
     }
   };
-
-  useEffect(() => {
-    setProductsFilter(payload);
-  }, [filter, status, pageSize, currentPage, startDate, endDate]);
 
   const renderItem = () => {
     switch (tab) {
@@ -148,6 +194,64 @@ export default function Products() {
     }
   };
 
+  // ✅ Render table with comprehensive debugging
+  const renderTable = () => {
+    if (getPRoductsIsLoading) {
+      return (
+        <div className="text-center py-8">
+          <p>Loading products...</p>
+        </div>
+      );
+    }
+
+    if (!getProductsData) {
+      return (
+        <div className="text-center py-8 bg-red-50 border border-red-200 rounded p-4">
+          <p className="text-red-600">❌ No data returned from API</p>
+        </div>
+      );
+    }
+
+    if (!getProductsData.data || !Array.isArray(getProductsData.data)) {
+      return (
+        <div className="text-center py-8 bg-yellow-50 border border-yellow-200 rounded p-4">
+          <p className="text-yellow-600">⚠️ Data is not an array</p>
+          <pre className="text-xs mt-2 text-left overflow-auto max-h-32">
+            {JSON.stringify(getProductsData, null, 2)}
+          </pre>
+        </div>
+      );
+    }
+
+    if (getProductsData.data.length === 0) {
+      return (
+        <div className="text-center py-8 bg-blue-50 border border-blue-200 rounded p-4">
+          <p className="text-blue-600">📭 No products found</p>
+        </div>
+      );
+    }
+
+    return (
+      <div>
+        <div className="mb-2 text-sm text-green-600">
+          {/* ✅ Found {getProductsData.data.length} products */}
+        </div>
+        <ProductDataTable
+          handleEdit={handleEditProduct}
+          handleView={handleViewProduct}
+          handleDelete={handleDeleteProduct}
+          setPageSize={setPageSize}
+          data={getProductsData.data}
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+          pageSize={Number(pageSize)}
+          totalPages={getProductsData.pagination?.totalPages || 1}
+          loading={getPRoductsIsLoading}
+        />
+      </div>
+    );
+  };
+
   return (
     <section className="bg-[#FFFFFF] rounded-lg shadow-sm">
       <div className="p-4 flex justify-between items-center mb-8">
@@ -177,6 +281,23 @@ export default function Products() {
           <h6 className="font-normal text-[#111827] mb-6">
             Detailed Product Table
           </h6>
+
+          {/* ✅ Debug info section (remove in production) */}
+          {/* <div className="mb-4 p-4 bg-gray-100 rounded text-xs">
+            <h4 className="font-bold mb-2">Debug Info:</h4>
+            <pre className="overflow-auto max-h-32">
+              {JSON.stringify({
+                loading: getPRoductsIsLoading,
+                hasData: !!getProductsData,
+                dataType: typeof getProductsData,
+                hasDataArray: !!getProductsData?.data,
+                isArray: Array.isArray(getProductsData?.data),
+                dataLength: getProductsData?.data?.length,
+                pagination: getProductsData?.pagination
+              }, null, 2)}
+            </pre>
+          </div> */}
+
           <div className="flex items-center gap-4 mb-6">
             <InputFilter
               setQuery={setFilter}
@@ -185,24 +306,14 @@ export default function Products() {
 
             <SelectFilter
               setFilter={setStatus}
-              placeholder="Product Type"
-              list={productTypeList}
+              placeholder="Filter Products"
+              list={productFilterList}
+              value={status}
             />
-
           </div>
 
-          <ProductDataTable
-            handleEdit={handleEditProduct}
-            handleView={handleViewProduct}
-            handleDelete={handleDeleteProduct}
-            setPageSize={setPageSize}
-            data={getProductsData?.data || []}
-            currentPage={currentPage}
-            onPageChange={onPageChange}
-            pageSize={Number(pageSize)}
-            totalPages={getProductsData?.pagination?.totalPages || 1}
-            loading={getPRoductsIsLoading}
-          />
+          {/* ✅ Use the debug render function */}
+          {renderTable()}
         </CardContent>
       </Card>
 

@@ -61,10 +61,10 @@ const DataTable: React.FC<iProps> = ({
           item?.kyc?.toLowerCase() === "verified"
             ? "success"
             : item?.kyc?.toLowerCase() === "pending"
-            ? "tertiary"
-            : item?.kyc?.toLowerCase() === "flagged"
-            ? "destructive"
-            : "warning"
+              ? "tertiary"
+              : item?.kyc?.toLowerCase() === "flagged"
+                ? "destructive"
+                : "warning"
         }
         className="py-1 px-[26px] font-bold"
       >

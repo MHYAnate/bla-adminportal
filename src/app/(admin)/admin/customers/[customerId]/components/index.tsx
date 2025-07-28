@@ -53,13 +53,13 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
 
   useEffect(() => {
     setCustomerInfoFilter(customerId);
-   
+
   }, [customerId]);
 
   useEffect(() => {
-    
+
     setStatus(data?.customerStatus);
-    
+
   }, [data?.customerStatus]);
 
   const address = data?.addresses?.find((addr: { isDefault: any; }) => addr.isDefault) || data?.addresses?.[0];
@@ -83,7 +83,7 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
                 </div>
                 <h6 className="text-center text-[#111827] text-xl mb-2.5">{data?.personalInfo?.fullName}</h6>
                 <p className="text-[#687588] text-sm mb-2.5 text-center">
-                {capitalizeFirstLetter(data?.customerType)}
+                  {capitalizeFirstLetter(data?.customerType)}
                 </p>
                 {/* <p className="text-[#687588] text-sm mb-6 text-center">
                 {data?.customerStatus}
@@ -94,8 +94,8 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
                       status?.toLowerCase() === "active"
                         ? "success"
                         : status?.toLowerCase() === "pending"
-                        ? "tertiary"
-                        : "warning"
+                          ? "tertiary"
+                          : "warning"
                     }
                     className="py-1 px-[26px] font-medium"
                   >
@@ -103,47 +103,54 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
                   </Badge>
                 </div>
               </div>
-              <div className="mb-6 pb-6 border-b border-[#F1F2F4]">
-                <div className="flex gap-3 items-center mb-4">
-                  <MailIcon />
-                  <p className="font-semibold text-sm text-[#111827]">
+              <div className="mb-6 pb-6 border-b border-[#F1F2F4] px-auto">
+                <div className="flex gap-3 items-start mb-4"> {/* Changed to items-start */}
+
+                  <div className="flex-shrink-0 mt-0.5">
+                    <MailIcon />
+                  </div>
+                  <p className="font-semibold text-sm text-[#111827] break-words flex-1 min-w-0">
                     {data?.email || "----"}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
-                  <CallIcon />
-                  <p className="font-semibold text-sm text-[#111827]">
+                  <div className="flex-shrink-0">
+                    <CallIcon />
+                  </div>
+                  <p className="font-semibold text-sm text-[#111827] break-words flex-1 min-w-0">
                     {data?.personalInfo?.phone}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
-                  <LocationIcon />
-                  <p className="font-semibold text-sm text-[#111827]">
+                  <div className="flex-shrink-0">
+                    <LocationIcon />
+                  </div>
+                  <p className="font-semibold text-sm text-[#111827] break-words flex-1 min-w-0">
                     {`${address?.city}, ${address?.country}`}
                   </p>
                 </div>
               </div>
               <div>
-              <div>
-                <p className="text-xs text-[#687588] mb-1">Referral Code</p>
-                <p className="font-semibold text-sm text-[#111827] mb-4">
-                  {data?.referralInfo?.referralCode}
-                </p>
+                <div>
+                  <p className="text-xs text-[#687588] mb-1">Referral Code</p>
+                  <p className="font-semibold text-sm text-[#111827] mb-4">
+                    {data?.referralInfo?.referralCode}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#687588] mb-1">Number of Referrals</p>
+                  <p className="font-semibold text-sm text-[#111827] mb-4">
+                    {data?.referralInfo?.totalReferrals}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#687588] mb-1">Date Joined</p>
+                  <p className="font-semibold text-sm text-[#111827] mb-4">
+                    {formatDate(data?.createdAt)}
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-xs text-[#687588] mb-1">Number of Referrals</p>
-                <p className="font-semibold text-sm text-[#111827] mb-4">
-                {data?.referralInfo?.totalReferrals}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-[#687588] mb-1">Date Joined</p>
-                <p className="font-semibold text-sm text-[#111827] mb-4">
-                  {formatDate(data?.createdAt)}
-                </p>
-              </div>
-              </div>
-             
+
               {/* <div>
                 <p className="text-xs text-[#687588] mb-1">Referral Code</p>
                 <p className="font-semibold text-sm text-[#111827] mb-4">
@@ -173,12 +180,11 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
                   <TabsTrigger
                     value={tab.value}
                     key={index}
-                    className={`w-2/12 flex-col pb-0 ${
-                      customer.toLowerCase() === "individual" &&
+                    className={`w-2/12 flex-col pb-0 ${customer.toLowerCase() === "individual" &&
                       tab.value === "documents"
-                        ? "hidden"
-                        : ""
-                    }`}
+                      ? "hidden"
+                      : ""
+                      }`}
                     onClick={() =>
                       handlePush(
                         `${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/${customerId}?tab=${tab.value}`
@@ -186,11 +192,10 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
                     }
                   >
                     <p
-                      className={`w-full text-center pb-[9px] ${
-                        tabber === tab.value
-                          ? "border-b-2 border-[#EC9F01] text-[#030C0A]"
-                          : "border-b-2 border-transparent text-[#111827]"
-                      }`}
+                      className={`w-full text-center pb-[9px] ${tabber === tab.value
+                        ? "border-b-2 border-[#EC9F01] text-[#030C0A]"
+                        : "border-b-2 border-transparent text-[#111827]"
+                        }`}
                     >
                       {tab.text}
                     </p>

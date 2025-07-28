@@ -8,26 +8,80 @@ import { routes } from "@/services/api-routes";
 import { ErrorHandler } from "@/services/errorHandler";
 import useFetchItem from "@/services/useFetchItem";
 import httpService from "@/services/httpService";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-// Get all products with pagination and filters
+// ✅ Fixed Get all products with comprehensive debugging
 export const useGetProducts = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchProducts"],
-    queryFn: (queryParams) => httpService.getData(routes.products(queryParams)),
+    queryFn: (queryParams) => {
+      console.log('🚀 API Call with params:', queryParams);
+      return httpService.getData(routes.products(queryParams));
+    },
     retry: 2,
   });
 
+  // ✅ Add comprehensive debugging
+  console.log('🔍 useGetProducts Debug:', {
+    isLoading,
+    error,
+    rawData: data,
+    dataStructure: data ? Object.keys(data) : 'no data',
+    hasDataProperty: data?.hasOwnProperty('data'),
+    dataContent: data?.data,
+    isDataArray: Array.isArray(data?.data),
+    dataLength: data?.data?.length,
+    firstProduct: data?.data?.[0]
+  });
+
+  // ✅ Extract with robust safety checks
+  const extractedData = useMemo(() => {
+    if (!data) {
+      console.log('❌ No data received');
+      return [];
+    }
+    
+    // Handle different response structures
+    if (Array.isArray(data)) {
+      console.log('✅ Data is direct array:', data.length, 'items');
+      return data;
+    }
+    
+    if (data.data && Array.isArray(data.data)) {
+      console.log('✅ Found products array:', data.data.length, 'products');
+      return data.data;
+    }
+    
+    if (data.data?.data && Array.isArray(data.data.data)) {
+      console.log('✅ Found nested products array:', data.data.data.length, 'products');
+      return data.data.data;
+    }
+    
+    console.warn('⚠️ Unexpected data structure:', typeof data, data);
+    return [];
+  }, [data]);
+
+  // ✅ Extract pagination safely
+  const extractedPagination = useMemo(() => {
+    if (!data) return {};
+    
+    // Try different pagination locations
+    return data?.pagination || data?.data?.pagination || {};
+  }, [data]);
+
   return {
     getPRoductsIsLoading: isLoading,
-    getProductsData: data?.data || [],
+    getProductsData: {
+      data: extractedData,
+      pagination: extractedPagination
+    },
     getProductsError: ErrorHandler(error),
     refetchProducts: refetch,
     setProductsFilter: setFilter,
   };
 };
 
-// Create product following manufacturer pattern
+// ✅ Rest of your existing hooks remain the same...
 export const useCreateProduct = (onSuccessCallback) => {
   const queryClient = useQueryClient();
 
@@ -37,7 +91,6 @@ export const useCreateProduct = (onSuccessCallback) => {
     error,
   } = useMutation({
     mutationFn: async (payload) => {
-      // First upload images for each option
       const processedOptions = await Promise.all(
         payload.options.map(async (option) => {
           let imageUrls = [];
@@ -63,19 +116,18 @@ export const useCreateProduct = (onSuccessCallback) => {
           return {
             value: option.value,
             stockPrice: option.stockPrice,
-            retailPrice: option.price, // Backend expects retailPrice
+            retailPrice: option.price,
             discountType: option.discountType,
             bulkDiscount: option.bulkDiscount,
             minimumBulkQuantity: option.minimumBulkQuantity,
             inventory: option.inventory,
             weight: option.weight,
             unit: option.unit,
-            image: imageUrls, // Backend expects image array
+            image: imageUrls,
           };
         })
       );
 
-      // Prepare final payload
       const productPayload = {
         name: payload.name,
         description: payload.description,
@@ -117,7 +169,6 @@ export const useCreateProduct = (onSuccessCallback) => {
   };
 };
 
-// Update product
 export const useUpdateProduct = ({ onSuccess }) => {
   const queryClient = useQueryClient();
 
@@ -127,12 +178,10 @@ export const useUpdateProduct = ({ onSuccess }) => {
     error,
   } = useMutation({
     mutationFn: async ({ id, payload }) => {
-      // Handle image uploads for new images
       const processedOptions = await Promise.all(
         payload.options.map(async (option) => {
           let uploadedImageUrls = [];
 
-          // Upload new images if any
           if (option.newImages && option.newImages.length > 0) {
             const formData = new FormData();
             option.newImages.forEach((file) => 
@@ -151,7 +200,6 @@ export const useUpdateProduct = ({ onSuccess }) => {
             }
           }
 
-          // Combine existing images with new uploaded images
           const allImages = [...(option.image || []), ...uploadedImageUrls];
 
           return {
@@ -217,8 +265,7 @@ export const useUpdateProduct = ({ onSuccess }) => {
   };
 };
 
-// Delete product
-export const useDeleteProduct = ({ onSuccess }) => {
+export const useDeleteProduct = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [data, setData] = useState(null);
@@ -233,7 +280,6 @@ export const useDeleteProduct = ({ onSuccess }) => {
       
       setData(response.data);
       
-      // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ["fetchProducts"] });
       queryClient.invalidateQueries({ queryKey: ["fetchManufacturerProducts"] });
       
@@ -265,7 +311,6 @@ export const useDeleteProduct = ({ onSuccess }) => {
   };
 };
 
-// Get single product details
 export const useGetProductInfo = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchProductInfo"],
@@ -282,7 +327,6 @@ export const useGetProductInfo = () => {
   };
 };
 
-// Get products by manufacturer
 export const useGetManufacturerProducts = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchManufacturerProducts"],
@@ -302,7 +346,6 @@ export const useGetManufacturerProducts = () => {
   };
 };
 
-// Get all categories for selection
 export const useGetAllCategories = () => {
   const {
     isLoading,

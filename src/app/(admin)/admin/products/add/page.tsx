@@ -238,9 +238,9 @@ export default function AddProductsPage() {
 
       // Create payload matching backend expectations
       const payload = {
-        name: values.name,
-        description: values.description,
-        shortDescription: values.shortDescription,
+        name: values.name.trim(), // ✅ Ensure name is properly sent
+        description: values.description.trim(),
+        shortDescription: values.shortDescription?.trim() || '',
         categoryId: parseInt(values.categoryId),
         manufacturerId: parseInt(values.manufacturerId),
         type: "platform",
@@ -251,17 +251,19 @@ export default function AddProductsPage() {
         acceptsReturns: values.acceptsReturns,
         options: optionsWithImages.map(option => ({
           value: option.value,
-          stockPrice: option.stockPrice, // What we pay manufacturer
-          retailPrice: option.price, // What customers pay individually (backend processes as 'price')
+          stockPrice: option.stockPrice,
+          retailPrice: option.price, // ✅ Send as retailPrice to match backend expectations
           discountType: option.discountType,
           bulkDiscount: option.bulkDiscount,
           minimumBulkQuantity: option.minimumBulkQuantity,
           inventory: option.inventory,
           weight: option.weight,
           unit: option.unit,
-          image: option.image, // Array of image URLs
+          image: option.image,
         })),
       };
+
+      console.log('🔍 Final payload being sent:', payload);
 
       // Create product
       const response = await createProduct(payload);

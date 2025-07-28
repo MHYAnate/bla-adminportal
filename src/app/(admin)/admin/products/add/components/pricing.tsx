@@ -460,7 +460,7 @@ const Pricing: React.FC<iProps> = ({ form, isSubmitting }) => {
         <h3 className="font-medium mb-4">Delivery & Return Policies</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <FormField
+          {/* <FormField
             control={control}
             name="shortDescription"
             render={({ field, fieldState }) => (
@@ -474,7 +474,7 @@ const Pricing: React.FC<iProps> = ({ form, isSubmitting }) => {
                 )}
               </FormItem>
             )}
-          />
+          /> */}
 
           <FormField
             control={control}

@@ -26,7 +26,7 @@ import EditProduct from "@/app/(admin)/admin/products/components/edit-products";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import DatePickerWithRange from "@/components/ui/date-picker";
-import { productTypeList } from "@/constant";
+import { productFilterList, productTypeList } from "@/constant";
 import { capitalizeFirstLetter, showSuccessAlert } from "@/lib/utils";
 import { useDeleteProduct } from "@/services/products";
 import { useRouter } from "next/navigation";
@@ -43,11 +43,11 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
     const [open, setOpen] = useState<boolean>(false);
     const [tab, setTab] = useState<string>("update");
     const [filter, setFilter] = useState<string>("");
-    const [status, setStatus] = useState<string>("");
+    const [status, setStatus] = useState<string>("all");
     const [pageSize, setPageSize] = useState<string>("10");
     const [currentPage, setCurrentPage] = useState(1);
-    const [startDate, setStartDate] = useState<string | null>(null);
-    const [endDate, setEndDate] = useState<string | null>(null);
+    // const [startDate, setStartDate] = useState<string | null>(null);
+    // const [endDate, setEndDate] = useState<string | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
     const onPageChange = (page: number) => {
@@ -278,13 +278,13 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
 
                         <SelectFilter
                             setFilter={setStatus}
-                            placeholder="Product Type"
-                            list={productTypeList}
+                            placeholder="Filters"
+                            list={productFilterList}
                         />
-                        <DatePickerWithRange
+                        {/* <DatePickerWithRange
                             setFromDate={setStartDate}
                             setToDate={setEndDate}
-                        />
+                        /> */}
                     </div>
 
                     <ManufacturerProductTable

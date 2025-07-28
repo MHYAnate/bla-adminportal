@@ -92,13 +92,13 @@ const ManufacturerProductTable: React.FC<ManufacturerProductTableProps> = ({
         },
         action: (item: any) => (
             <div className="flex gap-2">
-                <button
+                {/* <button
                     onClick={() => handleView(item)}
                     className="bg-green-600 p-2 rounded-lg hover:bg-green-700 transition-colors"
                     title="View Product"
                 >
                     <ViewIcon />
-                </button>
+                </button> */}
                 <button
                     onClick={() => handleEdit(item)}
                     className="bg-blue-600 p-2 rounded-lg hover:bg-blue-700 transition-colors"

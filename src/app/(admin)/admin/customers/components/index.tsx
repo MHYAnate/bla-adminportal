@@ -84,22 +84,22 @@ const Customers: React.FC = () => {
       value: "Verified",
     },
     {
-      text: "Not Verified",
+      text: "Pending",
       value: "Not Verified",
     },
   ];
 
-   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
-    
-  
-  
-  
-    // Debug: log to see what rolesData contains
-    console.log("rolesData:", rolesData);
-  
-  
-    // Ensure rolesData is an array
-    const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
+  const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
+
+
+
+
+  // Debug: log to see what rolesData contains
+  console.log("rolesData:", rolesData);
+
+
+  // Ensure rolesData is an array
+  const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
 
   return (
     <div>
@@ -119,13 +119,13 @@ const Customers: React.FC = () => {
                 <ExportIcon /> Download
               </Button>
             </div>
-             
+
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
-                    {safeRolesData.map((role: RoleData) => (
-                      <RoleCard key={role.id} role={role} />
-                    ))}
-                  </div>
+            {safeRolesData.map((role: RoleData) => (
+              <RoleCard key={role.id} role={role} />
+            ))}
+          </div>
           <div className="flex items-center gap-4 mb-6">
             <div className="w-1/2 me-auto">
               <InputFilter setQuery={setFilter} />
@@ -161,11 +161,10 @@ const Customers: React.FC = () => {
       </Card>
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
         <DialogContent
-          className={`${
-            currentTab === "delete"
-              ? "max-w-[33.75rem] left-[50%] translate-x-[-50%]"
-              : "right-0 p-8 max-w-[47.56rem] h-screen overflow-y-scroll"
-          }`}
+          className={`${currentTab === "delete"
+            ? "max-w-[33.75rem] left-[50%] translate-x-[-50%]"
+            : "right-0 p-8 max-w-[47.56rem] h-screen overflow-y-scroll"
+            }`}
         >
           <DialogHeader>
             <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
@@ -174,8 +173,8 @@ const Customers: React.FC = () => {
           </DialogHeader>
           {/* <CreateCustomer setClose={() => setIsOpen(false)} /> */}
           <DeleteContent
-          isLoading={getCustomersIsLoading}
-          handleClick={() => setIsOpen(false)}
+            isLoading={getCustomersIsLoading}
+            handleClick={() => setIsOpen(false)}
             handleClose={() => setIsOpen(false)}
             title="Customer"
           />
