@@ -1,33 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import httpService from "@/services/httpService";
-import { routes } from "@/services/api-routes";
-import { showSuccessAlert, showErrorAlert } from "@/lib/utils";
+import { clearTokens } from '@/lib/auth';
 
 export default function LogoutButton() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  // components/LogoutButton.tsx
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    // Clear other auth-related storage
-    sessionStorage.clear();
-    document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    window.location.href = "/login";
+    clearTokens();
+    // Use window.location to ensure complete cleanup
+    window.location.href = '/login';
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <div
-          className="flex items-center gap-2 py-2 pr-2 rounded cursor-pointer hover:bg-gray-100 transition"
-          onClick={() => setOpen(true)}
-        >
+        <div className="flex items-center gap-2 py-2 pr-2 rounded cursor-pointer hover:bg-gray-100 transition">
           <svg xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 -0.5 25 25" fill="none">
             <path
               d="M7.04401 9.53165C7.33763 9.23949 7.33881 8.76462 7.04665 8.47099C6.75449 8.17737 6.27962 8.17619 5.98599 8.46835L7.04401 9.53165ZM2.97099 11.4683C2.67737 11.7605 2.67619 12.2354 2.96835 12.529C3.26051 12.8226 3.73538 12.8238 4.02901 12.5317L2.97099 11.4683ZM5.98599 15.5317C6.27962 15.8238 6.75449 15.8226 7.04665 15.529C7.33881 15.2354 7.33763 14.7605 7.04401 14.4683L5.98599 15.5317ZM3.5 11.25C3.08579 11.25 2.75 11.5858 2.75 12C2.75 12.4142 3.08579 12.75 3.5 12.75V11.25ZM17.5 12.75C17.9142 12.75 18.25 12.4142 18.25 12C18.25 11.5858 17.9142 11.25 17.5 11.25V12.75ZM3.5 12.75L17.5 12.75V11.25L3.5 11.25V12.75Z"
@@ -41,7 +33,7 @@ export default function LogoutButton() {
               strokeLinejoin="round"
             />
           </svg>
-          <p className="font-bold text-black">log out</p>
+          <p className="font-bold text-black">Log out</p>
         </div>
       </DialogTrigger>
       <DialogContent>
@@ -61,3 +53,5 @@ export default function LogoutButton() {
     </Dialog>
   );
 }
+
+

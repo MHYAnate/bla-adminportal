@@ -11,13 +11,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { showErrorAlert, Storage } from "@/lib/utils";
+import { showErrorAlert } from "@/lib/utils";
 import { useLogin } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { setToken } from '@/lib/auth';
+
 const formSchema = z.object({
   email: z.string().email("Invalid email provided"),
   password: z.string(),
@@ -27,13 +30,13 @@ const formSchema = z.object({
 type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
-  // In your login component
-  // In your login component
+  const router = useRouter();
+
   const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
     const token = res?.data?.token;
     if (token) {
-      localStorage.setItem("token", token);
-      window.location.href = "/admin"; // Full page reload
+      setToken(token); // Using the centralized token setter
+      router.push('/admin'); // Using router push instead of window.location
     }
   });
 
@@ -47,7 +50,11 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: FormSchemaType) {
-    loginPayload(values);
+    try {
+      await loginPayload(values);
+    } catch (error) {
+      showErrorAlert("Login failed. Please check your credentials.");
+    }
   }
 
   return (
@@ -189,7 +196,7 @@ export default function LoginPage() {
                       className="font-bold text-base leading-[1.5rem]"
                       disabled={loginIsLoading}
                     >
-                      Submit
+                      {loginIsLoading ? "Logging in..." : "Submit"}
                     </Button>
                   </form>
                 </Form>
