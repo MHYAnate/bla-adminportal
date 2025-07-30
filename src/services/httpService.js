@@ -85,7 +85,12 @@ const httpService = {
 
   // POST request without token (for login, register, etc.)
   postDataWithoutToken: async (data, endpoint) => {
-    const response = await axios.post(`${API_BASE_URL}/${endpoint}`, data, {
+    // Remove leading slash from endpoint to avoid double slashes
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const url = `${API_BASE_URL}/${cleanEndpoint}`;
+    console.log('POST without token URL:', url);
+    
+    const response = await axios.post(url, data, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -96,7 +101,12 @@ const httpService = {
 
   // GET request without token
   getDataWithoutToken: async (endpoint) => {
-    const response = await axios.get(`${API_BASE_URL}/${endpoint}`, {
+    // Remove leading slash from endpoint to avoid double slashes
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const url = `${API_BASE_URL}/${cleanEndpoint}`;
+    console.log('GET without token URL:', url);
+    
+    const response = await axios.get(url, {
       timeout: 30000,
     });
     return response.data;

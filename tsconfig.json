@@ -28,6 +28,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "next.config.mjs"
-, "src/services/api/client.js"  ],
+, "src/services/api/client.js", "src/utils/api-debug.js"  ],
   "exclude": ["node_modules"]
 }

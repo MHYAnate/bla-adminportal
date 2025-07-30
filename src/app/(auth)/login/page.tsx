@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -20,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAuth } from '@/context/auth';
+import debugAPI from '@/utils/api-debug';
 
 const formSchema = z.object({
   email: z.string().email("Invalid email provided"),
@@ -32,6 +34,11 @@ type FormSchemaType = z.infer<typeof formSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+
+  // Debug API configuration
+  React.useEffect(() => {
+    debugAPI();
+  }, []);
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
