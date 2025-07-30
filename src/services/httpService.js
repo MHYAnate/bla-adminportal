@@ -18,6 +18,17 @@ const constructURL = (endpoint) => {
   return finalURL;
 };
 
+// Function to log and process response data
+const logResponse = (response, endpoint) => {
+  console.log(`=== RESPONSE DEBUG for ${endpoint} ===`);
+  console.log('Response status:', response.status);
+  console.log('Response data type:', typeof response.data);
+  console.log('Response data:', response.data);
+  console.log('Response data keys:', response.data ? Object.keys(response.data) : 'null/undefined');
+  console.log('======================================');
+  return response.data;
+};
+
 // Create axios instance for authenticated requests
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL.replace(/\/+$/, ''), // Remove trailing slashes
@@ -87,7 +98,7 @@ const httpService = {
     
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.get(cleanEndpoint);
-    return response.data;
+    return logResponse(response, endpoint);
   },
 
   // POST request with token
@@ -98,7 +109,7 @@ const httpService = {
     
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.post(cleanEndpoint, data);
-    return response.data;
+    return logResponse(response, endpoint);
   },
 
   // PUT request with token
@@ -109,7 +120,7 @@ const httpService = {
     
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.put(cleanEndpoint, data);
-    return response.data;
+    return logResponse(response, endpoint);
   },
 
   // PATCH request with token
@@ -120,7 +131,7 @@ const httpService = {
     
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.patch(cleanEndpoint, data);
-    return response.data;
+    return logResponse(response, endpoint);
   },
 
   // DELETE request with token
@@ -131,7 +142,7 @@ const httpService = {
     
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.delete(cleanEndpoint);
-    return response.data;
+    return logResponse(response, endpoint);
   },
 
   // POST request without token (for login, register, etc.)
@@ -146,7 +157,7 @@ const httpService = {
       },
       timeout: 30000,
     });
-    return response.data;
+    return logResponse(response, endpoint);
   },
 
   // GET request without token
@@ -157,7 +168,7 @@ const httpService = {
     const response = await axios.get(finalURL, {
       timeout: 30000,
     });
-    return response.data;
+    return logResponse(response, endpoint);
   },
 };
 
