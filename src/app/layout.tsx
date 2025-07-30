@@ -4,6 +4,7 @@ import "./globals.css";
 import TopLoader from "@/components/top-loader";
 import QueryProvider from "@/providers/tanstack";
 import { Toaster } from "sonner";
+import { AuthProvider } from "@/context/auth"; // New import
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -31,9 +32,11 @@ export default function RootLayout({
     <html lang="en" className={`${manrope.variable} ${dmSans.variable}`}>
       <body className={`font-manrope antialiased`}>
         <QueryProvider>
-          <TopLoader />
-          <Toaster richColors expand={false} />
-          {children}
+          <AuthProvider> {/* Wrap with AuthProvider */}
+            <TopLoader />
+            <Toaster richColors expand={false} />
+            {children}
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

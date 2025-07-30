@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -21,26 +19,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { setAuthToken } from '@/lib/auth';
+import { useAuth } from '@/context/auth';
 
 const formSchema = z.object({
   email: z.string().email("Invalid email provided"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  remember: z.boolean().default(false),
+  password: z.string(),
+  remember: z.boolean().default(false).optional(),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-
-  const { loginIsLoading, loginPayload } = useLogin((res: any) => {
-    const token = res?.data?.token;
-    if (token) {
-      setAuthToken(token, form.getValues("remember")); // Pass remember me value
-      router.push('/admin');
-    }
-  });
+  const { login } = useAuth();
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
@@ -51,10 +42,25 @@ export default function LoginPage() {
     },
   });
 
+  const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
+    console.log('Login response received:', res);
+    const token = res?.data?.token;
+    if (token) {
+      const rememberMe = form.getValues('remember');
+      console.log('Logging in with remember:', rememberMe);
+      login(token, rememberMe);
+    } else {
+      console.error('No token received in login response');
+      showErrorAlert("Login failed. No authentication token received.");
+    }
+  });
+
   async function onSubmit(values: FormSchemaType) {
     try {
+      console.log('Submitting login form:', { email: values.email, remember: values.remember });
       await loginPayload(values);
     } catch (error) {
+      console.error('Login error:', error);
       showErrorAlert("Login failed. Please check your credentials.");
     }
   }
