@@ -32,7 +32,7 @@ type FormSchemaType = z.infer<typeof formSchema>;
 export default function LoginPage() {
   const router = useRouter();
 
-  const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
+  const { loginIsLoading, loginPayload } = useLogin((res: any) => {
     const token = res?.data?.token;
     if (token) {
       setToken(token); // Using the centralized token setter
