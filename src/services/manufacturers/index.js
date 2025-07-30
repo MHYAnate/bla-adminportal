@@ -20,9 +20,60 @@ export const useGetManufacturers = () => {
     retry: 2,
   });
 
+  // Debug logging to see what data structure we're getting
+  console.log('🔍 useGetManufacturers - Raw data:', data);
+  console.log('🔍 useGetManufacturers - data.data:', data?.data);
+  console.log('🔍 useGetManufacturers - data type:', typeof data);
+  console.log('🔍 useGetManufacturers - is data array:', Array.isArray(data));
+
+  // Try different possible data structures
+  let processedData = [];
+  let paginationData = null;
+
+  if (data) {
+    // Check if data is directly an array
+    if (Array.isArray(data)) {
+      processedData = data;
+    }
+    // Check if data has a 'data' property that's an array
+    else if (data.data && Array.isArray(data.data)) {
+      processedData = data.data;
+      paginationData = data.pagination || data.meta;
+    }
+    // Check if data has other common property names
+    else if (data.result && Array.isArray(data.result)) {
+      processedData = data.result;
+      paginationData = data.pagination || data.meta;
+    }
+    else if (data.manufacturers && Array.isArray(data.manufacturers)) {
+      processedData = data.manufacturers;
+      paginationData = data.pagination || data.meta;
+    }
+    else if (data.items && Array.isArray(data.items)) {
+      processedData = data.items;
+      paginationData = data.pagination || data.meta;
+    }
+    // If data is an object with pagination and data properties
+    else if (data.data) {
+      processedData = Array.isArray(data.data) ? data.data : [];
+      paginationData = data.pagination || data.meta;
+    }
+    else {
+      console.warn('🚨 Unknown data structure for manufacturers:', data);
+      processedData = [];
+    }
+  }
+
+  console.log('🔍 useGetManufacturers - Processed data:', processedData);
+  console.log('🔍 useGetManufacturers - Processed data length:', processedData.length);
+  console.log('🔍 useGetManufacturers - Pagination data:', paginationData);
+
   return {
     getManufacturersIsLoading: isLoading,
-    getManufacturersData: data?.data || [],
+    getManufacturersData: {
+      data: processedData,
+      pagination: paginationData
+    },
     getManufacturersError: ErrorHandler(error),
     refetchManufacturers: refetch,
     setManufacturersFilter: setFilter,
