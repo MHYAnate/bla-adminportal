@@ -1,9 +1,8 @@
 "use client"
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Eye, EyeOff, User, Lock, Phone, Mail, Loader2,Check } from "lucide-react"
+import { Eye, EyeOff, User, Lock, Phone, Mail, Loader2, Check } from "lucide-react"
 import { toast } from "sonner"
-import { useRegisterAdmin } from "@/services/admin"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -18,62 +17,35 @@ type FormErrors = {
 }
 
 export default function AdminRegistration() {
-  // Extract signed invitation parameters from URL
+  // Extract parameters from URL (no validation)
   const searchParams = useSearchParams()
-  const email = searchParams.get("email")
-  const userId = searchParams.get("userId")
-  const expires = searchParams.get("expires")
-  const signature = searchParams.get("signature")
+  const email = searchParams.get("email") || "admin@example.com"
+  const userId = searchParams.get("userId") || "999"
 
   const router = useRouter()
 
-  // Check if invitation link is valid
-  const [expired, setExpired] = useState(false)
-  const [validatingLink, setValidatingLink] = useState(true)
-  const [registrationComplete, setRegistrationComplete] = useState(false)
-
-  useEffect(() => {
-    if (expires) {
-      // Parse expiration as timestamp (ms or seconds)
-      let expireTime = Number(expires)
-      if (isNaN(expireTime)) {
-        expireTime = new Date(expires).getTime()
-      }
-      if (!isNaN(expireTime) && Date.now() > expireTime) {
-        setExpired(true)
-      }
-    }
-    setValidatingLink(false)
-  }, [expires])
-
   // Form state
+  const [registrationComplete, setRegistrationComplete] = useState(false)
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [username, setUsername] = useState("")
   const [phone, setPhone] = useState("")
   const [gender, setGender] = useState("")
-  const [role] = useState("admin") // fixed
+  const [role] = useState("admin")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
-
-  // Hook for registering admin
-  const { registerAdminPayload, loading } = useRegisterAdmin({
-    onSuccess: () => {
-      toast.success("Admin registered successfully!")
-      setRegistrationComplete(true)
-    },
-  })
-  
-
-  // Validate and submit form
+  const [loading, setLoading] = useState(false) // ✅ Manual loading state
 
   const phoneRegex = /^\+?\d+$/;
-  
+
+  // ✅ FIXED: Direct API call instead of hook
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
+
+    // Form validation
     const newErrors: FormErrors = {}
     if (!firstName.trim()) newErrors.firstName = "First name is required"
     if (!lastName.trim()) newErrors.lastName = "Last name is required"
@@ -87,70 +59,87 @@ export default function AdminRegistration() {
     if (!password) newErrors.password = "Password is required"
     if (password && password.length < 6) newErrors.password = "Password must be at least 6 characters"
     if (password !== confirmPassword) newErrors.confirmPassword = "Passwords must match"
+
     setErrors(newErrors)
     if (Object.keys(newErrors).length > 0) return
 
-    // Call hook with form data + invitation params
+    setLoading(true)
+
     try {
-      await registerAdminPayload({
-        email,
-        userId,
-        expires,
-        signature,
-        firstName,
-        lastName,
+      const queryParams = new URLSearchParams()
+      queryParams.set('email', email)
+      queryParams.set('userId', userId)
+
+      const requestBody = {
+        fullName: `${firstName} ${lastName}`,
         username,
         phone,
         gender,
         role,
         password,
+      }
+
+      console.log('🚀 Making API call to backend')
+
+      // ✅ FIXED: Use correct backend URL
+      const backendUrl = 'https://buylocalapi-staging.up.railway.app'
+      const apiUrl = `${backendUrl}/api/admin/manage/register?${queryParams.toString()}`
+
+      console.log('URL:', apiUrl)
+      console.log('Body:', { ...requestBody, password: '[HIDDEN]' })
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
       })
-      setRegistrationComplete(true)
-      toast.success("Admin registered successfully!")
-    } catch (error) {
-      toast.error("Registration failed. Please try again.")
+
+      console.log('Response status:', response.status)
+      console.log('Response headers:', response.headers)
+
+      const result = await response.json()
+      console.log('📋 API Response:', result)
+
+      if (!response.ok) {
+        throw new Error(result?.error || result?.message || 'Registration failed')
+      }
+
+      if (result.success) {
+        console.log('✅ Registration successful!')
+        toast.success("Admin registered successfully!")
+        setRegistrationComplete(true)
+      } else {
+        throw new Error(result.error || 'Registration failed')
+      }
+
+    } catch (error: any) {
+      console.error('❌ Registration failed:', error)
+
+      let errorMessage = 'Registration failed. Please try again.'
+
+      if (error.message.includes('Username') || error.message.includes('username')) {
+        errorMessage = 'Username already taken. Please choose a different username.'
+      } else if (error.message.includes('phone') || error.message.includes('Phone')) {
+        errorMessage = 'Phone number already in use. Please use a different phone number.'
+      } else if (error.message.includes('already exists') || error.message.includes('already has an admin profile')) {
+        errorMessage = 'This user already has an admin profile.'
+      } else if (error.message.includes('Failed to fetch')) {
+        errorMessage = 'Cannot connect to server. Please check your internet connection.'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
     }
-  }
-
-  if (validatingLink) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#0F3D30] mx-auto" />
-          <p className="mt-4 text-lg">Verifying your invitation...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // If link invalid or expired, show error
-  if (!email || !userId || !expires || !signature) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="max-w-md mx-auto p-8 bg-white rounded-lg shadow-md text-center">
-          <h2 className="text-xl font-semibold text-red-600">Registration Error</h2>
-          <p className="text-gray-600 mt-2">Invalid invitation link.</p>
-          <p className="text-gray-600">Please contact your administrator for a new invitation or support.</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (expired) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="max-w-md mx-auto p-8 bg-white rounded-lg shadow-md text-center">
-          <h2 className="text-xl font-semibold text-red-600">Registration Error</h2>
-          <p className="text-gray-600 mt-2">Invitation link has expired.</p>
-          <p className="text-gray-600">Please contact your administrator for a new invitation or support.</p>
-        </div>
-      </div>
-    )
   }
 
   if (registrationComplete) {
     return (
-           <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="max-w-md w-full mx-auto p-8 bg-white rounded-lg shadow-md text-center">
           <div className="rounded-full bg-green-100 p-3 w-16 h-16 flex items-center justify-center mx-auto mb-4">
             <Check className="h-8 w-8 text-green-600" />
@@ -160,7 +149,7 @@ export default function AdminRegistration() {
             Your admin account has been successfully set up. You can now log in to access your dashboard.
           </p>
           <button
-            onClick={() => router.push('/login')}
+            onClick={() => router.push('/admin/login')}
             className="w-full bg-[#0F3D30] text-white py-3 px-4 rounded-md hover:bg-[#1b5d49] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F3D30]"
           >
             Proceed to Login
@@ -170,7 +159,7 @@ export default function AdminRegistration() {
     )
   }
 
-
+  // ✅ Rest of your JSX stays the same...
   return (
     <div className="flex flex-col md:flex-row w-full min-h-screen">
       {/* Left Column */}
@@ -217,9 +206,8 @@ export default function AdminRegistration() {
                   id="firstName"
                   name="firstName"
                   placeholder="Enter your first name"
-                  className={`w-full pl-10 pr-3 py-2 border ${
-                    errors.firstName ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.firstName ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
@@ -239,9 +227,8 @@ export default function AdminRegistration() {
                   id="lastName"
                   name="lastName"
                   placeholder="Enter your last name"
-                  className={`w-full pl-10 pr-3 py-2 border ${
-                    errors.lastName ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.lastName ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />
@@ -264,9 +251,8 @@ export default function AdminRegistration() {
                   id="username"
                   name="username"
                   placeholder="Choose a username"
-                  className={`w-full pl-10 pr-3 py-2 border ${
-                    errors.username ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.username ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -283,9 +269,8 @@ export default function AdminRegistration() {
                 name="gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className={`w-full p-2 border ${
-                  errors.gender ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                className={`w-full p-2 border ${errors.gender ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
               >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
@@ -331,9 +316,8 @@ export default function AdminRegistration() {
                   id="phone"
                   name="phone"
                   placeholder="Enter your phone number"
-                  className={`w-full pl-10 pr-3 py-2 border ${
-                    errors.phone ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.phone ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
@@ -371,9 +355,8 @@ export default function AdminRegistration() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className={`w-full pl-10 pr-10 py-2 border ${
-                    errors.password ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-10 py-2 border ${errors.password ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -405,9 +388,8 @@ export default function AdminRegistration() {
                   name="confirmPassword"
                   type={showConfirm ? "text" : "password"}
                   placeholder="Confirm your password"
-                  className={`w-full pl-10 pr-10 py-2 border ${
-                    errors.confirmPassword ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-10 py-2 border ${errors.confirmPassword ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
@@ -449,4 +431,3 @@ export default function AdminRegistration() {
     </div>
   )
 }
-

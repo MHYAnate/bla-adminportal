@@ -6,6 +6,7 @@ export const routes = {
   resetPassword: () => "auth/reset-password",
   profile: () => "/api/user/info",
   dashboard: () => "admin/dashboard",
+  checkAuth: () => `auth/check`,
 
   // Customer routes with improved query handling
   customers: (data) => {
@@ -213,14 +214,47 @@ export const routes = {
   adminRoles: () => "admin/manage/roles",
   adminPermissions: () => "admin/manage/permissions",
   inviteAdmin: () => "admin/manage/invite",
+  getCurrentAdmin: () => "admin/manage/current",
   updateAdminRoles: (adminId) => `admin/manage/${adminId}/roles`,
   checkAdminStatus: () => "admin/manage/status",
   deleteAdmin: (id) => `admin/manage/${id}`,
   removeAdmin: () => `admin/manage`,
   registerInvitedAdmin: () => "admin/manage/register",
   createAdmin: () => "admin/manage/create",
-  createAdminRole: () => 'admin/roles',
+  
+  // Enhanced permissions management routes
+  updateAdminRolesPermissions: (adminId) => `admin/manage/${adminId}/roles-permissions`,
+  updateAdminPermissions: (adminId) => `admin/manage/${adminId}/permissions`,
+  getSpecificAdminPermissions: (adminId) => `admin/manage/${adminId}/permissions`,
 
+   updateAdminPermissions: (adminId) => `admin/manage/${adminId}/permissions`,
+  toggleAdminPermission: (adminId, permissionId) => `admin/manage/${adminId}/permissions/${permissionId}/toggle`,
+  getAdminPermissions: (adminId) => `admin/manage/${adminId}/permissions`,
+  
+  // Role management routes
+  createRole: () => 'admin/manage/roles',
+  updateRole: (roleId) => `admin/manage/roles/${roleId}`,
+  deleteRole: (roleId) => `admin/manage/roles/${roleId}`,
+  getRolePermissions: (roleId) => `admin/manage/roles/${roleId}/permissions`,
+  updateRolePermissions: (roleId) => `admin/manage/roles/${roleId}/permissions`,
+  toggleRolePermission: (roleId, permissionId) => `admin/manage/roles/${roleId}/permissions/${permissionId}/toggle`,
+  
+  // Permission management routes
+  getAllPermissions: () => 'admin/manage/permissions',
+  createPermission: () => 'admin/manage/permissions',
+  updatePermission: (permissionId) => `admin/manage/permissions/${permissionId}`,
+  deletePermission: (permissionId) => `admin/manage/permissions/${permissionId}`,
+  
+  // Role assignment routes
+  assignRolesToAdmin: (adminId) => `admin/manage/${adminId}/assign-roles`,
+  
+  // Admin status management
+  updateAdminStatus: (adminId) => `admin/manage/${adminId}/status`,
+  getAdminProfile: (adminId) => `admin/manage/${adminId}/profile`,
+  
+  // Legacy routes (keep for backward compatibility)
+  createAdminRole: () => 'admin/manage/roles',
+  
   // Financial Reports
   financialReport: (customerId) => `admin/reports/${customerId}`,
   deleteFinancialData: (customerId) => `admin/reports/${customerId}`,
@@ -239,5 +273,5 @@ export const routes = {
   },
 
   // File upload
-  upload: () => "upload",
+  upload: () => "upload"
 };

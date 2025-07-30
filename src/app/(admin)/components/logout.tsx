@@ -12,14 +12,13 @@ export default function LogoutButton() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  const handleLogout = async () => {
-    try {
-      await httpService.postData({}, routes.logout()); // route that calls logoutHandler
-      showSuccessAlert("Logged out successfully");
-      router.push("/login");
-    } catch (error: any) {
-      showErrorAlert(error?.response?.data?.error || "Logout failed");
-    }
+  // components/LogoutButton.tsx
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    // Clear other auth-related storage
+    sessionStorage.clear();
+    document.cookie = 'auth_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
+    window.location.href = "/login";
   };
 
   return (

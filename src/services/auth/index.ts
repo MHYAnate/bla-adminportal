@@ -118,3 +118,20 @@ export const useResetPassword = (
   };
 };
 
+// services/auth.ts
+// services/auth.ts
+export const checkAuth = (): boolean => {
+  const token = localStorage.getItem("token");
+  
+  if (!token) return false;
+
+  try {
+    // Simple JWT expiration check (client-side only)
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const isExpired = payload.exp < Date.now() / 1000;
+    return !isExpired;
+  } catch (error) {
+    console.error('Token validation error:', error);
+    return false;
+  }
+};

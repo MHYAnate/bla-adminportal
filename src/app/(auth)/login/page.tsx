@@ -11,7 +11,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Storage } from "@/lib/utils";
+import { showErrorAlert, Storage } from "@/lib/utils";
 import { useLogin } from "@/services/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
@@ -27,11 +27,14 @@ const formSchema = z.object({
 type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
+  // In your login component
+  // In your login component
   const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
-    Storage.set("token", res?.data?.token);
-    const email = form.getValues().email;
-    sessionStorage.setItem("userEmail", email);
-    window.location.href = "/admin";
+    const token = res?.data?.token;
+    if (token) {
+      localStorage.setItem("token", token);
+      window.location.href = "/admin"; // Full page reload
+    }
   });
 
   const form = useForm<FormSchemaType>({

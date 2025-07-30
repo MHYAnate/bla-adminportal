@@ -1,664 +1,6 @@
-// // "use client"
+"use client";
 
-// // import React, { useEffect, useState } from "react";
-// // import {
-// //   Form,
-// //   FormControl,
-// //   FormField,
-// //   FormItem,
-// //   FormLabel,
-// //   FormMessage,
-// // } from "@/components/ui/form";
-// // import { Input } from "@/components/ui/input";
-// // import {
-// //   Select,
-// //   SelectContent,
-// //   SelectItem,
-// //   SelectTrigger,
-// //   SelectValue,
-// // } from "@/components/ui/select";
-// // import { zodResolver } from "@hookform/resolvers/zod";
-// // import { useForm } from "react-hook-form";
-// // import { z } from "zod";
-// // import { Button } from "@/components/ui/button";
-// // import {  useInviteAdmin } from "@/services/admin/index";
-// // import {  RoleData } from "@/types";
-// // import { toast } from "sonner";
-// // import { useGetAdmins } from "@/services/admin";
-
-
-
-// // const formSchema = z.object({
-// //   email: z.string().email("Please enter a valid email address"),
-// //   role: z.string({
-// //     required_error: "Please select a role.",
-// //   }),
-// // });
-
-// // type FormSchemaType = z.infer<typeof formSchema>;
-// // interface IProps {
-// //   setClose: () => void;
-// //   roles?: RoleData[];
-// //   setUrl:(data:string)=>void;
-// // }
-
-// // const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
-
-// //    const[email, setEmail] = useState("");
-
-// //    useEffect(() => {
-// //     if (typeof window !== "undefined") {
-// //       const email = localStorage.getItem("userEmail") || 
-// //                    sessionStorage.getItem("userEmail");
-// //       // Use the email
-// //       setEmail(email? email : "")
-// //     }
-// //   }, []);
-
-// //   const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
-// //   const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
-
-// //   console.log(email, "email", adminsData, "data", admin, "filter" )
-
-// //   //super_admin 
-// //   // admin.roles.role.name !==super_admin
- 
-// //   const { inviteAdminPayload, inviteAdminIsLoading} = useInviteAdmin((data: any) => {
-// //     toast.success("Admin invitation sent successfully");
-// //     console.log(data, "check reg data");
-// //     setUrl(data.data.inviteUrl)
-// //      // Use the response data passed to onSuccess
-// //     setClose();
-
-// //   });
-
-
-// //   console.log("inviteRolesss", roles)
-// //   // Initialize form with react-hook-form
-// //   const form = useForm<FormSchemaType>({
-// //     resolver: zodResolver(formSchema),
-// //     defaultValues: {
-// //       email: "",
-// //       role: "",
-// //     },
-// //   });
-
-// //   // Handle form submission
-// //   async function onSubmit(values: FormSchemaType) {
-// //     try {
-// //       await inviteAdminPayload({
-// //         email: values.email,
-// //         roleNames: [values.role]
-// //       });
-// //     } catch (error) {
-// //       toast.error("Failed to send admin invitation");
-// //       console.error(error);
-// //     }
-// //   }
-
-
-// //   return (
-// //     <div>
-// //       <Form {...form}>
-// //         <form
-// //           onSubmit={form.handleSubmit(onSubmit)}
-// //           className="mb-8 flex flex-col h-full"
-// //         >
-// //           <div className="mb-6 space-y-4">
-// //             <FormField
-// //               control={form.control}
-// //               name="email"
-// //               render={({ field }) => (
-// //                 <FormItem className="w-full">
-// //                   <FormLabel className="text-[#111827] font-medium text-base">
-// //                     Email Address <span className="text-[#E03137]">*</span>
-// //                   </FormLabel>
-// //                   <FormControl>
-// //                     <Input 
-// //                       type="email" 
-// //                       placeholder="Enter admin email address" 
-// //                       className="h-14"
-// //                       {...field} 
-// //                     />
-// //                   </FormControl>
-// //                   <FormMessage />
-// //                 </FormItem>
-// //               )}
-// //             />
-// //             <FormField
-// //               control={form.control}
-// //               name="role"
-// //               render={({ field }) => (
-// //                 <FormItem className="w-full">
-// //                   <FormLabel className="text-[#111827] font-medium text-base">
-// //                     Role <span className="text-[#E03137]">*</span>
-// //                   </FormLabel>
-// //                   <Select
-// //                     onValueChange={field.onChange}
-// //                     defaultValue={field.value}
-// //                   >
-// //                     <FormControl>
-// //                       <SelectTrigger className="h-14">
-// //                         <SelectValue placeholder="Select admin role" />
-// //                       </SelectTrigger>
-// //                     </FormControl>
-// //                     <SelectContent>
-// //                       {roles.map((role) => (
-// //                         <SelectItem key={role.id} value={role.name}>
-// //                           {role.name.replace(/_/g, " ")}
-// //                         </SelectItem>
-// //                       ))}
-// //                     </SelectContent>
-// //                   </Select>
-// //                   <FormMessage />
-// //                 </FormItem>
-// //               )}
-// //             />
-// //           </div>
-// //           <div className="gap-5 justify-end flex mt-auto">
-// //             <Button
-// //               variant="outline"
-// //               className="w-auto py-4 px-[3rem] font-bold text-base"
-// //               size="xl"
-// //               onClick={(e) => {
-// //                 e.preventDefault();
-// //                 setClose();
-// //               }}
-// //             >
-// //               Cancel
-// //             </Button>
-// //             <Button
-// //               disabled={inviteAdminIsLoading ||admin?.roles[0]?.role?.name !=="super_admin"}
-// //               variant="warning"
-// //               className="w-auto px-[3rem] py-4 font-bold text-base"
-// //               size="xl"
-// //               type="submit"
-// //             >
-// //               Submit
-// //             </Button>
-// //           </div>
-// //         </form>
-    
-// //       </Form>
-// //     </div>
-// //   );
-// // };
-
-// // export default CreateAdmin;
-
-// "use client";
-
-// import {
-//   Form,
-//   FormControl,
-//   FormField,
-//   FormItem,
-//   FormLabel,
-//   FormMessage,
-// } from "@/components/ui/form";
-// import { Input } from "@/components/ui/input";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { useForm } from "react-hook-form";
-// import { z } from "zod";
-// import { Button } from "@/components/ui/button";
-
-// const formSchema = z.object({
-//   email: z.string().min(5, "Name must be greater 4"),
-//   role: z.string({
-//     required_error: "Please select a role.",
-//   }),
-// });
-
-// type FormSchemaType = z.infer<typeof formSchema>;
-// interface iProps {
-//   setClose: () => void;
-// }
-
-// const CreateAdmin: React.FC<iProps> = ({ setClose }) => {
-//   const form = useForm<FormSchemaType>({
-//     resolver: zodResolver(formSchema),
-//     defaultValues: {
-//       email: "",
-//       role: "",
-//     },
-//   });
-
-//   async function onSubmit(values: FormSchemaType) {
-//     await Promise.resolve(true);
-//     console.warn(values);
-//   }
-
-//   return (
-//     <div>
-//       <Form {...form}>
-//         <form
-//           onSubmit={form.handleSubmit(onSubmit)}
-//           className="mb-8 flex flex-col h-full"
-//         >
-//           <div className="mb-6">
-//             <FormField
-//               control={form.control}
-//               name="email"
-//               render={({ field }) => (
-//                 <FormItem className="w-full">
-//                   <FormLabel>Name</FormLabel>
-//                   <FormControl>
-//                     <Input type="text" placeholder="Admin name" {...field} />
-//                   </FormControl>
-//                   <FormMessage />
-//                 </FormItem>
-//               )}
-//             />
-//             <FormField
-//               control={form.control}
-//               name="role"
-//               render={({ field }) => (
-//                 <FormItem className="w-full">
-//                   <FormLabel>Role</FormLabel>
-//                   <Select
-//                     onValueChange={field.onChange}
-//                     defaultValue={field.value}
-//                   >
-//                     <FormControl>
-//                       <SelectTrigger className="h-14">
-//                         <SelectValue placeholder="Admin role" />
-//                       </SelectTrigger>
-//                     </FormControl>
-//                     <SelectContent>
-//                       <SelectItem value="usdc">USDC</SelectItem>
-//                       <SelectItem value="usdt">USDT</SelectItem>
-//                     </SelectContent>
-//                   </Select>
-//                   <FormMessage />
-//                 </FormItem>
-//               )}
-//             />
-//           </div>
-//           <div className="gap-5 justify-end flex mt-auto">
-//             <Button
-//               variant="outline"
-//               className="w-auto py-4 px-[3rem] font-bold text-base"
-//               size="xl"
-//               onClick={(e) => {
-//                 e.preventDefault();
-//                 setClose();
-//               }}
-//             >
-//               Cancel
-//             </Button>
-//             <Button
-//               variant="warning"
-//               className="w-auto px-[3rem] py-4 font-bold text-base"
-//               size="xl"
-//             >
-//               Submit
-//             </Button>
-//           </div>
-//         </form>
-//       </Form>
-//     </div>
-//   );
-// };
-
-// export default CreateAdmin;
-
-
-// "use client"
-
-// import React, { useEffect, useState } from "react";
-// import {
-//   Form,
-//   FormControl,
-//   FormField,
-//   FormItem,
-//   FormLabel,
-//   FormMessage,
-// } from "@/components/ui/form";
-// import { Input } from "@/components/ui/input";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { useForm } from "react-hook-form";
-// import { z } from "zod";
-// import { Button } from "@/components/ui/button";
-// import {  useInviteAdmin } from "@/services/admin/index";
-// import {  RoleData } from "@/types";
-// import { toast } from "sonner";
-// import { useGetAdmins } from "@/services/admin";
-
-
-
-// const formSchema = z.object({
-//   email: z.string().email("Please enter a valid email address"),
-//   role: z.string({
-//     required_error: "Please select a role.",
-//   }),
-// });
-
-// type FormSchemaType = z.infer<typeof formSchema>;
-// interface IProps {
-//   setClose: () => void;
-//   roles?: RoleData[];
-//   setUrl:(data:string)=>void;
-// }
-
-// const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
-
-//    const[email, setEmail] = useState("");
-
-//    useEffect(() => {
-//     if (typeof window !== "undefined") {
-//       const email = localStorage.getItem("userEmail") || 
-//                    sessionStorage.getItem("userEmail");
-//       // Use the email
-//       setEmail(email? email : "")
-//     }
-//   }, []);
-
-//   const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
-//   const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
-
-//   console.log(email, "email", adminsData, "data", admin, "filter" )
-
-//   //super_admin 
-//   // admin.roles.role.name !==super_admin
- 
-//   const { inviteAdminPayload, inviteAdminIsLoading} = useInviteAdmin((data: any) => {
-//     toast.success("Admin invitation sent successfully");
-//     console.log(data, "check reg data");
-//     console.log(data.data.inviteUrl, "check url");
-//     setUrl(data.data.inviteUrl)
-//      // Use the response data passed to onSuccess
-//     setClose();
-
-//   });
-
-
-//   console.log("inviteRolesss", roles)
-//   // Initialize form with react-hook-form
-//   const form = useForm<FormSchemaType>({
-//     resolver: zodResolver(formSchema),
-//     defaultValues: {
-//       email: "",
-//       role: "",
-//     },
-//   });
-
-//   // Handle form submission
-//   async function onSubmit(values: FormSchemaType) {
-//     try {
-//       await inviteAdminPayload({
-//         email: values.email,
-//         roleNames: [values.role]
-//       });
-//     } catch (error) {
-//       toast.error("Failed to send admin invitation");
-//       console.error(error);
-//     }
-//   }
-
-
-//   return (
-//     <div>
-//       <Form {...form}>
-//         <form
-//           onSubmit={form.handleSubmit(onSubmit)}
-//           className="mb-8 flex flex-col h-full"
-//         >
-//           <div className="mb-6 space-y-4">
-//             <FormField
-//               control={form.control}
-//               name="email"
-//               render={({ field }) => (
-//                 <FormItem className="w-full">
-//                   <FormLabel className="text-[#111827] font-medium text-base">
-//                     Email Address <span className="text-[#E03137]">*</span>
-//                   </FormLabel>
-//                   <FormControl>
-//                     <Input 
-//                       type="email" 
-//                       placeholder="Enter admin email address" 
-//                       className="h-14"
-//                       {...field} 
-//                     />
-//                   </FormControl>
-//                   <FormMessage />
-//                 </FormItem>
-//               )}
-//             />
-//             <FormField
-//               control={form.control}
-//               name="role"
-//               render={({ field }) => (
-//                 <FormItem className="w-full">
-//                   <FormLabel className="text-[#111827] font-medium text-base">
-//                     Role <span className="text-[#E03137]">*</span>
-//                   </FormLabel>
-//                   <Select
-//                     onValueChange={field.onChange}
-//                     defaultValue={field.value}
-//                   >
-//                     <FormControl>
-//                       <SelectTrigger className="h-14">
-//                         <SelectValue placeholder="Select admin role" />
-//                       </SelectTrigger>
-//                     </FormControl>
-//                     <SelectContent>
-//                       {roles.map((role) => (
-//                         <SelectItem key={role.id} value={role.name}>
-//                           {role.name.replace(/_/g, " ")}
-//                         </SelectItem>
-//                       ))}
-//                     </SelectContent>
-//                   </Select>
-//                   <FormMessage />
-//                 </FormItem>
-//               )}
-//             />
-//           </div>
-//           <div className="gap-5 justify-end flex mt-auto">
-//             <Button
-//               variant="outline"
-//               className="w-auto py-4 px-[3rem] font-bold text-base"
-//               size="xl"
-//               onClick={(e) => {
-//                 e.preventDefault();
-//                 setClose();
-//               }}
-//             >
-//               Cancel
-//             </Button>
-//             <Button
-//               disabled={inviteAdminIsLoading ||admin?.roles[0]?.role?.name !=="super_admin"}
-//               variant="warning"
-//               className="w-auto px-[3rem] py-4 font-bold text-base"
-//               size="xl"
-//               type="submit"
-//             >
-//               Submit
-//             </Button>
-//           </div>
-//         </form>
-    
-//       </Form>
-//     </div>
-//   );
-// };
-
-// export default CreateAdmin;
-
-// "use client"
-
-// import React, { useEffect, useState } from "react";
-// import {
-//   Form,
-//   FormControl,
-//   FormField,
-//   FormItem,
-//   FormLabel,
-//   FormMessage,
-// } from "@/components/ui/form";
-// import { Input } from "@/components/ui/input";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
-// import { zodResolver } from "@hookform/resolvers/zod";
-// import { useForm } from "react-hook-form";
-// import { z } from "zod";
-// import { Button } from "@/components/ui/button";
-// import {  useInviteAdmin } from "@/services/admin/index";
-// import { AdminsData, RoleData } from "@/types";
-// import { toast } from "sonner";
-
-// const formSchema = z.object({
-//   email: z.string().email("Please enter a valid email address"),
-//   role: z.string({
-//     required_error: "Please select a role.",
-//   }),
-// });
-
-// type FormSchemaType = z.infer<typeof formSchema>;
-// interface IProps {
-//   setClose: () => void;
-//   roles?: RoleData[];
-// }
-
-// const CreateAdmin: React.FC<IProps> = ({ setClose, roles = [] }) => {
-//   const { inviteAdminPayload, inviteAdminIsLoading } = useInviteAdmin(() => {
-//     toast.success("Admin invitation sent successfully");
-//     setClose();
-//   });
-
-//   // Initialize form with react-hook-form
-//   const form = useForm<FormSchemaType>({
-//     resolver: zodResolver(formSchema),
-//     defaultValues: {
-//       email: "",
-//       role: "",
-//     },
-//   });
-
-//   // Handle form submission
-//   async function onSubmit(values: FormSchemaType) {
-//     try {
-//       await inviteAdminPayload({
-//         email: values.email,
-//         roleNames: [values.role]
-//       });
-//     } catch (error) {
-//       toast.error("Failed to send admin invitation");
-//       console.error(error);
-//     }
-//   }
-
-
-//   return (
-//     <div>
-//       <Form {...form}>
-//         <form
-//           onSubmit={form.handleSubmit(onSubmit)}
-//           className="mb-8 flex flex-col h-full"
-//         >
-//           <div className="mb-6 space-y-4">
-//             <FormField
-//               control={form.control}
-//               name="email"
-//               render={({ field }) => (
-//                 <FormItem className="w-full">
-//                   <FormLabel className="text-[#111827] font-medium text-base">
-//                     Email Address <span className="text-[#E03137]">*</span>
-//                   </FormLabel>
-//                   <FormControl>
-//                     <Input 
-//                       type="email" 
-//                       placeholder="Enter admin email address" 
-//                       className="h-14"
-//                       {...field} 
-//                     />
-//                   </FormControl>
-//                   <FormMessage />
-//                 </FormItem>
-//               )}
-//             />
-//             <FormField
-//               control={form.control}
-//               name="role"
-//               render={({ field }) => (
-//                 <FormItem className="w-full">
-//                   <FormLabel className="text-[#111827] font-medium text-base">
-//                     Role <span className="text-[#E03137]">*</span>
-//                   </FormLabel>
-//                   <Select
-//                     onValueChange={field.onChange}
-//                     defaultValue={field.value}
-//                   >
-//                     <FormControl>
-//                       <SelectTrigger className="h-14">
-//                         <SelectValue placeholder="Select admin role" />
-//                       </SelectTrigger>
-//                     </FormControl>
-//                     <SelectContent>
-//                       {roles.map((role) => (
-//                         <SelectItem key={role.id} value={role.name}>
-//                           {role.name.replace(/_/g, " ")}
-//                         </SelectItem>
-//                       ))}
-//                     </SelectContent>
-//                   </Select>
-//                   <FormMessage />
-//                 </FormItem>
-//               )}
-//             />
-//           </div>
-//           <div className="gap-5 justify-end flex mt-auto">
-//             <Button
-//               variant="outline"
-//               className="w-auto py-4 px-[3rem] font-bold text-base"
-//               size="xl"
-//               onClick={(e) => {
-//                 e.preventDefault();
-//                 setClose();
-//               }}
-//             >
-//               Cancel
-//             </Button>
-//             <Button
-//               disabled={inviteAdminIsLoading}
-//               variant="warning"
-//               className="w-auto px-[3rem] py-4 font-bold text-base"
-//               size="xl"
-//               type="submit"
-//             >
-//               Submit
-//             </Button>
-//           </div>
-//         </form>
-//       </Form>
-//     </div>
-//   );
-// };
-
-// export default CreateAdmin;
-
-"use client"
-
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Form,
   FormControl,
@@ -679,61 +21,181 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {  useInviteAdmin } from "@/services/admin/index";
-import { AdminsData, RoleData } from "@/types";
+import { useInviteAdmin } from "@/services/admin/index";
 import { toast } from "sonner";
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
+// Types
+interface RoleData {
+  id: number;
+  name: string;
+  description?: string;
+  permissions?: any[];
+}
 
-const formSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  role: z.string({
-    required_error: "Please select a role.",
-  }),
-});
-
-type FormSchemaType = z.infer<typeof formSchema>;
 interface IProps {
   setClose: () => void;
   roles?: RoleData[];
-  setUrl:(data:string)=>void;
+  setUrl: (data: string) => void;
 }
 
+interface InviteResponse {
+  success: boolean;
+  message: string;
+  data: {
+    userId: number;
+    email: string;
+    type: string;
+    inviteUrl: string;
+    expiresAt?: string | null;
+    expiryHours?: number | null;
+    debug?: {
+      tokenGenerated: boolean;
+      urlContainsToken: boolean;
+      totalParams: number;
+    };
+  };
+}
+
+// Enhanced form validation schema
+const formSchema = z.object({
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
+  role: z
+    .string({
+      required_error: "Please select a role.",
+    })
+    .min(1, "Please select a role")
+    .refine((role) => role === "admin", "Only admin role is currently supported"),
+});
+
+type FormSchemaType = z.infer<typeof formSchema>;
+
 const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
- 
-  const { inviteAdminPayload, inviteAdminIsLoading} = useInviteAdmin((data: any) => {
-    toast.success("Admin invitation sent successfully");
-    console.log(data, "check reg data");
-    setUrl(data.data.inviteUrl)
-     // Use the response data passed to onSuccess
-    setClose();
+  // Enhanced success callback with detailed validation
+  // In your CreateAdmin component, update the success callback:
+  const { inviteAdminPayload, inviteAdminIsLoading, inviteAdminError } = useInviteAdmin(
+    (data: InviteResponse) => {
+      console.log("✅ SUCCESS: Admin invitation callback received:", data);
 
-  });
+      if (data?.success && data?.data?.inviteUrl) {
+        console.log("✅ Generated URL:", data.data.inviteUrl);
 
+        // ✅ PARSE AND CHECK THE URL
+        try {
+          const url = new URL(data.data.inviteUrl);
+          const params = Object.fromEntries(url.searchParams);
+          console.log("📋 URL Parameters:", params);
 
-  console.log("inviteRolesss", roles)
-  // Initialize form with react-hook-form
+          const required = ['email', 'userId', 'token', 'signature', 'timestamp'];
+          const missing = required.filter(param => !params[param]);
+
+          if (missing.length > 0) {
+            console.error('❌ Generated URL missing:', missing);
+            toast.error(`Generated URL is missing: ${missing.join(', ')}`);
+          } else {
+            console.log('✅ All required parameters present in URL');
+            toast.success("Admin invitation sent successfully");
+            setUrl(data.data.inviteUrl);
+            setClose();
+          }
+        } catch (urlError) {
+          console.error("❌ Invalid URL:", urlError);
+          toast.error("Generated URL is invalid");
+        }
+      }
+    }
+  );
+
+  // Filter to only show admin roles
+  const adminRoles = roles.filter((role: RoleData) =>
+    role.name === "admin" || role.name === "super_admin"
+  );
+
+  console.log("Available roles:", roles);
+  console.log("Filtered admin roles:", adminRoles);
+
+  // Initialize form
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      role: "",
+      role: "admin",
     },
   });
 
-  // Handle form submission
-  async function onSubmit(values: FormSchemaType) {
+  // Handle form submission with enhanced error handling
+  async function onSubmit(values: FormSchemaType): Promise<void> {
+    console.log("Form submitted with values:", values);
+
+    if (isSubmitting || inviteAdminIsLoading) {
+      console.log("Already submitting, preventing duplicate submission");
+      return;
+    }
+
+    setIsSubmitting(true);
+
     try {
-      await inviteAdminPayload({
-        email: values.email,
-        roleNames: [values.role]
-      });
-    } catch (error) {
-      toast.error("Failed to send admin invitation");
-      console.error(error);
+      // Enhanced payload with proper validation
+      const payload = {
+        email: values.email.trim().toLowerCase(),
+        roleNames: [values.role], // Backend expects array
+        expiryHours: 24, // Default 24 hours
+        noExpiry: false
+      };
+
+      console.log("Sending payload:", payload);
+
+      const response = await inviteAdminPayload(payload);
+      console.log("API Response:", response);
+
+      // Additional success handling
+      if (response?.success) {
+        console.log("✅ Invitation sent successfully");
+      }
+
+    } catch (error: any) {
+      console.error("Form submission error:", error);
+
+      // Handle different types of errors with better messaging
+      let errorMessage = "Failed to send admin invitation";
+
+      if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+
+      // Show user-friendly error messages
+      if (errorMessage.includes('already exists')) {
+        toast.error("An admin with this email already exists");
+      } else if (errorMessage.includes('configuration')) {
+        toast.error("Server configuration error. Please contact administrator.");
+      } else if (errorMessage.includes('token')) {
+        toast.error("Failed to generate secure invitation link");
+      } else {
+        toast.error(errorMessage);
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
+  // Show loading state if roles are still loading
+  if (!roles || roles.length === 0) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+        <span>Loading roles...</span>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -752,17 +214,23 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                     Email Address <span className="text-[#E03137]">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      type="email" 
-                      placeholder="Enter admin email address" 
+                    <Input
+                      type="email"
+                      placeholder="Enter admin email address"
                       className="h-14"
-                      {...field} 
+                      {...field}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        console.log("Email changed:", e.target.value);
+                      }}
+                      disabled={isSubmitting || inviteAdminIsLoading}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="role"
@@ -772,8 +240,12 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                     Role <span className="text-[#E03137]">*</span>
                   </FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    onValueChange={(value: string) => {
+                      field.onChange(value);
+                      console.log("Role changed:", value);
+                    }}
+                    value={field.value}
+                    disabled={isSubmitting || inviteAdminIsLoading}
                   >
                     <FormControl>
                       <SelectTrigger className="h-14">
@@ -781,11 +253,22 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {roles.map((role) => (
-                        <SelectItem className={role.name !== "admin" ? "hidden":""} key={role.id} value={role.name}>
-                          {role.name.replace(/_/g, " ")}
+                      {adminRoles.length > 0 ? (
+                        adminRoles.map((role: RoleData) => (
+                          <SelectItem key={role.id} value={role.name}>
+                            {role.name.replace(/_/g, " ").toUpperCase()}
+                            {role.description && (
+                              <span className="text-sm text-gray-500 ml-2">
+                                - {role.description}
+                              </span>
+                            )}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="admin">
+                          Admin (Default)
                         </SelectItem>
-                      ))}
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -793,30 +276,51 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
               )}
             />
           </div>
+
+          {/* Show any invite errors */}
+          {inviteAdminError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
+              <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+              <span className="text-red-700 text-sm">{inviteAdminError}</span>
+            </div>
+          )}
+
           <div className="gap-5 justify-end flex mt-auto">
             <Button
               variant="outline"
               className="w-auto py-4 px-[3rem] font-bold text-base"
               size="xl"
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
+                console.log("Cancel clicked");
                 setClose();
               }}
+              disabled={isSubmitting || inviteAdminIsLoading}
             >
               Cancel
             </Button>
             <Button
-              disabled={inviteAdminIsLoading}
+              disabled={isSubmitting || inviteAdminIsLoading}
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"
               type="submit"
             >
-              Submit
+              {isSubmitting || inviteAdminIsLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending Invitation...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Send Invitation
+                </>
+              )}
             </Button>
           </div>
         </form>
-    
       </Form>
     </div>
   );

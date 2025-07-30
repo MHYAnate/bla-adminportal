@@ -27,6 +27,8 @@ const PermissionSwitch = React.forwardRef<React.ElementRef<"button">, Permission
       }
     }
 
+
+
     return (
       <button
         ref={ref}

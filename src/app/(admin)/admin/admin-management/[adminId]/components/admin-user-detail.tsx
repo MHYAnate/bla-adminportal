@@ -16,9 +16,10 @@ import GeneralInfo from "./general-info";
 import { useSearchParams } from "next/navigation";
 import { useHandlePush } from "@/hooks/use-handle-push";
 import { ROUTES } from "@/constant/routes";
-import PermissionsTab from "./permissions-tab";
+import { PermissionsTab } from "./permissions-tab";
 import { useGetAdmins } from "@/services/admin";
 import RolesTab from "./roleTab";
+
 interface AdminUserDetailProps {
 	adminId: string;
 	roles: any;
@@ -35,13 +36,17 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 	const { adminsData, isAdminsLoading, refetchAdmins } = useGetAdmins({
 		enabled: true,
 	});
-	console.log(adminId, "id", adminsData);
 
-	console.log("compare to saferroledata", roles);
+	// ✅ FIXED: Find admin with proper type checking
+	const admin = adminsData.find((admin: any) => admin.id.toString() === adminId.toString());
 
-	const admin = adminsData.find((admin: { id: string }) => admin.id == adminId);
-
-	console.log("adminData", admin);
+	if (admin && admin.role && (!admin.roles || admin.roles.length === 0)) {
+		// Find the role object from rolesData
+		const roleObject = roles?.data?.find((r: any) => r.name.toLowerCase() === admin.role.toLowerCase());
+		if (roleObject) {
+			admin.roles = [{ role: roleObject }];
+		}
+	}
 
 	const tabs = [
 		{
@@ -58,7 +63,14 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 		},
 	];
 
-	// If still loading, show a simple loading state
+	console.log('=== ADMIN USER DETAIL DEBUG ===');
+	console.log('adminId:', adminId);
+	console.log('admin found:', admin);
+	console.log('admin.roles:', admin?.roles);
+	console.log('roles passed as prop:', roles);
+	console.log('adminsData:', adminsData);
+	console.log('================================');
+
 	if (isAdminsLoading) {
 		return (
 			<div>
@@ -78,11 +90,30 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 		);
 	}
 
-	// If we have data, determine the status
-	const status = admin?.status && admin?.status;
+	if (!admin) {
+		return (
+			<div>
+				<Header title="Administrator Information" showBack={true} />
+				<div className="mt-5">
+					<Card>
+						<CardContent className="p-6">
+							<div className="flex justify-center items-center h-60">
+								<p className="text-muted-foreground">
+									Admin not found
+								</p>
+							</div>
+						</CardContent>
+					</Card>
+				</div>
+			</div>
+		);
+	}
+
+	// ✅ FIXED: Proper data extraction
+	const status = admin?.adminStatus || admin?.status || "INACTIVE";
 	const adminRoles = admin?.roles || [];
-	const adminName = admin?.adminProfile?.username || "Administrator";
-	const adminPhone = admin?.adminProfile?.phone || "number";
+	const adminName = admin?.fullName || admin?.adminProfile?.fullName || "Administrator";
+	const adminPhone = admin?.phone || admin?.adminProfile?.phone || "Not provided";
 	const adminEmail = admin?.email || "admin@example.com";
 
 	return (
@@ -106,10 +137,10 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 									{adminName}
 								</h6>
 								<p className="text-[#687588] text-sm mb-2.5 text-center">
-									{admin?.roles[0]?.role?.name}
+									{admin?.role || adminRoles[0]?.role?.name || adminRoles[0]?.name || "Admin"}
 								</p>
 								<p className="text-[#687588] text-sm mb-6 text-center">
-									@{adminName?.toLowerCase().replace(/\s+/g, "_")}
+									@{admin?.username || adminName?.toLowerCase().replace(/\s+/g, "_")}
 								</p>
 								<div className="flex justify-center">
 									<Badge
@@ -117,8 +148,8 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 											status?.toLowerCase() === "active"
 												? "success"
 												: status?.toLowerCase() === "pending"
-												? "tertiary"
-												: "warning"
+													? "tertiary"
+													: "warning"
 										}
 										className="py-1 px-[26px] font-medium"
 									>
@@ -126,21 +157,27 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 									</Badge>
 								</div>
 							</div>
-							<div className="mb-6 pb-6 border-b border-[#F1F2F4]">
-								<div className="flex gap-3 items-center mb-4">
-									<MailIcon />
+							<div className="mb-6 pb-6 border-b border-[#F1F2F4] px-auto">
+								<div className="flex gap-3 items-start mb-4">
+									<div className="flex-shrink-0 mt-0.5">
+										<MailIcon />
+									</div>
 									<p className="font-semibold text-sm text-[#111827]">
 										{adminEmail}
 									</p>
 								</div>
 								<div className="flex gap-3 items-center mb-4">
-									<CallIcon />
+									<div className="flex-shrink-0">
+										<CallIcon />
+									</div>
 									<p className="font-semibold text-sm text-[#111827]">
-										{adminPhone || "Not provided"}
+										{adminPhone}
 									</p>
 								</div>
 								<div className="flex gap-3 items-center mb-4">
-									<LocationIcon />
+									<div className="flex-shrink-0">
+										<LocationIcon />
+									</div>
 									<p className="font-semibold text-sm text-[#111827]">
 										{admin?.location || "Not specified"}
 									</p>
@@ -165,11 +202,10 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 										}
 									>
 										<p
-											className={`w-full text-center pb-[9px] ${
-												(tabParam || "general") === tab.value
-													? "border-b-2 border-[#EC9F01] text-[#030C0A]"
-													: "border-b-2 border-transparent text-[#111827]"
-											}`}
+											className={`w-full text-center pb-[9px] ${(tabParam || "general") === tab.value
+												? "border-b-2 border-[#EC9F01] text-[#030C0A]"
+												: "border-b-2 border-transparent text-[#111827]"
+												}`}
 										>
 											{tab.text}
 										</p>
@@ -178,13 +214,16 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 							</TabsList>
 
 							<TabsContent value="general">
-								<GeneralInfo adminData={admin} roles={roles.data} />
+								<GeneralInfo adminData={admin} roles={roles} />
 							</TabsContent>
 							<TabsContent value="role">
-								<RolesTab adminData={admin} roles={roles.data} />
+								<RolesTab
+									adminData={admin}
+									roles={roles}
+								/>
 							</TabsContent>
 							<TabsContent value="permissions">
-								<PermissionsTab adminData={admin} roles={roles.data} />
+								<PermissionsTab adminData={admin} />
 							</TabsContent>
 						</Tabs>
 					</CardContent>
