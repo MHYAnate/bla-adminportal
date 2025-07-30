@@ -17,9 +17,18 @@ export function setAuthToken(token: string, remember: boolean = false): void {
     localStorage.removeItem(AUTH_TOKEN_KEY);
   }
 
-  // Set cookie as backup (7 days expiry)
+  // Set cookie as backup (7 days expiry) - handle production vs development
   const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toUTCString();
-  document.cookie = `${AUTH_TOKEN_KEY}=${token}; expires=${expires}; path=/; Secure; SameSite=Lax`;
+  const isProduction = process.env.NODE_ENV === 'production';
+  const cookieOptions = [
+    `${AUTH_TOKEN_KEY}=${token}`,
+    `expires=${expires}`,
+    'path=/',
+    isProduction ? 'Secure' : '',
+    'SameSite=Lax'
+  ].filter(Boolean).join('; ');
+  
+  document.cookie = cookieOptions;
 }
 
 export function getAuthToken(): string | null {

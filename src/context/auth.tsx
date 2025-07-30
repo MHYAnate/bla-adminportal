@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthToken, setAuthToken, clearAuthTokens } from '@/lib/auth';
+import { checkAuth } from '@/services/auth';
 
 type AuthContextType = {
     isAuthenticated: boolean;
@@ -19,14 +20,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const router = useRouter();
 
     useEffect(() => {
-        const checkAuth = () => {
-            const token = getAuthToken();
-            console.log('Auth check - token exists:', !!token);
-            setIsAuthenticated(!!token);
+        const checkAuthStatus = async () => {
+            console.log('Checking authentication status...');
+
+            // First check if token exists and is valid (client-side)
+            const isValidLocally = checkAuth();
+
+            if (isValidLocally) {
+                // Optionally validate with server (uncomment if you have a check endpoint)
+                // try {
+                //     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/check`, {
+                //         headers: {
+                //             'Authorization': `Bearer ${getAuthToken()}`,
+                //         },
+                //     });
+                //     
+                //     if (response.ok) {
+                //         setIsAuthenticated(true);
+                //     } else {
+                //         console.log('Server token validation failed');
+                //         clearAuthTokens();
+                //         setIsAuthenticated(false);
+                //     }
+                // } catch (error) {
+                //     console.error('Token validation error:', error);
+                //     // Don't clear token on network error, use local validation
+                //     setIsAuthenticated(true);
+                // }
+
+                setIsAuthenticated(true);
+            } else {
+                setIsAuthenticated(false);
+            }
+
             setIsLoading(false);
         };
 
-        checkAuth();
+        checkAuthStatus();
     }, []);
 
     const login = (token: string, remember = false) => {

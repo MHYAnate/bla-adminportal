@@ -1,101 +1,106 @@
+// services/httpService.js
 import axios from "axios";
-import { Storage } from "@/lib/utils";
-import dotenv from 'dotenv';
-dotenv.config();
+import { getAuthToken, clearAuthTokens } from "@/lib/auth";
 
-class HttpService {
-  constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+
+// Create axios instance
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 30000,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Request interceptor to add token
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    console.log(`${config.method?.toUpperCase()} ${config.url}`);
+    return config;
+  },
+  (error) => {
+    console.error("Request interceptor error:", error);
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor to handle auth errors
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    console.error("API Error:", error.response?.status, error.config?.url);
     
-    // Create axios instance with interceptors
-    this.api = axios.create({
-      baseURL: this.baseUrl,
+    // Handle 401 unauthorized - token expired or invalid
+    if (error.response?.status === 401) {
+      console.log("Unauthorized request - clearing tokens");
+      clearAuthTokens();
+      
+      // Only redirect if we're in the browser and not already on login page
+      if (typeof window !== "undefined" && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
+const httpService = {
+  // GET request with token
+  getData: async (endpoint) => {
+    const response = await axiosInstance.get(endpoint);
+    return response.data;
+  },
+
+  // POST request with token
+  postData: async (data, endpoint) => {
+    const response = await axiosInstance.post(endpoint, data);
+    return response.data;
+  },
+
+  // PUT request with token
+  putData: async (data, endpoint) => {
+    const response = await axiosInstance.put(endpoint, data);
+    return response.data;
+  },
+
+  // PATCH request with token
+  patchData: async (data, endpoint) => {
+    const response = await axiosInstance.patch(endpoint, data);
+    return response.data;
+  },
+
+  // DELETE request with token
+  deleteData: async (endpoint) => {
+    const response = await axiosInstance.delete(endpoint);
+    return response.data;
+  },
+
+  // POST request without token (for login, register, etc.)
+  postDataWithoutToken: async (data, endpoint) => {
+    const response = await axios.post(`${API_BASE_URL}/${endpoint}`, data, {
       headers: {
-        'Content-Type': 'application/json',
-      }
+        "Content-Type": "application/json",
+      },
+      timeout: 30000,
     });
+    return response.data;
+  },
 
-    // Add request interceptor to inject token
-    this.api.interceptors.request.use((config) => {
-      const token = Storage.get("token");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    }, (error) => {
-      return Promise.reject(error);
+  // GET request without token
+  getDataWithoutToken: async (endpoint) => {
+    const response = await axios.get(`${API_BASE_URL}/${endpoint}`, {
+      timeout: 30000,
     });
+    return response.data;
+  },
+};
 
-    // Add response interceptor to handle errors
-    this.api.interceptors.response.use(
-      (response) => response,
-      (error) => {
-        if (error.response?.status === 401) {
-          // Handle unauthorized access
-          Storage.remove("token");
-          if (typeof window !== 'undefined') {
-            window.location.href = '/login';
-          }
-        }
-        return Promise.reject(error);
-      }
-    );
-  }
-
-  // httpService.js
-getServiceUrl(url) {
-  // Ensure baseUrl doesn't end with a slash
-  const cleanBaseUrl = this.baseUrl.endsWith('/') 
-    ? this.baseUrl.slice(0, -1) 
-    : this.baseUrl;
-  
-  // Ensure url doesn't start with a slash
-  const cleanUrl = url.startsWith('/') 
-    ? url.slice(1) 
-    : url;
-  
-  return `${cleanBaseUrl}/${cleanUrl}`;
-}
-
-  async postData(payload, url) {
-    return this.api.post(this.getServiceUrl(url), payload);
-  }
-
-  async postDataWithoutToken(payload, url) {
-    return axios.post(this.getServiceUrl(url), payload);
-  }
-
-  async getData(url) {
-    return this.api.get(this.getServiceUrl(url));
-  }
-
-  async getDataWithoutToken(url) {
-    return axios.get(this.getServiceUrl(url));
-  }
-
-  async putData(payload, url) {
-    return this.api.put(this.getServiceUrl(url), payload);
-  }
-
-  async putDataWithoutToken(payload, url) {
-    return axios.put(this.getServiceUrl(url), payload);
-  }
-
-  async patchData(payload, url) {
-    return this.api.patch(this.getServiceUrl(url), payload);
-  }
-
-  async patchDataWithoutToken(payload, url) {
-    return axios.patch(this.getServiceUrl(url), payload);
-  }
-
-  async deleteData(url) {
-    return this.api.delete(this.getServiceUrl(url));
-  }
-
-  async deleteDataWithoutToken(url) {
-    return axios.delete(this.getServiceUrl(url));
-  }
-}
-
-export default new HttpService();
+export default httpService;

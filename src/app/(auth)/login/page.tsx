@@ -44,13 +44,16 @@ export default function LoginPage() {
 
   const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
     console.log('Login response received:', res);
-    const token = res?.data?.token;
+
+    // Check multiple possible token locations in the response
+    const token = res?.token || res?.data?.token || res?.accessToken || res?.data?.accessToken;
+
     if (token) {
       const rememberMe = form.getValues('remember');
       console.log('Logging in with remember:', rememberMe);
       login(token, rememberMe);
     } else {
-      console.error('No token received in login response');
+      console.error('No token received in login response:', res);
       showErrorAlert("Login failed. No authentication token received.");
     }
   });
