@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -19,12 +21,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { setToken } from '@/lib/auth';
+import { setAuthToken } from '@/lib/auth';
 
 const formSchema = z.object({
   email: z.string().email("Invalid email provided"),
-  password: z.string(),
-  remember: z.boolean().default(false).optional(),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  remember: z.boolean().default(false),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
@@ -35,8 +37,8 @@ export default function LoginPage() {
   const { loginIsLoading, loginPayload } = useLogin((res: any) => {
     const token = res?.data?.token;
     if (token) {
-      setToken(token); // Using the centralized token setter
-      router.push('/admin'); // Using router push instead of window.location
+      setAuthToken(token, form.getValues("remember")); // Pass remember me value
+      router.push('/admin');
     }
   });
 

@@ -1,18 +1,18 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { clearTokens } from '@/lib/auth';
+import { clearAuthTokens } from '@/lib/auth';
 
 export default function LogoutButton() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
   const handleLogout = () => {
-    clearTokens();
-    // Use window.location to ensure complete cleanup
+    clearAuthTokens();
+    // Full page reload to clear all state
     window.location.href = '/login';
   };
 
@@ -53,5 +53,3 @@ export default function LogoutButton() {
     </Dialog>
   );
 }
-
-
