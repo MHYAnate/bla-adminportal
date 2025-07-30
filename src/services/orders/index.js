@@ -4,8 +4,6 @@ import httpService from "../httpService";
 import useFetchItem from "../useFetchItem";
 import useMutateItem from "../useMutateItem";
 
-
-
 export const useGetOrders = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchOrders"],
@@ -51,7 +49,62 @@ export const useGetOrders = () => {
   };
 };
 
-// Fixed Orders Analytics Hook
+export const useGetOrderInfo = () => {
+  const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
+    queryKey: ["fetchOrderInfo"],
+    queryFn: (id) => httpService.getData(routes.getOrderInfo(id)),
+    retry: 2,
+  });
+
+  return {
+    getOrderInfoIsLoading: isLoading,
+    getOrderInfoData: data?.data?.data || {},
+    getOrderInfoError: ErrorHandler(error),
+    refetchOrderInfo: refetch,
+    setOrderInfoFilter: setFilter,
+  };
+};
+
+export const useGetOrdersSummary = () => {
+  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
+    queryKey: ["fetchOrdersSummary"],
+    queryFn: () => httpService.getData(routes.orderSummaryChart()),
+    retry: 2,
+  });
+
+  console.log('🔍 useGetOrdersSummary - Raw data:', data);
+
+  // Process data with multiple fallbacks
+  let processedData = [];
+  
+  if (data) {
+    if (Array.isArray(data)) {
+      processedData = data;
+    } else if (data.data && Array.isArray(data.data)) {
+      processedData = data.data;
+    } else if (data.result && Array.isArray(data.result)) {
+      processedData = data.result;
+    } else if (data.summary && Array.isArray(data.summary)) {
+      processedData = data.summary;
+    } else if (data.items && Array.isArray(data.items)) {
+      processedData = data.items;
+    } else {
+      // If it's summary data object, keep as is
+      processedData = data;
+    }
+  }
+
+  console.log('🔍 useGetOrdersSummary - Processed data:', processedData);
+
+  return {
+    getOrdersSummaryIsLoading: isLoading,
+    getOrdersSummaryData: processedData,
+    getOrdersSummaryError: ErrorHandler(error),
+    refetchOrdersSummary: refetch,
+    setOrdersSummaryFilter: setFilter,
+  };
+};
+
 export const useGetOrdersAnalytics = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchOrdersAnalytics"],
@@ -101,48 +154,6 @@ export const useGetOrdersAnalytics = () => {
   };
 };
 
-// Fixed Orders Summary Hook
-export const useGetOrdersSummary = () => {
-  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
-    queryKey: ["fetchOrdersSummary"],
-    queryFn: () => httpService.getData(routes.orderSummaryChart()),
-    retry: 2,
-  });
-
-  console.log('🔍 useGetOrdersSummary - Raw data:', data);
-
-  // Process data with multiple fallbacks
-  let processedData = [];
-  
-  if (data) {
-    if (Array.isArray(data)) {
-      processedData = data;
-    } else if (data.data && Array.isArray(data.data)) {
-      processedData = data.data;
-    } else if (data.result && Array.isArray(data.result)) {
-      processedData = data.result;
-    } else if (data.summary && Array.isArray(data.summary)) {
-      processedData = data.summary;
-    } else if (data.items && Array.isArray(data.items)) {
-      processedData = data.items;
-    } else {
-      // If it's summary data object, keep as is
-      processedData = data;
-    }
-  }
-
-  console.log('🔍 useGetOrdersSummary - Processed data:', processedData);
-
-  return {
-    getOrdersSummaryIsLoading: isLoading,
-    getOrdersSummaryData: processedData,
-    getOrdersSummaryError: ErrorHandler(error),
-    refetchOrdersSummary: refetch,
-    setOrdersSummaryFilter: setFilter,
-  };
-};
-
-// Fixed Sales Data Hook
 export const useGetSalesData = ({ year, enabled = true } = {}) => {
   const {
     isLoading,
@@ -191,5 +202,29 @@ export const useGetSalesData = ({ year, enabled = true } = {}) => {
     salesYear: salesYear,
     salesError: ErrorHandler(error),
     refetchSales: refetch,
+  };
+};
+
+export const useGetOrderSummaryChart = ({ timeframe = '5m', enabled = true } = {}) => {
+  const {
+    data,
+    isLoading,
+    isFetching,
+    error,
+    refetch
+  } = useFetchItem({
+    queryKey: ['order-summary-chart', timeframe],
+    queryFn: () => httpService.getData(routes.orderSummaryChart(timeframe)),
+    enabled,
+    retry: 2,
+  });
+
+  return {
+    isOrderSummaryLoading: isLoading,
+    isFetchingOrderSummary: isFetching,
+    orderSummary: data?.data || [],
+    orderSummarySummary: data?.summary || {},
+    orderSummaryError: ErrorHandler(error),
+    refetchOrderSummary: refetch,
   };
 };

@@ -49,3 +49,36 @@ export const useGetCustomers = () => {
     setCustomersFilter: setFilter,
   };
 };
+
+export const useGetCustomerInfo = () => {
+  const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
+    queryKey: ["fetchCustomerInfo"],
+    queryFn: (id) => httpService.getData(routes.getCustomerInfo(id)),
+    retry: 2,
+  });
+
+  return {
+    getCustomerInfoIsLoading: isLoading,
+    getCustomerInfoData: data?.data?.data || {},
+    getCustomerInfoError: ErrorHandler(error),
+    refetchCustomerInfo: refetch,
+    setCustomerInfoFilter: setFilter,
+  };
+};
+
+export const useGetCustomerOrderHistory = () => {
+  const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
+    queryKey: ["fetchCustomerOrderHistory"],
+    queryFn: (id) => httpService.getData(routes.getCustomerOrderHistory(id)),
+    retry: 2,
+  });
+
+  return {
+    getCustomerOrderHistoryIsLoading: isLoading,
+    getCustomerOrderHistoryData: data?.data?.data || {},
+    getCustomerOrderHistoryError: ErrorHandler(error),
+    refetchCustomerOrderHistoryInfo: refetch,
+    setCustomerOrderHistoryFilter: setFilter,
+  };
+};
+
