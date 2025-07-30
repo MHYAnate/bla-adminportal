@@ -26,7 +26,12 @@ export const useGetAllCategories = () => {
     retry: 2,
   });
 
-  // Extract data from response structure
+  // Debug logging to see what data structure we're getting
+  console.log('🔍 useGetAllCategories - Raw data:', data);
+  console.log('🔍 useGetAllCategories - data type:', typeof data);
+  console.log('🔍 useGetAllCategories - is data array:', Array.isArray(data));
+
+  // Extract data from response structure with comprehensive fallbacks
   let categories = [];
   let pagination = {
     total: 0,
@@ -38,48 +43,60 @@ export const useGetAllCategories = () => {
   };
 
   try {
-    if (data?.data?.success && data?.data?.data) {
-      categories = data.data.data.categories || [];
-      pagination = { ...pagination, ...data.data.data.pagination };
-      
-      if (data.data.data.stats) {
-        pagination.activeCount = data.data.data.stats.active || 0;
-        pagination.inactiveCount = data.data.data.stats.inactive || 0;
+    if (data) {
+      // Check multiple possible response structures
+      if (data?.data?.success && data?.data?.data) {
+        categories = data.data.data.categories || [];
+        pagination = { ...pagination, ...data.data.data.pagination };
+        
+        if (data.data.data.stats) {
+          pagination.activeCount = data.data.data.stats.active || 0;
+          pagination.inactiveCount = data.data.data.stats.inactive || 0;
+        }
+      } else if (data?.data?.categories) {
+        categories = data.data.categories || [];
+        pagination = { ...pagination, ...data.data.pagination };
+        
+        if (data.data.stats) {
+          pagination.activeCount = data.data.stats.active || 0;
+          pagination.inactiveCount = data.data.stats.inactive || 0;
+        }
+      } else if (data?.success && data?.data) {
+        categories = data.data.categories || [];
+        pagination = { ...pagination, ...data.data.pagination };
+        
+        if (data.data.stats) {
+          pagination.activeCount = data.data.stats.active || 0;
+          pagination.inactiveCount = data.data.stats.inactive || 0;
+        }
+      } else if (data?.categories) {
+        categories = data.categories || [];
+        pagination = { ...pagination, ...data.pagination };
+        
+        if (data.stats) {
+          pagination.activeCount = data.stats.active || 0;
+          pagination.inactiveCount = data.stats.inactive || 0;
+        }
+      } else if (data?.data && Array.isArray(data.data)) {
+        categories = data.data;
+        pagination = { ...pagination, ...data.pagination };
+      } else if (Array.isArray(data)) {
+        categories = data;
       }
-    } else if (data?.data?.categories) {
-      categories = data.data.categories || [];
-      pagination = { ...pagination, ...data.data.pagination };
-      
-      if (data.data.stats) {
-        pagination.activeCount = data.data.stats.active || 0;
-        pagination.inactiveCount = data.data.stats.inactive || 0;
-      }
-    } else if (data?.success && data?.data) {
-      categories = data.data.categories || [];
-      pagination = { ...pagination, ...data.data.pagination };
-      
-      if (data.data.stats) {
-        pagination.activeCount = data.data.stats.active || 0;
-        pagination.inactiveCount = data.data.stats.inactive || 0;
-      }
-    } else if (data?.categories) {
-      categories = data.categories || [];
-      pagination = { ...pagination, ...data.pagination };
-      
-      if (data.stats) {
-        pagination.activeCount = data.stats.active || 0;
-        pagination.inactiveCount = data.stats.inactive || 0;
-      }
-    }
 
-    // Fallback calculation if stats not provided by API
-    if (!pagination.activeCount && !pagination.inactiveCount && categories.length > 0) {
-      pagination.activeCount = categories.filter((cat) => cat.status === 'Active').length;
-      pagination.inactiveCount = categories.filter((cat) => cat.status === 'Inactive').length;
+      // Fallback calculation if stats not provided by API
+      if (!pagination.activeCount && !pagination.inactiveCount && categories.length > 0) {
+        pagination.activeCount = categories.filter((cat) => cat.status === 'Active').length;
+        pagination.inactiveCount = categories.filter((cat) => cat.status === 'Inactive').length;
+      }
     }
   } catch (extractError) {
     console.error("Error extracting categories data:", extractError);
   }
+
+  console.log('🔍 useGetAllCategories - Processed categories:', categories);
+  console.log('🔍 useGetAllCategories - Categories length:', categories.length);
+  console.log('🔍 useGetAllCategories - Pagination:', pagination);
 
   return {
     getAllCategoriesIsLoading: isLoading,
@@ -131,6 +148,11 @@ export const useGetCategoryStats = () => {
     } else if (data?.categories) {
       categories = data.categories || [];
       pagination = data.pagination || {};
+    } else if (data?.data && Array.isArray(data.data)) {
+      categories = data.data;
+      pagination = data.pagination || {};
+    } else if (Array.isArray(data)) {
+      categories = data;
     }
 
     if (categories.length > 0) {
@@ -192,7 +214,7 @@ export const useGetCategoriesForSelection = () => {
   };
 };
 
-// Create category
+// Rest of your hooks remain the same...
 export const useCreateCategory = () => {
   const queryClient = useQueryClient();
 
@@ -241,7 +263,6 @@ export const useCreateCategory = () => {
   };
 };
 
-// Update category
 export const useUpdateCategory = () => {
   const queryClient = useQueryClient();
 
@@ -287,7 +308,6 @@ export const useUpdateCategory = () => {
   };
 };
 
-// Delete category
 export const useDeleteCategory = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);

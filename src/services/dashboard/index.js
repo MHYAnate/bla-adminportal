@@ -15,10 +15,28 @@ export const useGetDashboardInfo = ({ enabled = true }) => {
       enabled,
       retry: 2,
     });
+
+  console.log('🔍 useGetDashboardInfo - Raw data:', data);
+
+  // Process dashboard data with multiple fallbacks
+  let processedData = {};
+  
+  if (data) {
+    if (data.data) {
+      processedData = data.data;
+    } else if (data.result) {
+      processedData = data.result;
+    } else {
+      processedData = data;
+    }
+  }
+
+  console.log('🔍 useGetDashboardInfo - Processed data:', processedData);
+
   return {
     isFetchingDashboardInfo: isFetching,
     isDashboardInfoLoading: isLoading,
-    dashboardData: data?.data || {},
+    dashboardData: processedData,
     dashboardError: ErrorHandler(error),
     refetchDashboardData: refetch,
   };

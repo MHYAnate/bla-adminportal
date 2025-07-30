@@ -15,7 +15,7 @@ export const useGetProducts = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchProducts"],
     queryFn: (queryParams) => {
-      console.log('🚀 API Call with params:', queryParams);
+      console.log('🚀 Products API Call with params:', queryParams);
       return httpService.getData(routes.products(queryParams));
     },
     retry: 2,
@@ -34,16 +34,16 @@ export const useGetProducts = () => {
     firstProduct: data?.data?.[0]
   });
 
-  // ✅ Extract with robust safety checks
+  // ✅ Extract with robust safety checks using the same pattern as manufacturers
   const extractedData = useMemo(() => {
     if (!data) {
-      console.log('❌ No data received');
+      console.log('❌ No products data received');
       return [];
     }
     
     // Handle different response structures
     if (Array.isArray(data)) {
-      console.log('✅ Data is direct array:', data.length, 'items');
+      console.log('✅ Products data is direct array:', data.length, 'items');
       return data;
     }
     
@@ -56,8 +56,23 @@ export const useGetProducts = () => {
       console.log('✅ Found nested products array:', data.data.data.length, 'products');
       return data.data.data;
     }
+
+    if (data.result && Array.isArray(data.result)) {
+      console.log('✅ Found products in result:', data.result.length, 'products');
+      return data.result;
+    }
+
+    if (data.products && Array.isArray(data.products)) {
+      console.log('✅ Found products array:', data.products.length, 'products');
+      return data.products;
+    }
+
+    if (data.items && Array.isArray(data.items)) {
+      console.log('✅ Found products in items:', data.items.length, 'products');
+      return data.items;
+    }
     
-    console.warn('⚠️ Unexpected data structure:', typeof data, data);
+    console.warn('⚠️ Unexpected products data structure:', typeof data, data);
     return [];
   }, [data]);
 
@@ -66,8 +81,12 @@ export const useGetProducts = () => {
     if (!data) return {};
     
     // Try different pagination locations
-    return data?.pagination || data?.data?.pagination || {};
+    return data?.pagination || data?.data?.pagination || data?.meta || {};
   }, [data]);
+
+  console.log('🔍 useGetProducts - Final processed data:', extractedData);
+  console.log('🔍 useGetProducts - Final processed data length:', extractedData.length);
+  console.log('🔍 useGetProducts - Final pagination:', extractedPagination);
 
   return {
     getPRoductsIsLoading: isLoading,
