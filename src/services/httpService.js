@@ -18,7 +18,7 @@ const constructURL = (endpoint) => {
   return finalURL;
 };
 
-// Create axios instance
+// Create axios instance for authenticated requests
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL.replace(/\/+$/, ''), // Remove trailing slashes
   timeout: 30000,
@@ -31,10 +31,16 @@ const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
+    console.log('Request interceptor - Token exists:', !!token);
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Added Authorization header to request');
+    } else {
+      console.warn('No token found for authenticated request');
     }
-    console.log(`${config.method?.toUpperCase()} ${config.url}`);
+    
+    console.log(`${config.method?.toUpperCase()} ${config.baseURL}/${config.url}`);
     return config;
   },
   (error) => {
@@ -46,14 +52,20 @@ axiosInstance.interceptors.request.use(
 // Response interceptor to handle auth errors
 axiosInstance.interceptors.response.use(
   (response) => {
+    console.log(`Response received: ${response.status} for ${response.config.url}`);
     return response;
   },
   (error) => {
-    console.error("API Error:", error.response?.status, error.config?.url);
+    console.error("API Error Details:", {
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method,
+      data: error.response?.data
+    });
     
     // Handle 401 unauthorized - token expired or invalid
     if (error.response?.status === 401) {
-      console.log("Unauthorized request - clearing tokens");
+      console.log("Unauthorized request - clearing tokens and redirecting");
       clearAuthTokens();
       
       // Only redirect if we're in the browser and not already on login page
@@ -69,6 +81,10 @@ axiosInstance.interceptors.response.use(
 const httpService = {
   // GET request with token
   getData: async (endpoint) => {
+    console.log('getData called with endpoint:', endpoint);
+    const token = getAuthToken();
+    console.log('Token check before GET request:', !!token);
+    
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.get(cleanEndpoint);
     return response.data;
@@ -76,6 +92,10 @@ const httpService = {
 
   // POST request with token
   postData: async (data, endpoint) => {
+    console.log('postData called with endpoint:', endpoint);
+    const token = getAuthToken();
+    console.log('Token check before POST request:', !!token);
+    
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.post(cleanEndpoint, data);
     return response.data;
@@ -83,6 +103,10 @@ const httpService = {
 
   // PUT request with token
   putData: async (data, endpoint) => {
+    console.log('putData called with endpoint:', endpoint);
+    const token = getAuthToken();
+    console.log('Token check before PUT request:', !!token);
+    
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.put(cleanEndpoint, data);
     return response.data;
@@ -90,6 +114,10 @@ const httpService = {
 
   // PATCH request with token
   patchData: async (data, endpoint) => {
+    console.log('patchData called with endpoint:', endpoint);
+    const token = getAuthToken();
+    console.log('Token check before PATCH request:', !!token);
+    
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.patch(cleanEndpoint, data);
     return response.data;
@@ -97,6 +125,10 @@ const httpService = {
 
   // DELETE request with token
   deleteData: async (endpoint) => {
+    console.log('deleteData called with endpoint:', endpoint);
+    const token = getAuthToken();
+    console.log('Token check before DELETE request:', !!token);
+    
     const cleanEndpoint = endpoint.replace(/^\/+/, '');
     const response = await axiosInstance.delete(cleanEndpoint);
     return response.data;
