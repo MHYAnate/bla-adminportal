@@ -21,8 +21,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import {  useInviteAdmin } from "@/services/admin/index";
-import {  RoleData } from "@/types";
+import { useInviteAdmin } from "@/services/admin/index";
+import { RoleData } from "@/types";
 import { toast } from "sonner";
 import { useGetAdmins } from "@/services/admin";
 
@@ -39,35 +39,28 @@ type FormSchemaType = z.infer<typeof formSchema>;
 interface IProps {
   setClose: () => void;
   roles?: RoleData[];
-  setUrl:(data:string)=>void;
+  setUrl: (data: string) => void;
 }
 
 const AddCustomer: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
-   const[email, setEmail] = useState("");
+  const [email, setEmail] = useState("");
 
-   useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
-      const email = localStorage.getItem("userEmail") || 
-                   sessionStorage.getItem("userEmail");
+      const email = localStorage.getItem("userEmail") ||
+        sessionStorage.getItem("userEmail");
       // Use the email
-      setEmail(email? email : "")
+      setEmail(email ? email : "")
     }
   }, []);
 
   const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
-  const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
+  const admin = adminsData?.find((admin: { email: string }) => admin.email === email);
 
- 
- 
-  const { inviteAdminPayload, inviteAdminIsLoading} = useInviteAdmin((data: any) => {
-    toast.success("Customer invitation sent successfully");
-    console.log(data, "check reg data");
-    setUrl(data.data.inviteUrl)
-     // Use the response data passed to onSuccess
-    setClose();
 
-  });
+
+  const { inviteAdmin, isLoading: inviteAdminIsLoading } = useInviteAdmin();
 
 
   console.log("inviteRolesss", roles)
@@ -83,7 +76,7 @@ const AddCustomer: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
   // Handle form submission
   async function onSubmit(values: FormSchemaType) {
     try {
-      await inviteAdminPayload({
+      await inviteAdmin({
         email: values.email,
         roleNames: [values.role]
       });
@@ -111,11 +104,11 @@ const AddCustomer: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                     Email Address <span className="text-[#E03137]">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      type="email" 
-                      placeholder="Enter admin email address" 
+                    <Input
+                      type="email"
+                      placeholder="Enter admin email address"
                       className="h-14"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -165,7 +158,7 @@ const AddCustomer: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
               Cancel
             </Button>
             <Button
-              disabled={inviteAdminIsLoading ||admin?.roles[0]?.role?.name !=="super_admin"}
+              disabled={inviteAdminIsLoading || admin?.roles[0]?.role?.name !== "super_admin"}
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"
@@ -175,7 +168,7 @@ const AddCustomer: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
             </Button>
           </div>
         </form>
-    
+
       </Form>
     </div>
   );

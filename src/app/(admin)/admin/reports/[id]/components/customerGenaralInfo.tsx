@@ -59,7 +59,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ Data, roles }) => {
 		<>
 			{Data?.totalSpent == true ? (
 				<>
-			
+
 				</>
 			) : (
 				<>
@@ -86,10 +86,10 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ Data, roles }) => {
 									<p className="text-sm text-[#111827] font-semibold">
 										{Data?.joinDate
 											? new Date(Data.joinDate).toLocaleDateString("en-US", {
-													day: "2-digit",
-													month: "short",
-													year: "numeric",
-											  })
+												day: "2-digit",
+												month: "short",
+												year: "numeric",
+											})
 											: "Not specified"}
 									</p>
 								</div>
@@ -106,10 +106,10 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ Data, roles }) => {
 									<p className="text-sm text-[#111827] font-semibold">
 										{Data?.lastLogin
 											? new Date(Data.lastLogin).toLocaleDateString("en-US", {
-													day: "2-digit",
-													month: "short",
-													year: "numeric",
-											  })
+												day: "2-digit",
+												month: "short",
+												year: "numeric",
+											})
 											: "Not available"}
 									</p>
 								</div>
@@ -180,12 +180,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
 	const currentRoles = adminData?.roles?.map((role: any) => role.name) || [];
 	const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
 
-	const { updateRolesPayload, updateRolesIsLoading } = useUpdateAdminRoles(
-		() => {
-			toast.success("Admin roles updated successfully");
-			onClose();
-		}
-	);
+	const { updateRoles, isUpdating } = useUpdateAdminRoles();
 
 	const handleRoleToggle = (roleName: string) => {
 		setSelectedRoles((prev) =>
@@ -198,7 +193,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
 	const handleSubmit = async () => {
 		if (!adminId) return;
 		try {
-			await updateRolesPayload(adminId, selectedRoles);
+			await updateRoles(adminId, selectedRoles);
 		} catch (error) {
 			toast.error("Failed to update roles");
 			console.error("Update roles error:", error);
@@ -261,9 +256,9 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
 						variant="warning"
 						className="px-6"
 						onClick={handleSubmit}
-						disabled={updateRolesIsLoading}
+						disabled={isUpdating}
 					>
-						{updateRolesIsLoading ? "Updating..." : "Save Changes"}
+						{isUpdating ? "Updating..." : "Save Changes"}
 					</Button>
 				</div>
 			</DialogContent>
