@@ -28,13 +28,10 @@ export default function CreateRoleForm() {
   const { permissionsData, isPermissionsLoading } = useGetAdminPermissions({ enabled: true });
 
   // ✅ Create role hook
-  const { createRolePayload, createRoleIsLoading } = useCreateAdminRole(
-    (response: { message: any; data: any; }) => {
-      console.log('Role created successfully:', response);
-      toast.success(response.message || "Role created successfully!");
-      handleCancel(); // Reset form on success
-    }
-  );
+  const {
+    createRole,
+    isCreating: createRoleIsLoading,
+  } = useCreateAdminRole();
 
   // ✅ Process permissions data
   useEffect(() => {
@@ -88,16 +85,15 @@ export default function CreateRoleForm() {
       return;
     }
 
-    console.log('Submitting role:', {
-      ...formData,
-      permissionIds: Array.from(selectedPermissionIds)
-    });
-
     try {
-      await createRolePayload({
+      const response = await createRole({
         ...formData,
         permissionIds: Array.from(selectedPermissionIds),
       });
+
+      console.log("Role created successfully:", response);
+      toast.success(response?.message || "Role created successfully!");
+      handleCancel();
     } catch (error: any) {
       console.error("Error creating role:", error);
       toast.error(error.message || "Failed to create role. Please try again.");

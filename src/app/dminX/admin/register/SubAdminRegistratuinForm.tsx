@@ -1,9 +1,9 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
-import { Eye, EyeOff, User, Lock, Phone, Mail, Loader2,Check } from "lucide-react"
+import { Eye, EyeOff, User, Lock, Phone, Mail, Loader2, Check } from "lucide-react"
 import { toast } from "sonner"
-import { useRegisterAdmin } from "@/services/admin"
+import { useCreateAdmin } from "@/services/admin"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -60,18 +60,14 @@ export default function AdminRegistration() {
   const [errors, setErrors] = useState<FormErrors>({})
 
   // Hook for registering admin
-  const { registerAdminPayload, loading } = useRegisterAdmin({
-    onSuccess: () => {
-      toast.success("Admin registered successfully!")
-      setRegistrationComplete(true)
-    },
-  })
-  
+  const { createAdmin: registerAdminPayload, isCreating: loading } = useCreateAdmin()
+
+
 
   // Validate and submit form
 
   const phoneRegex = /^\+?\d+$/;
-  
+
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
     const newErrors: FormErrors = {}
@@ -150,7 +146,7 @@ export default function AdminRegistration() {
 
   if (registrationComplete) {
     return (
-           <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center h-screen bg-gray-50">
         <div className="max-w-md w-full mx-auto p-8 bg-white rounded-lg shadow-md text-center">
           <div className="rounded-full bg-green-100 p-3 w-16 h-16 flex items-center justify-center mx-auto mb-4">
             <Check className="h-8 w-8 text-green-600" />
@@ -217,9 +213,8 @@ export default function AdminRegistration() {
                   id="firstName"
                   name="firstName"
                   placeholder="Enter your first name"
-                  className={`w-full pl-10 pr-3 py-2 border ${
-                    errors.firstName ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.firstName ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                 />
@@ -239,9 +234,8 @@ export default function AdminRegistration() {
                   id="lastName"
                   name="lastName"
                   placeholder="Enter your last name"
-                  className={`w-full pl-10 pr-3 py-2 border ${
-                    errors.lastName ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.lastName ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                 />
@@ -264,9 +258,8 @@ export default function AdminRegistration() {
                   id="username"
                   name="username"
                   placeholder="Choose a username"
-                  className={`w-full pl-10 pr-3 py-2 border ${
-                    errors.username ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.username ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
@@ -283,9 +276,8 @@ export default function AdminRegistration() {
                 name="gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className={`w-full p-2 border ${
-                  errors.gender ? "border-red-500" : "border-gray-200"
-                } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                className={`w-full p-2 border ${errors.gender ? "border-red-500" : "border-gray-200"
+                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
               >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
@@ -331,9 +323,8 @@ export default function AdminRegistration() {
                   id="phone"
                   name="phone"
                   placeholder="Enter your phone number"
-                  className={`w-full pl-10 pr-3 py-2 border ${
-                    errors.phone ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.phone ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
@@ -371,9 +362,8 @@ export default function AdminRegistration() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
-                  className={`w-full pl-10 pr-10 py-2 border ${
-                    errors.password ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-10 py-2 border ${errors.password ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -405,9 +395,8 @@ export default function AdminRegistration() {
                   name="confirmPassword"
                   type={showConfirm ? "text" : "password"}
                   placeholder="Confirm your password"
-                  className={`w-full pl-10 pr-10 py-2 border ${
-                    errors.confirmPassword ? "border-red-500" : "border-gray-200"
-                  } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
+                  className={`w-full pl-10 pr-10 py-2 border ${errors.confirmPassword ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
