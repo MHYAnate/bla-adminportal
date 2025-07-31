@@ -1,140 +1,67 @@
 "use client";
 
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { FormEvent } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useResetPassword } from "@/services/auth"; // Adjust the import path as necessary
-import { useState } from "react";
+import { routes } from "@/services/api-routes";
+import httpService from "@/services/httpService";
+import { showErrorAlert, showSuccessAlert } from "@/lib/utils";
 
-// Form validation schema
-const formSchema = z
-  .object({
-    currentpassword: z.string().min(6, "Current password is required"),
-    newpassword: z.string().min(6, "New password must be at least 6 characters"),
-    confirmpassword: z.string().min(6, "Confirm password must be at least 6 characters"),
-  })
-  .refine((data) => data.newpassword === data.confirmpassword, {
-    message: "Passwords do not match",
-    path: ["confirmpassword"],
-  });
+interface FormValues {
+  currentpassword: string;
+  newpassword: string;
+  confirmpassword: string;
+}
 
-type FormSchemaType = z.infer<typeof formSchema>;
+export default function Security() {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+  } = useForm<FormValues>();
 
-const Security: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-
-  const { resetPasswordPayload, resetPasswordIsLoading } = useResetPassword(() => {
-    form.reset(); // Reset form on success
-  });
-
-  const form = useForm<FormSchemaType>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      currentpassword: "",
-      newpassword: "",
-      confirmpassword: "",
-    },
-  });
-
-  async function onSubmit(values: FormSchemaType) {
+  const onSubmit = async (data: FormValues) => {
     const payload = {
-      currentpassword: values.currentpassword,
-      newpassword: values.newpassword,
-      confirmpassword: values.confirmpassword,
+      currentPassword: data.currentpassword,
+      newPassword: data.newpassword,
+      confirmPassword: data.confirmpassword,
     };
 
     try {
-      setLoading(true);
-      await resetPasswordPayload(payload);
-    } finally {
-      setLoading(false);
+      // Replace this with your actual postDataWithToken implementation if needed
+      const response = await httpService.postData(payload, routes.resetPassword());
+      showSuccessAlert(response?.data?.message || "Password changed successfully");
+      reset();
+    } catch (error: any) {
+      const message = error?.response?.data?.error || "Password change failed";
+      showErrorAlert(message);
+      console.error("Reset password error:", error);
     }
-  }
+  };
 
   return (
-    <div>
-      <h6 className="text-[#111827] text-xl font-bold mb-6">Change Password</h6>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mb-8">
-          <FormField
-            control={form.control}
-            name="currentpassword"
-            render={({ field }) => (
-              <FormItem className="w-full mb-6">
-                <FormLabel>Current Password</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Enter current password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="newpassword"
-            render={({ field }) => (
-              <FormItem className="w-full mb-6">
-                <FormLabel>New Password</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Enter new password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="confirmpassword"
-            render={({ field }) => (
-              <FormItem className="w-full mb-6">
-                <FormLabel>Confirm Password</FormLabel>
-                <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="Re-enter new password"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <div className="gap-5 justify-end flex">
-            <Button
-              variant="warning"
-              type="submit"
-              disabled={loading || resetPasswordIsLoading}
-              className="w-auto px-[3rem] py-4 font-bold text-base"
-              size="xl"
-            >
-              {loading || resetPasswordIsLoading ? "Submitting..." : "Submit"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Input
+        type="password"
+        placeholder="Current Password"
+        required
+        {...register("currentpassword", { required: true })}
+      />
+      <Input
+        type="password"
+        placeholder="New Password"
+        required
+        {...register("newpassword", { required: true })}
+      />
+      <Input
+        type="password"
+        placeholder="Confirm Password"
+        required
+        {...register("confirmpassword", { required: true })}
+      />
+      <Button type="submit">Reset Password</Button>
+    </form>
   );
-};
-
-export default Security;
+}
