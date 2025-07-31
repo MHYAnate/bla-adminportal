@@ -1,6 +1,6 @@
 import { HorizontalDots } from "../../../../../../../public/icons";
 import { Button } from "@/components/ui/button";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft } from "lucide-react";
 import { useUpdateAdminRoles, useGetCurrentAdmin, useGetAdminRoles } from "@/services/admin";
@@ -14,13 +14,13 @@ interface GeneralInfoProps {
 
 interface EditRolesDialogProps {
   adminData: Admin;
-  roles: Role[] | any; // Allow any type to handle API response objects
+  roles: Role[];
   onClose: () => void;
   canEditRoles: boolean;
 }
 
 // Helper function to normalize role data structure
-const normalizeRole = (roleItem: AdminRole) => {
+const normalizeRole = (roleItem: AdminRole): Role => {
   if (roleItem.role) {
     return {
       id: roleItem.role.id,
@@ -38,6 +38,53 @@ const normalizeRole = (roleItem: AdminRole) => {
   };
 };
 
+// Improved function to normalize roles from API responses
+const normalizeRoles = (rolesInput: any): Role[] => {
+  console.log("🔍 normalizeRoles input:", rolesInput);
+
+  // Handle null/undefined
+  if (!rolesInput) {
+    console.log("❌ No roles input provided");
+    return [];
+  }
+
+  let rolesArray: any[] = [];
+
+  // Extract array from various API response patterns
+  if (Array.isArray(rolesInput)) {
+    rolesArray = rolesInput;
+  } else if (rolesInput && typeof rolesInput === 'object') {
+    // Try common API response patterns
+    if (Array.isArray(rolesInput.data)) {
+      rolesArray = rolesInput.data;
+    } else if (Array.isArray(rolesInput.roles)) {
+      rolesArray = rolesInput.roles;
+    } else if (Array.isArray(rolesInput.result)) {
+      rolesArray = rolesInput.result;
+    } else if (Array.isArray(rolesInput.items)) {
+      rolesArray = rolesInput.items;
+    }
+  }
+
+  console.log("🔍 Extracted roles array:", rolesArray);
+
+  // Normalize each role object
+  const normalized = rolesArray.map((role: any) => {
+    // Handle nested role structure (role.role.name)
+    const roleData = role.role || role;
+
+    return {
+      id: roleData.id || role.id || 0,
+      name: roleData.name || role.name || '',
+      description: roleData.description || role.description || '',
+      permissions: roleData.permissions || role.permissions || []
+    };
+  }).filter(role => role.name); // Only keep roles with names
+
+  console.log("✅ Normalized roles:", normalized);
+  return normalized;
+};
+
 const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
   adminData,
   roles,
@@ -46,16 +93,24 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
 }) => {
   const adminId = adminData.id;
 
-  // Fix the null check for roles mapping
-  const currentRoles = adminData.roles && Array.isArray(adminData.roles)
-    ? adminData.roles.map((userRole: AdminRole) => {
-      return normalizeRole(userRole).name;
-    }).filter(Boolean) as string[]
-    : [];
+  // Get current roles safely
+  const currentRoles = useMemo(() => {
+    if (!adminData.roles || !Array.isArray(adminData.roles)) {
+      return [];
+    }
+
+    return adminData.roles
+      .map((userRole: AdminRole) => normalizeRole(userRole).name)
+      .filter(Boolean) as string[];
+  }, [adminData.roles]);
 
   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
 
-  // ✅ Updated to use the new hook API
+  // Update selected roles when current roles change
+  useEffect(() => {
+    setSelectedRoles(currentRoles);
+  }, [currentRoles]);
+
   const { updateRoles, isUpdating: updateRolesIsLoading } = useUpdateAdminRoles();
 
   const handleRoleToggle = (roleName: string) => {
@@ -73,51 +128,59 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
       return;
     }
 
+    const changes = {
+      added: selectedRoles.filter(role => !currentRoles.includes(role)),
+      removed: currentRoles.filter(role => !selectedRoles.includes(role))
+    };
+
+    // Don't make API call if no changes
+    if (changes.added.length === 0 && changes.removed.length === 0) {
+      toast.info("No changes to save");
+      onClose();
+      return;
+    }
+
     console.log("🔍 Starting role update:", {
       adminId,
       selectedRoles,
       originalRoles: currentRoles,
-      changes: {
-        added: selectedRoles.filter(role => !currentRoles.includes(role)),
-        removed: currentRoles.filter(role => !selectedRoles.includes(role))
-      }
+      changes
     });
 
     try {
       console.log("📡 Calling updateRoles with:", { adminId, selectedRoles });
-      console.log("🔍 Request details that will be sent:");
-      console.log("- URL:", `admin/manage/${adminId}/roles`);
-      console.log("- Method: PUT");
-      console.log("- Body:", JSON.stringify({ roleNames: selectedRoles }));
-      console.log("- Headers: Authorization: Bearer [token], Content-Type: application/json");
 
-      // ✅ Updated to use the new hook method
       const result = await updateRoles(adminId, selectedRoles);
       console.log("✅ Update successful:", result);
 
-      // Show success message and close dialog
       toast.success("Admin roles updated successfully");
       onClose();
 
     } catch (error: any) {
       console.error("❌ Update roles error:", error);
 
-      // More detailed error logging
-      if (error && typeof error === 'object' && error.response) {
-        console.error("Error response:", {
-          status: error.response.status,
-          statusText: error.response.statusText,
-          data: error.response.data
-        });
+      // Enhanced error handling
+      if (error?.response) {
+        const { status, statusText, data } = error.response;
+        console.error("Error response:", { status, statusText, data });
 
-        if (error.response.status === 403) {
-          toast.error("Permission denied: Backend restricts editing other admin accounts. Contact system administrator.");
-        } else if (error.response.status === 404) {
-          toast.error("Admin not found");
-        } else {
-          toast.error(`Update failed: ${error.response.data?.error || error.response.statusText}`);
+        switch (status) {
+          case 403:
+            toast.error("Permission denied: You don't have permission to edit admin roles.");
+            break;
+          case 404:
+            toast.error("Admin not found");
+            break;
+          case 400:
+            toast.error(`Invalid request: ${data?.message || data?.error || 'Bad request'}`);
+            break;
+          case 500:
+            toast.error("Server error. Please try again later.");
+            break;
+          default:
+            toast.error(`Update failed: ${data?.error || data?.message || statusText}`);
         }
-      } else if (error && typeof error === 'object' && error.message) {
+      } else if (error?.message) {
         toast.error(`Update failed: ${error.message}`);
       } else if (typeof error === 'string') {
         toast.error(`Update failed: ${error}`);
@@ -127,6 +190,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
     }
   };
 
+  // Permission check dialog
   if (!canEditRoles) {
     return (
       <Dialog open onOpenChange={onClose}>
@@ -135,8 +199,29 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
             <DialogTitle>Permission Denied</DialogTitle>
           </DialogHeader>
           <p>You don't have permission to edit admin roles.</p>
-          <div className="flex justify-end">
+          <div className="flex justify-end mt-4">
             <Button onClick={onClose}>Close</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Loading state
+  if (!roles || roles.length === 0) {
+    return (
+      <Dialog open onOpenChange={onClose}>
+        <DialogContent className="right-[30px] p-8 max-w-[35.56rem]">
+          <DialogHeader>
+            <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
+              <div onClick={onClose} className="cursor-pointer">
+                <ChevronLeft size={24} />
+              </div>
+              Edit Admin Roles
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center py-8">
+            <p>Loading roles...</p>
           </div>
         </DialogContent>
       </Dialog>
@@ -157,48 +242,67 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
 
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-4">
-            Select roles for {adminData.fullName || "this administrator"}
+            Select roles for {adminData.fullName || adminData?.adminProfile?.fullName || "this administrator"}
           </h3>
 
-          {Array.isArray(roles) && roles.length > 0 ? (
-            <div className="space-y-4">
-              {roles.map((role) => (
-                <div key={role.id} className="flex items-center space-x-3 p-3 border rounded-md">
-                  <input
-                    type="checkbox"
-                    id={`role-${role.id}`}
-                    className="h-5 w-5 rounded border-gray-300"
-                    checked={selectedRoles.includes(role.name)}
-                    onChange={() => handleRoleToggle(role.name)}
-                  />
-                  <div>
-                    <label htmlFor={`role-${role.id}`} className="font-medium text-sm text-gray-900">
-                      {role.name.replace(/_/g, " ")}
-                    </label>
-                    <p className="text-sm text-gray-500">{role.description}</p>
-                  </div>
+          <div className="space-y-4">
+            {roles.map((role) => (
+              <div key={role.id} className="flex items-center space-x-3 p-3 border rounded-md hover:bg-gray-50 transition-colors">
+                <input
+                  type="checkbox"
+                  id={`role-${role.id}`}
+                  className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  checked={selectedRoles.includes(role.name)}
+                  onChange={() => handleRoleToggle(role.name)}
+                />
+                <div className="flex-1">
+                  <label htmlFor={`role-${role.id}`} className="font-medium text-sm text-gray-900 cursor-pointer">
+                    {role.name.replace(/_/g, " ")}
+                  </label>
+                  {role.description && (
+                    <p className="text-sm text-gray-500 mt-1">{role.description}</p>
+                  )}
                 </div>
-              ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Show current vs new selection */}
+          {selectedRoles.length !== currentRoles.length ||
+            !selectedRoles.every(role => currentRoles.includes(role)) ? (
+            <div className="mt-4 p-3 bg-blue-50 rounded-md">
+              <p className="text-sm font-medium text-blue-900">Changes:</p>
+              {selectedRoles.filter(role => !currentRoles.includes(role)).length > 0 && (
+                <p className="text-xs text-green-700">
+                  ➕ Adding: {selectedRoles.filter(role => !currentRoles.includes(role)).join(", ")}
+                </p>
+              )}
+              {currentRoles.filter(role => !selectedRoles.includes(role)).length > 0 && (
+                <p className="text-xs text-red-700">
+                  ➖ Removing: {currentRoles.filter(role => !selectedRoles.includes(role)).join(", ")}
+                </p>
+              )}
             </div>
-          ) : (
-            <div>
-              <p className="text-sm text-red-500">Failed to load roles</p>
-              <p className="text-xs text-gray-500">
-                No roles available for selection
-              </p>
-            </div>
-          )}
+          ) : null}
         </div>
 
         <div className="flex justify-end gap-4 mt-6">
-          <Button variant="outline" className="px-6" onClick={onClose}>
+          <Button
+            variant="outline"
+            className="px-6"
+            onClick={onClose}
+            disabled={updateRolesIsLoading}
+          >
             Cancel
           </Button>
           <Button
             variant="warning"
             className="px-6"
             onClick={handleSubmit}
-            disabled={updateRolesIsLoading}
+            disabled={updateRolesIsLoading || (
+              selectedRoles.length === currentRoles.length &&
+              selectedRoles.every(role => currentRoles.includes(role))
+            )}
           >
             {updateRolesIsLoading ? "Updating..." : "Save Changes"}
           </Button>
@@ -211,55 +315,43 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
 const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { currentAdmin, isLoading: isCurrentAdminLoading } = useGetCurrentAdmin();
-
-  // ✅ Updated to use the new hook API - no parameters needed for basic call
-  const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: !roles || roles.length === 0 });
-
-  // Normalize roles - handle both array and object with data property
-  const normalizeRoles = (rolesInput: any) => {
-    if (Array.isArray(rolesInput)) {
-      return rolesInput;
-    }
-    if (rolesInput && typeof rolesInput === 'object') {
-      // Check if it has a data property that's an array
-      if (Array.isArray(rolesInput.data)) {
-        return rolesInput.data;
-      }
-      // Check if it has other common API response patterns
-      if (Array.isArray(rolesInput.roles)) {
-        return rolesInput.roles;
-      }
-      if (Array.isArray(rolesInput.result)) {
-        return rolesInput.result;
-      }
-    }
-    return [];
-  };
-
-  // Use provided roles or fetched roles
-  const normalizedPropRoles = normalizeRoles(roles);
-  const normalizedFetchedRoles = normalizeRoles(rolesData);
-  const availableRoles = normalizedPropRoles.length > 0 ? normalizedPropRoles : normalizedFetchedRoles;
-
-  // Cast currentAdmin to Admin type to fix TypeScript issues
-  const typedCurrentAdmin = currentAdmin as Admin | null;
-
-  // Add debugging for roles prop
-  console.log("🔍 GeneralInfo Debug:", {
-    originalRoles: roles,
-    originalRolesType: typeof roles,
-    normalizedPropRoles: normalizedPropRoles,
-    fetchedRoles: rolesData,
-    normalizedFetchedRoles: normalizedFetchedRoles,
-    availableRoles: availableRoles,
-    availableRolesLength: availableRoles?.length,
-    isRolesLoading: isRolesLoading,
-    currentAdmin: typedCurrentAdmin,
-    currentAdminRoles: typedCurrentAdmin?.roles,
-    isCurrentAdminLoading: isCurrentAdminLoading,
+  const { rolesData, isRolesLoading } = useGetAdminRoles({
+    enabled: !roles || normalizeRoles(roles).length === 0
   });
 
-  // TEMPORARY: Force true while backend route is being fixed
+  // ✅ Improved roles normalization with memoization
+  const availableRoles = useMemo(() => {
+    // First try provided roles prop
+    const propRoles = normalizeRoles(roles);
+    if (propRoles.length > 0) {
+      console.log("📋 Using provided roles:", propRoles);
+      return propRoles;
+    }
+
+    // Fallback to fetched roles
+    const fetchedRoles = normalizeRoles(rolesData);
+    console.log("📋 Using fetched roles:", fetchedRoles);
+    return fetchedRoles;
+  }, [roles, rolesData]);
+
+  // Debug logging
+  useEffect(() => {
+    console.log("🔍 GeneralInfo Debug:", {
+      originalRoles: roles,
+      originalRolesType: typeof roles,
+      fetchedRoles: rolesData,
+      availableRoles: availableRoles,
+      availableRolesLength: availableRoles?.length,
+      isRolesLoading: isRolesLoading,
+      currentAdmin: currentAdmin as Admin | null,
+      isCurrentAdminLoading: isCurrentAdminLoading,
+    });
+  }, [roles, rolesData, availableRoles, isRolesLoading, currentAdmin, isCurrentAdminLoading]);
+
+  // Cast currentAdmin to Admin type
+  const typedCurrentAdmin = currentAdmin as Admin | null;
+
+  // Permission check - temporarily forced to true, restore commented logic when backend is ready
   const canEditRoles = true;
 
   // TODO: Restore this after backend route is working
@@ -282,9 +374,15 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
   // }, [typedCurrentAdmin, isCurrentAdminLoading]);
 
   // Safely extract roles for display
-  const displayRoles = adminData.roles?.map((roleItem: AdminRole) => {
-    return normalizeRole(roleItem);
-  }).filter(role => role.name) || [];
+  const displayRoles = useMemo(() => {
+    if (!adminData.roles || !Array.isArray(adminData.roles)) {
+      return [];
+    }
+
+    return adminData.roles
+      .map((roleItem: AdminRole) => normalizeRole(roleItem))
+      .filter(role => role.name);
+  }, [adminData.roles]);
 
   const colors = [
     { bg: "#E7F7EF", color: "#0CAF60" },
@@ -354,6 +452,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
           </div>
         </div>
       </div>
+
       <div className="border border-[#F1F2F4] rounded-[1rem] p-6">
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#F1F2F4]">
           <h5 className="text-[#111827] font-semibold">Role</h5>
@@ -364,9 +463,9 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
                 size="sm"
                 onClick={() => setIsEditDialogOpen(true)}
                 className="px-4"
-                disabled={isCurrentAdminLoading}
+                disabled={isCurrentAdminLoading || isRolesLoading}
               >
-                {isCurrentAdminLoading ? "Loading..." : "Edit Roles"}
+                {isCurrentAdminLoading || isRolesLoading ? "Loading..." : "Edit Roles"}
               </Button>
             )}
             <Button variant="ghost" size="icon">
@@ -374,6 +473,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
             </Button>
           </div>
         </div>
+
         <div className="flex gap-[4rem] items-center flex-col md:flex-row">
           <div>
             <p className="text-sm text-[#687588]">Current Role(s)</p>
@@ -401,12 +501,20 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
             )}
           </div>
         </div>
+
+        {/* Debug info - remove this in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-2 bg-gray-100 rounded text-xs">
+            <p><strong>Debug:</strong> Available roles: {availableRoles.length}</p>
+            <p><strong>Loading:</strong> {isRolesLoading ? 'Yes' : 'No'}</p>
+          </div>
+        )}
       </div>
 
       {isEditDialogOpen && (
         <EditRolesDialog
           adminData={adminData}
-          roles={availableRoles || []}
+          roles={availableRoles}
           onClose={() => setIsEditDialogOpen(false)}
           canEditRoles={canEditRoles}
         />
