@@ -1,152 +1,193 @@
-"use client"
-import { useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { Eye, EyeOff, User, Lock, Phone, Mail, Loader2, Check } from "lucide-react"
-import { toast } from "sonner"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
+"use client";
+
+import { useState } from "react";
+import { Eye, EyeOff, User, Lock, Phone, Mail, Loader2, Check, AlertCircle } from "lucide-react";
+import { toast } from "sonner";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useAdminRegistration } from "@/services/admin";
 
 type FormErrors = {
-  firstName?: string
-  lastName?: string
-  username?: string
-  phone?: string
-  gender?: string
-  password?: string
-  confirmPassword?: string
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  phone?: string;
+  gender?: string;
+  password?: string;
+  confirmPassword?: string;
+};
+
+interface InviteParams {
+  email: string;
+  userId: number;
+  token: string;
+  signature: string;
+  timestamp: number;
+  expires?: number;
+  noExpiry: boolean;
+  isValid: boolean;
 }
 
-export default function AdminRegistration() {
-  // Extract parameters from URL (no validation)
-  const searchParams = useSearchParams()
-  const email = searchParams.get("email") || "admin@example.com"
-  const userId = searchParams.get("userId") || "999"
+interface Props {
+  inviteParams: InviteParams;
+}
 
-  const router = useRouter()
+export default function SubAdminRegistrationForm({ inviteParams }: Props) {
+  const router = useRouter();
+  const { registerAdmin, isLoading: isRegistering } = useAdminRegistration();
 
   // Form state
-  const [registrationComplete, setRegistrationComplete] = useState(false)
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [username, setUsername] = useState("")
-  const [phone, setPhone] = useState("")
-  const [gender, setGender] = useState("")
-  const [role] = useState("admin")
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
-  const [errors, setErrors] = useState<FormErrors>({})
-  const [loading, setLoading] = useState(false)
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(false);
 
-  // ✅ BYPASS MODE: Minimal validation only
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
-    e.preventDefault()
+  // ✅ SECURE REGISTRATION: Proper validation and secure submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    console.log('🚀 Starting registration (BYPASS MODE)')
+    console.log('🔐 Starting secure admin registration');
 
-    // ✅ OPTIONAL: Remove all validation if you want zero checks
-    // For now, keeping minimal validation to prevent empty submissions
-    const newErrors: FormErrors = {}
-    if (!firstName.trim()) newErrors.firstName = "First name is required"
-    if (!lastName.trim()) newErrors.lastName = "Last name is required"
+    // ✅ Enhanced validation
+    const newErrors: FormErrors = {};
 
-    // ✅ Generate defaults for missing fields
-    const finalUsername = username.trim() || `admin_${Date.now()}`
-    const finalPhone = phone.trim() || "1234567890"
-    const finalGender = gender || "prefer_not_to_say"
-    const finalPassword = password || "defaultPassword123"
-
-    // ✅ OPTIONAL: Remove this validation block entirely for zero validation
-    if (password && password !== confirmPassword) {
-      newErrors.confirmPassword = "Passwords must match"
+    if (!firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    } else if (firstName.trim().length < 2) {
+      newErrors.firstName = "First name must be at least 2 characters";
     }
 
-    setErrors(newErrors)
-    if (Object.keys(newErrors).length > 0) return
+    if (!lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    } else if (lastName.trim().length < 2) {
+      newErrors.lastName = "Last name must be at least 2 characters";
+    }
 
-    setLoading(true)
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    if (!confirmPassword) {
+      newErrors.confirmPassword = "Please confirm your password";
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    // Username validation (optional but if provided, must be valid)
+    if (username && username.trim()) {
+      if (username.trim().length < 3) {
+        newErrors.username = "Username must be at least 3 characters";
+      } else if (!/^[a-zA-Z0-9_]+$/.test(username.trim())) {
+        newErrors.username = "Username can only contain letters, numbers, and underscores";
+      }
+    }
+
+    // Phone validation (optional but if provided, must be valid)
+    if (phone && phone.trim()) {
+      if (!/^\d{10,15}$/.test(phone.replace(/\D/g, ''))) {
+        newErrors.phone = "Please enter a valid phone number";
+      }
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      toast.error("Please fix the form errors before submitting");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const queryParams = new URLSearchParams()
-      queryParams.set('email', email)
-      queryParams.set('userId', userId)
+      // ✅ Prepare secure registration payload
+      const registrationData = {
+        fullName: `${firstName.trim()} ${lastName.trim()}`,
+        username: username.trim() || undefined, // Let backend generate if empty
+        phone: phone.trim() || undefined,
+        gender: gender || undefined,
+        password: password,
+        // Include invitation verification data in query params (handled by URL)
+      };
 
-      const requestBody = {
-        fullName: `${firstName} ${lastName}`,
-        username: finalUsername,
-        phone: finalPhone,
-        gender: finalGender,
-        role,
-        password: finalPassword,
-      }
+      console.log('🔐 Submitting secure registration with verification');
+      console.log('Registration data:', { ...registrationData, password: '[HIDDEN]' });
+      console.log('Invitation params:', {
+        email: inviteParams.email,
+        userId: inviteParams.userId,
+        hasToken: !!inviteParams.token,
+        hasSignature: !!inviteParams.signature
+      });
 
-      console.log('🚀 Making API call to backend (BYPASS MODE)')
+      // ✅ The registration hook will handle URL parameter verification
+      const result = await registerAdmin(registrationData);
 
-      const backendUrl = 'https://buylocalapi-staging.up.railway.app'
-      const apiUrl = `${backendUrl}/api/admin/manage/register?${queryParams.toString()}`
+      console.log('✅ Secure registration successful:', result);
 
-      console.log('URL:', apiUrl)
-      console.log('Body:', { ...requestBody, password: '[HIDDEN]' })
-      console.log('✅ NO AUTH HEADERS - Complete bypass mode')
-
-      // ✅ COMPLETE BYPASS: No authentication headers at all
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      })
-
-      console.log('Response status:', response.status)
-
-      const result = await response.json()
-      console.log('📋 API Response:', result)
-
-      // ✅ BYPASS MODE: Accept any response as success
-      if (response.ok || result.success) {
-        console.log('✅ Registration successful!')
-        toast.success("Admin registered successfully!")
-        setRegistrationComplete(true)
-      } else {
-        // ✅ Even on "failure", still show success in bypass mode
-        console.log('⚠️ API returned error, but proceeding anyway (BYPASS MODE)')
-        toast.success("Admin registration completed!")
-        setRegistrationComplete(true)
-      }
+      toast.success("Admin account created successfully!");
+      setRegistrationComplete(true);
 
     } catch (error: any) {
-      console.error('❌ Registration error (showing success anyway):', error)
+      console.error('❌ Secure registration failed:', error);
 
-      // ✅ BYPASS MODE: Always show success, never fail
-      toast.success("Admin registration completed!")
-      setRegistrationComplete(true)
+      let errorMessage = "Registration failed. Please try again.";
+
+      // ✅ Handle specific secure registration errors
+      if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
+      // ✅ Provide specific error messages for common issues
+      if (errorMessage.includes('Invalid invitation')) {
+        toast.error("Your invitation link is invalid or has been tampered with. Please request a new invitation.");
+      } else if (errorMessage.includes('expired')) {
+        toast.error("Your invitation has expired. Please request a new invitation.");
+      } else if (errorMessage.includes('already used')) {
+        toast.error("This invitation has already been used. Please request a new invitation if needed.");
+      } else if (errorMessage.includes('Username already exists')) {
+        setErrors({ username: "This username is already taken" });
+        toast.error("Username is already taken. Please choose a different one.");
+      } else if (errorMessage.includes('Email mismatch')) {
+        toast.error("There's a mismatch with your invitation. Please use the correct invitation link.");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
+  // ✅ Registration success state
   if (registrationComplete) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="max-w-md w-full mx-auto p-8 bg-white rounded-lg shadow-md text-center">
           <div className="rounded-full bg-green-100 p-3 w-16 h-16 flex items-center justify-center mx-auto mb-4">
             <Check className="h-8 w-8 text-green-600" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800 mb-2">Registration Complete!</h1>
           <p className="text-gray-600 mb-6">
-            Your admin account has been successfully set up. You can now log in to access your dashboard.
+            Your admin account has been successfully created and activated. You can now log in to access your dashboard.
           </p>
           <button
             onClick={() => router.push('/admin/login')}
-            className="w-full bg-[#0F3D30] text-white py-3 px-4 rounded-md hover:bg-[#1b5d49] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F3D30]"
+            className="w-full bg-[#0F3D30] text-white py-3 px-4 rounded-md hover:bg-[#1b5d49] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F3D30] transition-colors"
           >
             Proceed to Login
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -164,12 +205,26 @@ export default function AdminRegistration() {
         </div>
         <div className="flex flex-col gap-6 p-12 border-t-[5px] border-[#EC9F01]">
           <div className="w-1/2">
-            <Image alt="Logo" src="/images/logo.png" className="object-cover h-30 w-30" width={200} height={200} />
+            <Image
+              alt="Logo"
+              src="/images/logo.png"
+              className="object-cover h-30 w-30"
+              width={200}
+              height={200}
+            />
           </div>
-          <h1 className="text-3xl font-bold text-white">Welcome Aboard! Complete Your Registration</h1>
+          <h1 className="text-3xl font-bold text-white">
+            Complete Your Secure Registration
+          </h1>
           <p className="text-base text-white">
-            Fill in your details to set up your account and access your assigned admin role.
+            Fill in your details to complete your admin account setup. Your invitation has been verified and is ready to use.
           </p>
+
+          {/* Security indicators */}
+          <div className="flex items-center space-x-2 text-green-300">
+            <Check className="h-4 w-4" />
+            <span className="text-sm">Secure invitation verified</span>
+          </div>
         </div>
       </div>
 
@@ -177,9 +232,14 @@ export default function AdminRegistration() {
       <div className="w-full md:w-1/2 bg-white p-9 overflow-y-auto">
         <form onSubmit={handleSubmit} className="max-w-[648px] mx-auto flex flex-col gap-6">
           <div className="mb-4">
-            <h2 className="text-3xl font-bold text-black">Setup your account as an Admin</h2>
-            {email && <p className="text-gray-500 mt-2">Welcome, {email}</p>}
-            <p className="text-xs text-blue-600 mt-1">✅ BYPASS MODE: Minimal validation active</p>
+            <h2 className="text-3xl font-bold text-black">Setup Your Admin Account</h2>
+            <p className="text-gray-500 mt-2">
+              Welcome, <span className="font-medium">{inviteParams.email}</span>
+            </p>
+            <div className="flex items-center space-x-2 mt-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-xs text-green-600 font-medium">Secure invitation verified</span>
+            </div>
           </div>
 
           {/* Form Fields */}
@@ -200,6 +260,7 @@ export default function AdminRegistration() {
                     } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
+                  disabled={loading || isRegistering}
                 />
               </div>
               {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
@@ -221,6 +282,7 @@ export default function AdminRegistration() {
                     } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  disabled={loading || isRegistering}
                 />
               </div>
               {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
@@ -231,7 +293,7 @@ export default function AdminRegistration() {
           <div className="flex flex-col md:flex-row gap-6">
             <div className="w-full">
               <label htmlFor="username" className="text-sm font-medium text-gray-900 mb-2 block">
-                Username <span className="text-gray-400">(optional - auto-generated if empty)</span>
+                Username <span className="text-gray-500">(optional)</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -241,23 +303,27 @@ export default function AdminRegistration() {
                   id="username"
                   name="username"
                   placeholder="Choose a username (optional)"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]"
+                  className={`w-full pl-10 pr-4 py-2 border ${errors.username ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  disabled={loading || isRegistering}
                 />
               </div>
+              {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
               <p className="text-xs text-gray-500 mt-1">Leave empty for auto-generated username</p>
             </div>
 
             <div className="w-full md:w-1/2">
               <label htmlFor="gender" className="text-sm font-medium text-gray-900 mb-2 block">
-                Gender <span className="text-gray-400">(optional)</span>
+                Gender <span className="text-gray-500">(optional)</span>
               </label>
               <select
                 id="gender"
                 name="gender"
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
+                disabled={loading || isRegistering}
                 className="w-full p-2 border border-gray-200 rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]"
               >
                 <option value="">Select gender (optional)</option>
@@ -282,18 +348,18 @@ export default function AdminRegistration() {
                 <input
                   id="email"
                   type="email"
-                  placeholder="Enter your email address"
+                  placeholder="Email address"
                   className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-gray-50"
-                  value={email || ""}
+                  value={inviteParams.email || ""}
                   disabled
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Your email is provided by the invitation</p>
+              <p className="text-xs text-gray-500 mt-1">Verified from your invitation</p>
             </div>
 
             <div className="w-full md:w-1/2">
               <label htmlFor="phone" className="text-sm font-medium text-gray-900 mb-2 block">
-                Phone Number <span className="text-gray-400">(optional)</span>
+                Phone Number <span className="text-gray-500">(optional)</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -302,35 +368,23 @@ export default function AdminRegistration() {
                 <input
                   id="phone"
                   name="phone"
-                  placeholder="Enter your phone number (optional)"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]"
+                  placeholder="Enter your phone number"
+                  className={`w-full pl-10 pr-3 py-2 border ${errors.phone ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  disabled={loading || isRegistering}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-1">Default will be used if empty</p>
+              {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
-          </div>
-
-          {/* Role (fixed to admin) */}
-          <div>
-            <label htmlFor="role" className="text-sm font-medium text-gray-900 mb-2 block">
-              Role
-            </label>
-            <input
-              id="role"
-              type="text"
-              value="admin"
-              disabled
-              className="w-full pl-3 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-700"
-            />
           </div>
 
           {/* Password Fields */}
           <div className="flex flex-col md:flex-row gap-6">
             <div className="w-full md:w-1/2">
               <label htmlFor="password" className="text-sm font-medium text-gray-900 mb-2 block">
-                Password <span className="text-gray-400">(optional)</span>
+                Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -340,11 +394,13 @@ export default function AdminRegistration() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password (optional)"
+                  placeholder="Create your password"
                   autoComplete="new-password"
-                  className="w-full pl-10 pr-10 py-2 border border-gray-200 rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]"
+                  className={`w-full pl-10 pr-10 py-2 border ${errors.password ? "border-red-500" : "border-gray-200"
+                    } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={loading || isRegistering}
                 />
                 <button
                   type="button"
@@ -358,12 +414,12 @@ export default function AdminRegistration() {
                   )}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">Default password will be used if empty</p>
+              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
 
             <div className="w-full md:w-1/2">
               <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-900 mb-2 block">
-                Confirm Password <span className="text-gray-400">(if password provided)</span>
+                Confirm Password <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -379,6 +435,7 @@ export default function AdminRegistration() {
                     } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={loading || isRegistering}
                 />
                 <button
                   type="button"
@@ -400,25 +457,33 @@ export default function AdminRegistration() {
           <div className="flex justify-start mt-6">
             <button
               type="submit"
-              className="bg-[#EC9F01] hover:bg-[#d89001] text-white font-bold py-4 px-8 rounded-lg flex items-center disabled:opacity-50"
-              disabled={loading}
+              className="bg-[#EC9F01] hover:bg-[#d89001] text-white font-bold py-4 px-8 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              disabled={loading || isRegistering}
             >
-              {loading ? (
+              {loading || isRegistering ? (
                 <>
                   <Loader2 className="h-5 w-5 animate-spin mr-2" />
                   Creating Admin Account...
                 </>
               ) : (
-                "Complete Registration"
+                <>
+                  <Check className="h-5 w-5 mr-2" />
+                  Complete Registration
+                </>
               )}
             </button>
           </div>
 
-          <div className="text-xs text-gray-500 mt-2">
-            ✅ BYPASS MODE: Registration will succeed with minimal validation
+          {/* Security notice */}
+          <div className="flex items-start space-x-2 p-3 bg-green-50 border border-green-200 rounded-lg mt-4">
+            <Check className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-green-700">
+              <p className="font-medium">Secure Registration</p>
+              <p>Your invitation has been cryptographically verified. All data is transmitted securely.</p>
+            </div>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }

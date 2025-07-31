@@ -29,17 +29,13 @@ export const useGetAdminRoles = ({ enabled = true } = {}) => {
     staleTime: 5 * 60 * 1000 // 5 minutes
   });
 
-  // Extract roles data with fallbacks like categories
+  // Extract roles data with fallbacks
   let rolesData = [];
   
   try {
     if (data) {
-      if (data?.data?.success && data?.data?.data) {
-        rolesData = data.data.data || [];
-      } else if (data?.data && Array.isArray(data.data)) {
-        rolesData = data.data;
-      } else if (data?.success && Array.isArray(data.data)) {
-        rolesData = data.data;
+      if (data?.success && Array.isArray(data?.data)) {
+        rolesData = data.data || [];
       } else if (Array.isArray(data)) {
         rolesData = data;
       }
@@ -84,12 +80,8 @@ export const useGetAdminPermissions = ({ enabled = true }) => {
   
   try {
     if (data) {
-      if (data?.data?.success && data?.data?.data) {
-        permissionsData = data.data.data || [];
-      } else if (data?.data && Array.isArray(data.data)) {
-        permissionsData = data.data;
-      } else if (data?.success && Array.isArray(data.data)) {
-        permissionsData = data.data;
+      if (data?.success && Array.isArray(data?.data)) {
+        permissionsData = data.data || [];
       } else if (Array.isArray(data)) {
         permissionsData = data;
       }
@@ -135,7 +127,7 @@ export const useGetAdmins = ({ enabled = true, filter = {} }) => {
     initialPageSize: 10
   });
 
-  // Extract admins data with comprehensive fallbacks like categories
+  // Extract admins data with comprehensive fallbacks
   let adminsData = [];
   let pagination = {
     total: 0,
@@ -148,21 +140,8 @@ export const useGetAdmins = ({ enabled = true, filter = {} }) => {
 
   try {
     if (data) {
-      // Check multiple possible response structures
-      if (data?.data?.success && data?.data?.data) {
-        adminsData = data.data.data.admins || data.data.data || [];
-        pagination = { ...pagination, ...data.data.data.pagination };
-      } else if (data?.data?.admins) {
-        adminsData = data.data.admins || [];
-        pagination = { ...pagination, ...data.data.pagination };
-      } else if (data?.success && data?.data) {
-        adminsData = data.data.admins || data.data || [];
-        pagination = { ...pagination, ...data.pagination };
-      } else if (data?.admins) {
-        adminsData = data.admins || [];
-        pagination = { ...pagination, ...data.pagination };
-      } else if (data?.data && Array.isArray(data.data)) {
-        adminsData = data.data;
+      if (data?.success && Array.isArray(data?.data)) {
+        adminsData = data.data || [];
         pagination = { ...pagination, ...data.pagination };
       } else if (Array.isArray(data)) {
         adminsData = data;
@@ -173,9 +152,7 @@ export const useGetAdmins = ({ enabled = true, filter = {} }) => {
     adminsData = [];
   }
 
-  console.log('🔍 useGetAdmins - Raw data:', data);
   console.log('🔍 useGetAdmins - Processed admins:', adminsData);
-  console.log('🔍 useGetAdmins - Pagination:', pagination);
 
   return {
     isFetchingAdmins: isFetching,
@@ -197,62 +174,6 @@ export const useGetAdmins = ({ enabled = true, filter = {} }) => {
   };
 };
 
-// =================== GET SPECIFIC ADMIN INFO ===================
-export const useGetAdminInfo = (adminId) => {
-  const [adminData, setAdminData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const fetchAdminInfo = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const response = await httpService.getData(routes.getAdminInfo(adminId));
-      
-      // Extract admin data with fallbacks
-      let extractedData = null;
-      
-      if (response?.data?.success && response?.data?.data) {
-        extractedData = response.data.data;
-      } else if (response?.data) {
-        extractedData = response.data;
-      } else if (response?.success && response?.data) {
-        extractedData = response.data;
-      }
-      
-      console.log('🔍 useGetAdminInfo - Raw response:', response);
-      console.log('🔍 useGetAdminInfo - Extracted data:', extractedData);
-      
-      setAdminData(extractedData);
-      return extractedData;
-    } catch (err) {
-      setError(err);
-      console.error("Error fetching admin info:", ErrorHandler(err));
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (adminId) {
-      fetchAdminInfo();
-    }
-  }, [adminId]);
-
-  const refetchAdminInfo = () => {
-    return fetchAdminInfo();
-  };
-
-  return {
-    adminData,
-    isLoading,
-    error: ErrorHandler(error),
-    refetchAdminInfo
-  };
-};
-
 // =================== GET CURRENT ADMIN ===================
 export const useGetCurrentAdmin = () => {
   const [currentAdmin, setCurrentAdmin] = useState(null);
@@ -269,17 +190,19 @@ export const useGetCurrentAdmin = () => {
       
       console.log("📡 Raw API Response:", response);
       
-      if (!response || !response.data) {
+      if (!response) {
         throw new Error("No admin data received from server");
       }
       
       // Extract admin data with fallbacks
       let adminData = null;
       
-      if (response?.data?.success && response?.data?.data) {
-        adminData = response.data.data;
+      if (response?.success && response?.data) {
+        adminData = response.data;
       } else if (response?.data) {
         adminData = response.data;
+      } else {
+        adminData = response;
       }
       
       // Ensure roles exists even if empty
@@ -292,8 +215,7 @@ export const useGetCurrentAdmin = () => {
         id: adminData.id,
         email: adminData.email,
         roles: adminData.roles,
-        roleCount: adminData.roles?.length,
-        fullData: adminData
+        roleCount: adminData.roles?.length
       });
       
       setCurrentAdmin(adminData);
@@ -302,16 +224,6 @@ export const useGetCurrentAdmin = () => {
       console.error("❌ Error fetching current admin:", error);
       const errorMessage = ErrorHandler(error);
       setError(errorMessage);
-      
-      // Log specific error types
-      if (error.response?.status === 401) {
-        console.log("🚫 Unauthorized - user not logged in");
-      } else if (error.response?.status === 403) {
-        console.log("🚫 Forbidden - user not an admin");
-      } else if (error.response?.status === 404) {
-        console.log("🚫 Not Found - endpoint doesn't exist");
-      }
-      
       return null;
     } finally {
       setIsLoading(false);
@@ -332,6 +244,161 @@ export const useGetCurrentAdmin = () => {
   };
 };
 
+// =================== SECURE INVITE ADMIN ===================
+export const useInviteAdmin = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  const inviteAdmin = async (payload) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      console.log('🔐 Sending secure admin invitation:', { ...payload, email: payload.email });
+      
+      const response = await httpService.postData(payload, routes.inviteAdmin());
+      
+      console.log('📡 Secure invitation response:', response);
+      
+      // Extract data with fallbacks
+      let extractedData;
+      if (response?.success && response?.data) {
+        extractedData = response.data;
+      } else if (response?.data) {
+        extractedData = response.data;
+      } else {
+        extractedData = response;
+      }
+      
+      setData(extractedData);
+      
+      // Validate secure URL generation
+      if (extractedData?.inviteUrl) {
+        try {
+          const url = new URL(extractedData.inviteUrl);
+          const params = Object.fromEntries(url.searchParams);
+          
+          // Check for required security parameters
+          const requiredParams = ['email', 'userId', 'token', 'signature', 'timestamp'];
+          const missing = requiredParams.filter(param => !params[param]);
+          
+          if (missing.length > 0) {
+            console.warn('⚠️ Generated invitation URL missing security parameters:', missing);
+            toast.warning('Invitation sent but some security parameters are missing');
+          } else {
+            console.log('✅ Secure invitation URL generated with all required parameters');
+            toast.success('Secure admin invitation sent successfully');
+          }
+        } catch (urlError) {
+          console.error('❌ Invalid invitation URL:', urlError);
+          toast.error('Generated invitation URL is invalid');
+          throw new Error('Invalid invitation URL generated');
+        }
+      } else {
+        console.warn('⚠️ No invitation URL in response');
+        toast.warning('Invitation processed but no URL generated');
+      }
+      
+      return extractedData;
+    } catch (error) {
+      console.error('❌ Secure admin invitation failed:', error);
+      
+      let errorMessage = "Failed to send admin invitation";
+      
+      if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      // Handle specific secure invitation errors
+      if (errorMessage.includes('configuration')) {
+        toast.error("Server security configuration error. Please contact administrator.");
+      } else if (errorMessage.includes('INVITE_SECRET')) {
+        toast.error("Invitation signing not configured. Please contact administrator.");
+      } else if (errorMessage.includes('already exists')) {
+        toast.error("An admin with this email already exists");
+      } else {
+        toast.error(errorMessage);
+      }
+      
+      setError(error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    inviteAdmin,
+    isLoading,
+    error: ErrorHandler(error),
+    data
+  };
+};
+
+// =================== SECURE ADMIN REGISTRATION ===================
+export const useAdminRegistration = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+
+  const registerAdmin = async (payload) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log('🔐 Starting secure admin registration');
+      
+      // The registration endpoint will verify the URL parameters automatically
+      const response = await httpService.postData(payload, routes.registerInvitedAdmin());
+      
+      console.log('📡 Secure registration response:', response);
+      
+      // Extract data with fallbacks
+      let extractedData;
+      if (response?.success && response?.data) {
+        extractedData = response.data;
+      } else if (response?.data) {
+        extractedData = response.data;
+      } else {
+        extractedData = response;
+      }
+      
+      setData(extractedData);
+      
+      console.log('✅ Secure admin registration successful');
+      toast.success('Admin account created successfully!');
+      
+      return extractedData;
+    } catch (error) {
+      console.error('❌ Secure admin registration failed:', error);
+      
+      let errorMessage = "Registration failed";
+      
+      if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+      
+      // Don't show toast here - let the component handle it for better UX
+      setError(error);
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return {
+    registerAdmin,
+    isLoading,
+    error: ErrorHandler(error),
+    data
+  };
+};
+
 // =================== CREATE ADMIN ROLE ===================
 export const useCreateAdminRole = () => {
   const queryClient = useQueryClient();
@@ -342,19 +409,18 @@ export const useCreateAdminRole = () => {
     error,
   } = useMutation({
     mutationFn: async (payload) => {
-      const response = await httpService.postData(payload, routes.createAdminRole());
+      const response = await httpService.postData(payload, routes.createRole());
       return response;
     },
 
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
       
-      // Extract message with fallbacks
       let message = "Role created successfully";
-      if (response?.data?.success && response?.data?.message) {
-        message = response.data.message;
-      } else if (response?.data?.message) {
-        message = response.data.message;
+      if (response?.success && response?.message) {
+        message = response.message;
+      } else if (response?.message) {
+        message = response.message;
       }
       
       toast.success(message);
@@ -370,7 +436,7 @@ export const useCreateAdminRole = () => {
   const createRole = async (payload) => {
     try {
       const response = await createRoleMutation(payload);
-      return response?.data?.data || response?.data || response;
+      return response?.data || response;
     } catch (error) {
       throw error;
     }
@@ -380,57 +446,6 @@ export const useCreateAdminRole = () => {
     createRole,
     isCreating,
     createRoleError: ErrorHandler(error),
-  };
-};
-
-// =================== CREATE ADMIN ===================
-export const useCreateAdmin = () => {
-  const queryClient = useQueryClient();
-
-  const {
-    mutateAsync: createAdminMutation,
-    isPending: isCreating,
-    error,
-  } = useMutation({
-    mutationFn: async (payload) => {
-      const response = await httpService.postData(payload, routes.createAdmin());
-      return response;
-    },
-
-    onSuccess: (response) => {
-      queryClient.invalidateQueries({ queryKey: ["admins"] });
-      
-      // Extract message with fallbacks
-      let message = "Admin created successfully";
-      if (response?.data?.success && response?.data?.message) {
-        message = response.data.message;
-      } else if (response?.data?.message) {
-        message = response.data.message;
-      }
-      
-      toast.success(message);
-    },
-
-    onError: (error) => {
-      console.error('Admin creation failed:', error);
-      const errorMessage = error?.response?.data?.error || error?.message || "Failed to create admin";
-      toast.error(errorMessage);
-    },
-  });
-
-  const createAdmin = async (payload) => {
-    try {
-      const response = await createAdminMutation(payload);
-      return response?.data?.data || response?.data || response;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  return {
-    createAdmin,
-    isCreating,
-    createAdminError: ErrorHandler(error),
   };
 };
 
@@ -448,20 +463,19 @@ export const useDeleteAdmin = () => {
     try {
       const response = await httpService.deleteData(routes.deleteAdmin(adminId));
       
-      setData(response.data);
+      setData(response);
       
       queryClient.invalidateQueries({ queryKey: ["admins"] });
       
-      // Extract message with fallbacks
       let message = "Admin deleted successfully";
-      if (response?.data?.success && response?.data?.message) {
-        message = response.data.message;
-      } else if (response?.data?.message) {
-        message = response.data.message;
+      if (response?.success && response?.message) {
+        message = response.message;
+      } else if (response?.message) {
+        message = response.message;
       }
       
       toast.success(message);
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Admin deletion failed:', error);
       const errorMessage = error?.response?.data?.error || error?.message || "Failed to delete admin";
@@ -484,172 +498,92 @@ export const useDeleteAdmin = () => {
 // =================== UPDATE ADMIN ROLES ===================
 export const useUpdateAdminRoles = () => {
   const queryClient = useQueryClient();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const {
-    mutateAsync: updateRolesMutation,
-    isPending: isUpdating,
-    error,
-  } = useMutation({
-    mutationFn: async ({ adminId, roleNames }) => {
+  const updateRoles = async (adminId, roleNames) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
       const response = await httpService.putData(
         { roleNames },
         routes.updateAdminRoles(adminId)
       );
-      return response;
-    },
-
-    onSuccess: (response) => {
+      
       queryClient.invalidateQueries({ queryKey: ["admins"] });
       queryClient.invalidateQueries({ queryKey: ["admin-info"] });
       
-      toast.success("Roles updated successfully");
-    },
-
-    onError: (error) => {
+      toast.success("Admin roles updated successfully");
+      return response?.data || response;
+    } catch (error) {
       console.error('Roles update failed:', error);
       const errorMessage = error?.response?.data?.error || error?.message || "Failed to update roles";
       toast.error(errorMessage);
-    },
-  });
-
-  const updateRoles = async (adminId, roleNames) => {
-    try {
-      const response = await updateRolesMutation({ adminId, roleNames });
-      return response?.data?.data || response?.data || response;
-    } catch (error) {
+      setError(error);
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return {
     updateRoles,
-    isUpdating,
-    updateRolesError: ErrorHandler(error),
+    isLoading,
+    error: ErrorHandler(error),
   };
 };
 
-// =================== INVITE ADMIN ===================
-export const useInviteAdmin = () => {
-  const [isLoading, setIsLoading] = useState(false);
+// =================== GET SPECIFIC ADMIN INFO ===================
+export const useGetAdminInfo = (adminId) => {
+  const [adminData, setAdminData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
 
-  const inviteAdmin = async (payload) => {
+  const fetchAdminInfo = async () => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await httpService.postData(payload, routes.inviteAdmin());
+      const response = await httpService.getData(routes.getAdminInfo(adminId));
       
-      // Extract data with fallbacks
-      let extractedData = response?.data?.data || response?.data || response;
-      setData(extractedData);
-      
-      // Extract message with fallbacks
-      let message = "Admin invited successfully";
-      if (response?.data?.success && response?.data?.message) {
-        message = response.data.message;
-      } else if (response?.data?.message) {
-        message = response.data.message;
+      let extractedData = null;
+      if (response?.success && response?.data) {
+        extractedData = response.data;
+      } else if (response?.data) {
+        extractedData = response.data;
+      } else {
+        extractedData = response;
       }
       
-      toast.success(message);
+      console.log('🔍 useGetAdminInfo - Extracted data:', extractedData);
+      
+      setAdminData(extractedData);
       return extractedData;
-    } catch (error) {
-      console.error('Admin invitation failed:', error);
-      const errorMessage = error?.response?.data?.error || error?.message || "Failed to send invitation";
-      toast.error(errorMessage);
-      setError(error);
-      throw error;
+    } catch (err) {
+      setError(err);
+      console.error("Error fetching admin info:", ErrorHandler(err));
+      return null;
     } finally {
       setIsLoading(false);
     }
   };
-
-  return {
-    inviteAdmin,
-    isLoading,
-    error: ErrorHandler(error),
-    data
-  };
-};
-
-// =================== ADMIN REGISTRATION ===================
-export const useAdminRegistration = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
-
-  const registerAdmin = async (payload) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await httpService.postData(payload, routes.registerInvitedAdmin());
-      
-      // Extract data with fallbacks
-      let extractedData = response?.data?.data || response?.data || response;
-      setData(extractedData);
-      
-      return extractedData;
-    } catch (error) {
-      setError(error);
-      throw ErrorHandler(error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return {
-    registerAdmin,
-    isLoading,
-    error: ErrorHandler(error),
-    data
-  };
-};
-
-// =================== HELPER FUNCTIONS ===================
-export const useAdminInviteParams = () => {
-  const [params, setParams] = useState({
-    email: null,
-    userId: null,
-    expires: null,
-    signature: null,
-    isLoading: true,
-    error: null
-  });
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const email = searchParams.get('email');
-    const userId = searchParams.get('userId');
-    const expires = searchParams.get('expires');
-    const signature = searchParams.get('signature');
-
-    let error = null;
-    
-    if (!email || !userId || !expires || !signature) {
-      error = 'Invalid invitation link. Missing required parameters.';
-    } else {
-      const expiryTime = parseInt(expires);
-      if (isNaN(expiryTime) || Date.now() > expiryTime) {
-        error = 'This invitation link has expired. Please request a new one.';
-      }
+    if (adminId) {
+      fetchAdminInfo();
     }
+  }, [adminId]);
 
-    setParams({
-      email,
-      userId,
-      expires,
-      signature,
-      isLoading: false,
-      error
-    });
-  }, []);
-
-  return params;
+  return {
+    adminData,
+    isLoading,
+    error: ErrorHandler(error),
+    refetchAdminInfo: fetchAdminInfo
+  };
 };
 
+// =================== ENHANCED ADMIN INVITE PARAMS ===================
 export const useEnhancedAdminInviteParams = () => {
   const [params, setParams] = useState({
     email: null,
@@ -675,7 +609,7 @@ export const useEnhancedAdminInviteParams = () => {
       const timestamp = searchParams.get('timestamp');
       const noExpiry = searchParams.get('noExpiry') === 'true';
 
-      console.log('Parsing invite params:', { 
+      console.log('🔐 Parsing secure invite params:', { 
         email, 
         userId, 
         expires, 
@@ -688,6 +622,7 @@ export const useEnhancedAdminInviteParams = () => {
       let error = null;
       let isValid = false;
       
+      // ✅ Check all required security parameters
       if (!email || !userId || !signature || !token || !timestamp) {
         const missing = [];
         if (!email) missing.push('email');
@@ -696,22 +631,29 @@ export const useEnhancedAdminInviteParams = () => {
         if (!token) missing.push('token');
         if (!timestamp) missing.push('timestamp');
         
-        error = `Invalid invitation link. Missing required parameters: ${missing.join(', ')}.`;
-      } else if (!noExpiry) {
-        if (!expires) {
-          error = 'Invalid invitation link. Missing expiry information.';
-        } else {
+        error = `Invalid invitation link. Missing required security parameters: ${missing.join(', ')}.`;
+      } else {
+        // ✅ Validate timestamp
+        const timestampInt = parseInt(timestamp);
+        const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 days
+        
+        if (isNaN(timestampInt)) {
+          error = 'Invalid invitation link. Invalid timestamp format.';
+        } else if (Date.now() - timestampInt > maxAge) {
+          error = 'This invitation link is too old (expired after 7 days). Please request a new one.';
+        } else if (!noExpiry && expires) {
           const expiryTime = parseInt(expires);
           if (isNaN(expiryTime)) {
             error = 'Invalid invitation link. Invalid expiry format.';
           } else if (Date.now() > expiryTime) {
-            error = 'This invitation link has expired. Please request a new one.';
+            const expiredDate = new Date(expiryTime).toLocaleString();
+            error = `This invitation link expired on ${expiredDate}. Please request a new one.`;
           } else {
             isValid = true;
           }
+        } else {
+          isValid = true;
         }
-      } else {
-        isValid = true;
       }
 
       setParams({
@@ -727,7 +669,7 @@ export const useEnhancedAdminInviteParams = () => {
         isValid
       });
     } catch (err) {
-      console.error('Error parsing invite params:', err);
+      console.error('Error parsing secure invite params:', err);
       setParams(prev => ({
         ...prev,
         isLoading: false,
@@ -741,11 +683,6 @@ export const useEnhancedAdminInviteParams = () => {
 };
 
 // =================== AUTH HELPERS ===================
-export const setTestToken = (token) => {
-  localStorage.setItem('token', token);
-  console.log('🧪 Token set for testing:', !!token);
-};
-
 export const checkAuthState = () => {
   const authData = {
     localStorage: {

@@ -23,7 +23,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { useInviteAdmin } from "@/services/admin/index";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Shield, Clock, Users } from "lucide-react";
 
 // Types
 interface RoleData {
@@ -50,44 +50,54 @@ const formSchema = z.object({
       required_error: "Please select a role.",
     })
     .min(1, "Please select a role"),
+  expiryHours: z
+    .number()
+    .min(1, "Expiry must be at least 1 hour")
+    .max(168, "Expiry cannot exceed 1 week (168 hours)")
+    .optional(),
+  noExpiry: z.boolean().optional(),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
 const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [advancedOptions, setAdvancedOptions] = useState<boolean>(false);
 
   const { inviteAdmin, isLoading: inviteAdminIsLoading, error: inviteAdminError } = useInviteAdmin();
 
-  // ✅ FIXED: Simple success handler - backend auth completely bypassed
+  // ✅ SECURE: Handle invitation success with proper validation
   const handleInviteSuccess = (data: any) => {
-    console.log("✅ SUCCESS: Admin invitation successful:", data);
+    console.log("✅ SECURE: Admin invitation successful:", data);
 
     if (data?.inviteUrl) {
-      console.log("✅ Generated URL:", data.inviteUrl);
+      console.log("✅ Generated secure URL:", data.inviteUrl);
 
       try {
         const url = new URL(data.inviteUrl);
         const params = Object.fromEntries(url.searchParams);
-        console.log("📋 URL Parameters:", params);
+        console.log("📋 URL Security Parameters:", Object.keys(params));
 
-        // ✅ Since backend auth is bypassed, just check for basic parameters
-        if (params.email && params.userId) {
-          console.log('✅ Valid invitation URL generated (backend auth bypassed)');
-          toast.success("Admin invitation sent successfully");
+        // ✅ Validate all required security parameters
+        const requiredParams = ['email', 'userId', 'token', 'signature', 'timestamp'];
+        const missing = requiredParams.filter(param => !params[param]);
+
+        if (missing.length === 0) {
+          console.log('✅ Secure invitation URL generated with all security parameters');
+          toast.success("Secure admin invitation sent successfully!");
           setUrl(data.inviteUrl);
           setClose();
         } else {
-          console.error('❌ Generated URL missing essential parameters');
-          toast.error("Generated URL is missing essential parameters");
+          console.error('❌ Generated URL missing security parameters:', missing);
+          toast.error(`Generated URL missing security parameters: ${missing.join(', ')}`);
         }
       } catch (urlError) {
-        console.error("❌ Invalid URL:", urlError);
-        toast.error("Generated URL is invalid");
+        console.error("❌ Invalid secure URL:", urlError);
+        toast.error("Generated invitation URL is invalid");
       }
     } else {
       console.warn("⚠️ Invitation response missing URL");
-      toast.error("Invitation sent but URL generation failed");
+      toast.error("Invitation processed but URL generation failed");
     }
   };
 
@@ -101,12 +111,14 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
   console.log("Available roles:", roles);
   console.log("Filtered admin roles:", adminRoles);
 
-  // Initialize form
+  // Initialize form with secure defaults
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
       role: "",
+      expiryHours: 24, // Default 24 hours
+      noExpiry: false,
     },
   });
 
@@ -119,9 +131,9 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
     }
   }, [adminRoles, form]);
 
-  // ✅ FIXED: Handle form submission with corrected response processing
+  // ✅ SECURE: Handle form submission with enhanced security
   async function onSubmit(values: FormSchemaType): Promise<void> {
-    console.log("Form submitted with values:", values);
+    console.log("🔐 Secure form submitted with values:", values);
 
     if (isSubmitting || inviteAdminIsLoading) {
       console.log("Already submitting, preventing duplicate submission");
@@ -134,42 +146,40 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
       const payload = {
         email: values.email.trim().toLowerCase(),
         roleNames: [values.role],
-        expiryHours: 24,
-        noExpiry: false
+        expiryHours: values.noExpiry ? undefined : (values.expiryHours || 24),
+        noExpiry: values.noExpiry || false
       };
 
-      console.log("Sending payload:", payload);
+      console.log("🔐 Sending secure payload:", { ...payload, email: payload.email });
 
       const response = await inviteAdmin(payload);
-      console.log("API Response:", response);
+      console.log("📡 Secure API Response:", response);
 
-      // ✅ FIXED: The hook already extracts the data, so use it directly
       if (response) {
-        console.log("✅ Processing success response:", response);
+        console.log("✅ Processing secure success response");
         handleInviteSuccess(response);
       }
 
     } catch (error: any) {
-      console.error("Form submission error:", error);
+      console.error("❌ Secure form submission error:", error);
 
-      let errorMessage = "Failed to send admin invitation";
+      let errorMessage = "Failed to send secure admin invitation";
 
       if (error?.response?.data?.error) {
         errorMessage = error.response.data.error;
-      } else if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message;
       } else if (error?.message) {
         errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
       }
 
-      if (errorMessage.includes('already exists')) {
+      // ✅ Handle specific secure invitation errors
+      if (errorMessage.includes('INVITE_SECRET')) {
+        toast.error("Server security configuration error. Please contact administrator.");
+      } else if (errorMessage.includes('FRONTEND_URL')) {
+        toast.error("Server URL configuration error. Please contact administrator.");
+      } else if (errorMessage.includes('already exists')) {
         toast.error("An admin with this email already exists");
       } else if (errorMessage.includes('configuration')) {
         toast.error("Server configuration error. Please contact administrator.");
-      } else if (errorMessage.includes('token')) {
-        toast.error("Failed to generate secure invitation link");
       } else if (errorMessage.includes('Invalid email')) {
         toast.error("Please enter a valid email address");
       } else if (errorMessage.includes('Role not found')) {
@@ -199,6 +209,18 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
           onSubmit={form.handleSubmit(onSubmit)}
           className="mb-8 flex flex-col h-full"
         >
+          {/* Security Notice */}
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center space-x-2 mb-2">
+              <Shield className="h-5 w-5 text-green-600" />
+              <h3 className="text-sm font-semibold text-green-800">Secure Invitation System</h3>
+            </div>
+            <p className="text-xs text-green-700">
+              Invitations are cryptographically signed and time-limited for maximum security.
+              Recipients will receive a tamper-proof link that expires automatically.
+            </p>
+          </div>
+
           <div className="mb-6 space-y-4">
             <FormField
               control={form.control}
@@ -251,17 +273,25 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                       {adminRoles.length > 0 ? (
                         adminRoles.map((role: RoleData) => (
                           <SelectItem key={role.id} value={role.name}>
-                            {role.name.replace(/_/g, " ").toUpperCase()}
-                            {role.description && (
-                              <span className="text-sm text-gray-500 ml-2">
-                                - {role.description}
+                            <div className="flex items-center space-x-2">
+                              <Users className="h-4 w-4" />
+                              <span>
+                                {role.name.replace(/_/g, " ").toUpperCase()}
+                                {role.description && (
+                                  <span className="text-sm text-gray-500 ml-2">
+                                    - {role.description}
+                                  </span>
+                                )}
                               </span>
-                            )}
+                            </div>
                           </SelectItem>
                         ))
                       ) : (
                         <SelectItem value="admin">
-                          Admin (Default)
+                          <div className="flex items-center space-x-2">
+                            <Users className="h-4 w-4" />
+                            <span>Admin (Default)</span>
+                          </div>
                         </SelectItem>
                       )}
                     </SelectContent>
@@ -270,12 +300,101 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                 </FormItem>
               )}
             />
+
+            {/* Advanced Security Options */}
+            <div className="border-t pt-4">
+              <button
+                type="button"
+                onClick={() => setAdvancedOptions(!advancedOptions)}
+                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                <Shield className="h-4 w-4" />
+                <span>Security Options</span>
+                <span className="text-xs">
+                  {advancedOptions ? '(Hide)' : '(Show)'}
+                </span>
+              </button>
+
+              {advancedOptions && (
+                <div className="mt-4 space-y-4 p-4 bg-gray-50 rounded-lg">
+                  <FormField
+                    control={form.control}
+                    name="noExpiry"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center space-x-2">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={field.onChange}
+                            disabled={isSubmitting || inviteAdminIsLoading}
+                            className="rounded border-gray-300"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm font-medium text-gray-700 cursor-pointer">
+                          No Expiry (Permanent invitation link)
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+
+                  {!form.watch('noExpiry') && (
+                    <FormField
+                      control={form.control}
+                      name="expiryHours"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-gray-700 flex items-center space-x-2">
+                            <Clock className="h-4 w-4" />
+                            <span>Invitation Expiry (hours)</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Select
+                              onValueChange={(value) => field.onChange(parseInt(value))}
+                              value={field.value?.toString()}
+                              disabled={isSubmitting || inviteAdminIsLoading}
+                            >
+                              <SelectTrigger className="h-10">
+                                <SelectValue placeholder="Select expiry time" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1">1 hour</SelectItem>
+                                <SelectItem value="6">6 hours</SelectItem>
+                                <SelectItem value="12">12 hours</SelectItem>
+                                <SelectItem value="24">24 hours (default)</SelectItem>
+                                <SelectItem value="48">48 hours</SelectItem>
+                                <SelectItem value="72">72 hours</SelectItem>
+                                <SelectItem value="168">1 week</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <p className="text-xs text-gray-500">
+                            The invitation link will expire after this duration for security
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded border border-blue-200">
+                    <div className="font-medium text-blue-800 mb-1">Security Features:</div>
+                    <ul className="space-y-1 text-blue-700">
+                      <li>• Cryptographic signatures prevent link tampering</li>
+                      <li>• Time-based tokens prevent replay attacks</li>
+                      <li>• HMAC verification ensures authenticity</li>
+                      <li>• Automatic cleanup of expired invitations</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Show any invite errors */}
           {inviteAdminError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
-              <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+              <AlertCircle className="h-4 w-4 text-red-500 mr-2 flex-shrink-0" />
               <span className="text-red-700 text-sm">{inviteAdminError}</span>
             </div>
           )}
@@ -305,15 +424,25 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
               {isSubmitting || inviteAdminIsLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending Invitation...
+                  Generating Secure Invitation...
                 </>
               ) : (
                 <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Send Invitation
+                  <Shield className="mr-2 h-4 w-4" />
+                  Send Secure Invitation
                 </>
               )}
             </Button>
+          </div>
+
+          {/* Security Footer */}
+          <div className="mt-4 text-xs text-gray-500 text-center">
+            <div className="flex items-center justify-center space-x-1">
+              <Shield className="h-3 w-3" />
+              <span>
+                Secure invitation system with cryptographic verification
+              </span>
+            </div>
           </div>
         </form>
       </Form>
