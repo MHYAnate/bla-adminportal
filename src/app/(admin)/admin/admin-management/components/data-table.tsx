@@ -92,7 +92,9 @@ const DataTable: React.FC<DataTableProps> = ({
       const matchesStatus =
         !statusFilter ||
         statusFilter === "select" ||
-        admin?.status?.toLowerCase() === statusFilter.toLowerCase();
+        String(admin?.status || "")
+          .toLowerCase()
+          .trim() === statusFilter.toLowerCase();
 
       return matchesName && matchesRole && matchesStatus;
     }) || [];
@@ -195,7 +197,7 @@ const DataTable: React.FC<DataTableProps> = ({
         role: roleName,
         description: roleDescription,
         date: formattedDate,
-        status: admin?.status || "Unknown",
+        status: admin.status || "Unknown",
       };
     }) || [];
 
@@ -280,7 +282,6 @@ const DataTable: React.FC<DataTableProps> = ({
       );
     },
     status: (item: any) => {
-      // ✅ Safely handle status
       const statusText = typeof item.status === 'string' ? item.status : String(item.status || 'Unknown');
       const statusLower = statusText.toLowerCase();
 
@@ -299,6 +300,8 @@ const DataTable: React.FC<DataTableProps> = ({
         </Badge>
       );
     },
+
+
     action: (item: any) => (
       <div className="flex gap-2.5">
         <Link
