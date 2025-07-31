@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import SubAdminRegistrationForm from "./SubAdminRegistratuinForm";
+// import SubAdminRegistrationForm from "./SubAdminRegistratuinForm";
 import { Loader2 } from "lucide-react";
 import httpService from "@/services/httpService";
 
@@ -12,7 +12,7 @@ export default function AdminRegistrationPage() {
   const userId = searchParams.get("userId");
   const expires = searchParams.get("expires");
   const signature = searchParams.get("signature");
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +57,7 @@ export default function AdminRegistrationPage() {
 
 
   return (
-    <SubAdminRegistrationForm />
+    <></>
+    // <SubAdminRegistrationForm />
   );
 }
