@@ -1,6 +1,5 @@
 "use client";
 
-import { FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,10 +18,10 @@ export default function Security() {
     register,
     handleSubmit,
     reset,
-    watch,
+    formState: { errors },
   } = useForm<FormValues>();
 
-  const onSubmit = async (data: FormValues) => {
+  const resetPassword = async (data: FormValues) => {
     const payload = {
       currentPassword: data.currentpassword,
       newPassword: data.newpassword,
@@ -30,7 +29,6 @@ export default function Security() {
     };
 
     try {
-      // Replace this with your actual postDataWithToken implementation if needed
       const response = await httpService.postData(payload, routes.resetPassword());
       showSuccessAlert(response?.data?.message || "Password changed successfully");
       reset();
@@ -42,25 +40,34 @@ export default function Security() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(resetPassword)} className="space-y-4">
       <Input
         type="password"
         placeholder="Current Password"
-        required
         {...register("currentpassword", { required: true })}
       />
+      {errors.currentpassword && (
+        <p className="text-sm text-red-500">Current password is required</p>
+      )}
+
       <Input
         type="password"
         placeholder="New Password"
-        required
         {...register("newpassword", { required: true })}
       />
+      {errors.newpassword && (
+        <p className="text-sm text-red-500">New password is required</p>
+      )}
+
       <Input
         type="password"
         placeholder="Confirm Password"
-        required
         {...register("confirmpassword", { required: true })}
       />
+      {errors.confirmpassword && (
+        <p className="text-sm text-red-500">Confirm password is required</p>
+      )}
+
       <Button type="submit">Reset Password</Button>
     </form>
   );
