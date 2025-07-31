@@ -42,12 +42,6 @@ export default function AdminRegistration() {
   const phoneRegex = /^\+?\d+$/;
 
   // ✅ FIXED: Get auth token from localStorage (your app stores it there)
-  const getAuthToken = () => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('authToken') || localStorage.getItem('token') || '';
-    }
-    return '';
-  };
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
@@ -95,22 +89,12 @@ export default function AdminRegistration() {
       console.log('Body:', { ...requestBody, password: '[HIDDEN]' })
 
       // ✅ FIXED: Add auth token to headers
-      const authToken = getAuthToken();
-      const headers: { [key: string]: string } = {
-        'Content-Type': 'application/json',
-      };
-
-      // Add authorization header if token exists
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
-        console.log('✅ Added Authorization header with token');
-      } else {
-        console.log('⚠️ No auth token found - making request without authentication');
-      }
 
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+        }, // ← No Authorization header at all
         body: JSON.stringify(requestBody),
       })
 
