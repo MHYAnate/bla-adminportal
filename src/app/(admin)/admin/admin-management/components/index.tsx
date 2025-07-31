@@ -14,12 +14,12 @@ import CreateAdmin from "./add-admin";
 import { ChevronLeft } from "lucide-react";
 import RoleCard from "./role-card";
 import { useGetAdminRoles, useGetAdmins } from "@/services/admin/index";
-import InviteLinkDisplay from "./invite-link-display"; // Import the component
+import InviteLinkDisplay from "./invite-link-display";
 
 export default function Admins() {
   const [url, setUrl] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [showInviteLink, setShowInviteLink] = useState(false); // New state for link display
+  const [showInviteLink, setShowInviteLink] = useState(false);
 
   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
   const { adminsData, isAdminsLoading, refetchAdmins } = useGetAdmins({ enabled: true });
@@ -27,17 +27,20 @@ export default function Admins() {
   console.log("rolesData:", rolesData);
   console.log("adminData:", adminsData);
 
-  const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
+  // ✅ FIXED: Remove .data property access since your hook returns array directly
+  const safeRolesData = Array.isArray(rolesData) ? rolesData : [];
   const safeAdminData = Array.isArray(adminsData) ? adminsData : [];
 
   console.log("saferoledata", safeRolesData, "data", rolesData);
   console.log("saferAdmindata", safeAdminData, "data", adminsData);
+  console.log("About to pass roles to CreateAdmin:", safeRolesData); // ✅ Added debug log
 
   // Handle successful admin creation
   const handleAdminCreated = (inviteUrl: any) => {
     setUrl(inviteUrl);
     setIsOpen(false);
-    setShowInviteLink(true); // Show the enhanced link display
+    setShowInviteLink(true);
+    refetchAdmins(); // ✅ Added: Refresh admin list after creation
   };
 
   // Handle closing the invite link display
@@ -101,9 +104,9 @@ export default function Admins() {
             </DialogTitle>
           </DialogHeader>
           <CreateAdmin
-            setUrl={handleAdminCreated} // Use the new handler
+            setUrl={handleAdminCreated}
             setClose={() => setIsOpen(false)}
-            roles={safeRolesData}
+            roles={safeRolesData} // ✅ Now correctly passes the roles array
           />
         </DialogContent>
       </Dialog>
