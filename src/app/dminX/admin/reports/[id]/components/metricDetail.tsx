@@ -21,7 +21,28 @@ import { useGetAdmins } from "@/services/admin";
 import { useGetDashboardInfo } from "@/services/dashboard";
 import { useGetAdminRoles } from "@/services/admin/index";
 
+// Define TypeScript interfaces for the dashboard data
+interface DashboardData {
+  topPerformers?: {
+    customers?: Array<{
+      userId: string | number;
+      email?: string;
+      status?: string;
+      totalSpent?: number;
+      orderCount?: number;
+      lastOrderDate?: string;
+      kycStatus?: string;
+      joinDate?: string;
+      [key: string]: any;
+    }>;
+  };
+  [key: string]: any;
+}
 
+interface RolesData {
+  data?: any[];
+  [key: string]: any;
+}
 
 interface UserMetricDetailProps {
   adminId: string;
@@ -32,31 +53,29 @@ const UserMetricDetail: React.FC<UserMetricDetailProps> = ({ adminId, roles }) =
   const params = useSearchParams();
   const tabParam = params.get("tab");
   const { handlePush } = useHandlePush();
-  
-  console.log("customerId", adminId)
 
+  console.log("customerId", adminId);
+  console.log("compare to saferroledata", roles);
 
-     console.log("compare to saferroledata", roles)
+  const { rolesData: rawRolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
+  const rolesData = rawRolesData as RolesData;
+  const safeRolesData = Array.isArray(rolesData?.data) ? rolesData.data : [];
 
-     const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
-    const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
-    const {
-      isDashboardInfoLoading,
-      isFetchingDashboardInfo,
-      dashboardData: data,
-      refetchDashboardData,
-    } = useGetDashboardInfo({ enabled: true });
+  const {
+    isDashboardInfoLoading,
+    isFetchingDashboardInfo,
+    dashboardData: rawData,
+    refetchDashboardData,
+  } = useGetDashboardInfo({ enabled: true });
 
-  //  const User = data .find(
-  //   (admin:any) => admin.recentActivity.
-  //   newCustomers.id == adminId
-  // );
+  // Type assertion for dashboard data
+  const data = rawData as DashboardData;
 
   const User = data?.topPerformers?.customers?.find(
     (customer: any) => customer.userId == adminId
   );
 
-  console.log("CustomerDataMetric", User,"data" ,data);
+  console.log("CustomerDataMetric", User, "data", data);
 
   const tabs = [
     {
@@ -88,12 +107,12 @@ const UserMetricDetail: React.FC<UserMetricDetailProps> = ({ adminId, roles }) =
   }
 
   // If we have data, determine the status
-  const lastOrderDate =	User?.lastOrderDate
+  const lastOrderDate = User?.lastOrderDate
     ? new Date(User.lastOrderDate).toLocaleDateString("en-US", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      })
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
     : "Not available";
   const orderCount = User?.orderCount;
   const status = User?.status;
@@ -131,8 +150,8 @@ const UserMetricDetail: React.FC<UserMetricDetailProps> = ({ adminId, roles }) =
                       status?.toLowerCase() === "active"
                         ? "success"
                         : status?.toLowerCase() === "pending"
-                        ? "tertiary"
-                        : "warning"
+                          ? "tertiary"
+                          : "warning"
                     }
                     className="py-1 px-[26px] font-medium"
                   >
@@ -142,28 +161,24 @@ const UserMetricDetail: React.FC<UserMetricDetailProps> = ({ adminId, roles }) =
                 {/* <p className="text-[#687588] text-sm mb-6 text-center">
                   @{UserName?.toLowerCase().replace(/\s+/g, "_")}
                 </p> */}
-            
               </div>
               <div className="mb-6 pb-6 border-b border-[#F1F2F4]">
-              
                 <div className="flex gap-3 items-center mb-4">
                   {/* <CallIcon /> */}
                   <p className="font-semibold text-sm text-[#111827]">
-                  Total Spent : N{totalSpent
- || "Not provided"}
+                    Total Spent : N{totalSpent || "Not provided"}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
-                 <CalendarIcon />
+                  <CalendarIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                    
-                  Last Order Date : {lastOrderDate}
+                    Last Order Date : {lastOrderDate}
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
                   <PersonIcon />
                   <p className="font-semibold text-sm text-[#111827]">
-                  Order Count :{orderCount}
+                    Order Count : {orderCount}
                   </p>
                 </div>
               </div>
@@ -199,7 +214,7 @@ const UserMetricDetail: React.FC<UserMetricDetailProps> = ({ adminId, roles }) =
               </TabsList> */}
 
               {/* <TabsContent value="general">
-                <GeneralInfo Data={User} roles={roles.data} />
+                <GeneralInfo Data={User} roles={safeRolesData} />
               </TabsContent> */}
               {/* <TabsContent value="permissions">
                 <PermissionsTab Data={User} />
@@ -212,4 +227,4 @@ const UserMetricDetail: React.FC<UserMetricDetailProps> = ({ adminId, roles }) =
   );
 };
 
-export default  UserMetricDetail;
+export default UserMetricDetail;
