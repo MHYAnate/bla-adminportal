@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ChevronLeft } from "lucide-react";
 import { useUpdateAdminRoles, useGetCurrentAdmin, useGetAdminRoles } from "@/services/admin";
 import { toast } from "sonner";
-import { Admin, AdminRole, Role, UpdateRolesResponse, Permission } from "@/types/admin";
+import { Admin, AdminRole, Role, Permission } from "@/types/admin";
 
 interface GeneralInfoProps {
   adminData: Admin;
@@ -55,12 +55,8 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
 
   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
 
-  const { updateRolesPayload, updateRolesIsLoading } = useUpdateAdminRoles(
-    (response: UpdateRolesResponse) => {
-      toast.success("Admin roles updated successfully");
-      onClose();
-    }
-  );
+  // ✅ Updated to use the new hook API
+  const { updateRoles, isUpdating: updateRolesIsLoading } = useUpdateAdminRoles();
 
   const handleRoleToggle = (roleName: string) => {
     setSelectedRoles(prev =>
@@ -88,17 +84,21 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
     });
 
     try {
-      console.log("📡 Calling updateRolesPayload with:", { adminId, selectedRoles });
+      console.log("📡 Calling updateRoles with:", { adminId, selectedRoles });
       console.log("🔍 Request details that will be sent:");
       console.log("- URL:", `admin/manage/${adminId}/roles`);
       console.log("- Method: PUT");
       console.log("- Body:", JSON.stringify({ roleNames: selectedRoles }));
       console.log("- Headers: Authorization: Bearer [token], Content-Type: application/json");
 
-      const result = await updateRolesPayload(adminId, selectedRoles);
+      // ✅ Updated to use the new hook method
+      const result = await updateRoles(adminId, selectedRoles);
       console.log("✅ Update successful:", result);
 
-      // Success handling is in the hook's onSuccess callback
+      // Show success message and close dialog
+      toast.success("Admin roles updated successfully");
+      onClose();
+
     } catch (error: any) {
       console.error("❌ Update roles error:", error);
 
@@ -212,7 +212,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { currentAdmin, isLoading: isCurrentAdminLoading } = useGetCurrentAdmin();
 
-  // Fetch roles if not provided via props
+  // ✅ Updated to use the new hook API - no parameters needed for basic call
   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: !roles || roles.length === 0 });
 
   // Normalize roles - handle both array and object with data property
@@ -264,7 +264,21 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
 
   // TODO: Restore this after backend route is working
   // const canEditRoles = useMemo(() => {
-  //   // ... permission check logic
+  //   if (isCurrentAdminLoading || !typedCurrentAdmin) {
+  //     return false;
+  //   }
+  //   
+  //   // Check if current admin has permission to edit roles
+  //   const hasEditPermission = typedCurrentAdmin.roles?.some((roleItem: AdminRole) => {
+  //     const role = normalizeRole(roleItem);
+  //     return role.permissions?.some((permission: Permission) => 
+  //       permission.name === 'manage_admin_roles' || 
+  //       permission.name === 'edit_admin_roles' ||
+  //       permission.name === 'admin_management'
+  //     );
+  //   });
+  //   
+  //   return hasEditPermission || false;
   // }, [typedCurrentAdmin, isCurrentAdminLoading]);
 
   // Safely extract roles for display

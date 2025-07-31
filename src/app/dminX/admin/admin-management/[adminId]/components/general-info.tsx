@@ -17,30 +17,30 @@ interface GeneralInfoProps {
 const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
-  
+
   const adminRoles = adminData?.roles || [];
 
   console.log("props role", roles, "inrole", adminRoles, "adminData", adminData);
 
-     const[email, setEmail] = useState("");
-  
-     useEffect(() => {
-      if (typeof window !== "undefined") {
-        const email = localStorage.getItem("userEmail") || 
-                     sessionStorage.getItem("userEmail");
-        // Use the email
-        setEmail(email? email : "")
-      }
-    }, []);
-  
-    const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
-    const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
-  
-    console.log(email, "email", adminsData, "data", admin, "filter" )
-  
-    //super_admin 
-    // admin.roles.role.name !==super_admin
-  
+  const [email, setEmail] = useState("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const email = localStorage.getItem("userEmail") ||
+        sessionStorage.getItem("userEmail");
+      // Use the email
+      setEmail(email ? email : "")
+    }
+  }, []);
+
+  const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
+  const admin = adminsData?.find((admin: { email: string }) => admin.email === email);
+
+  console.log(email, "email", adminsData, "data", admin, "filter")
+
+  //super_admin 
+  // admin.roles.role.name !==super_admin
+
   const colors = [
     { bg: "#E7F7EF", color: "#0CAF60" },
     { bg: "#FFF6D3", color: "#E6BB20" },
@@ -71,12 +71,12 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
             <div className="flex justify-between mb-4">
               <p className="text-sm text-[#687588]">Created On</p>
               <p className="text-sm text-[#111827] font-semibold">
-                {adminData?.createdAt 
+                {adminData?.createdAt
                   ? new Date(adminData.createdAt).toLocaleDateString("en-US", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
                   : "Not specified"}
               </p>
             </div>
@@ -91,12 +91,12 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
             <div className="flex justify-between mb-4">
               <p className="text-sm text-[#687588]">Last Login</p>
               <p className="text-sm text-[#111827] font-semibold">
-                {adminData?.lastLogin 
+                {adminData?.lastLogin
                   ? new Date(adminData.lastLogin).toLocaleDateString("en-US", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
                   : "Not available"}
               </p>
             </div>
@@ -113,10 +113,10 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-[#F1F2F4]">
           <h5 className="text-[#111827] font-semibold">Role</h5>
           <div className="flex gap-2">
-            <Button 
-            // disabled={admin?.roles[0]?.role?.name !=="super_admin"}
-              variant="outline" 
-              size="sm" 
+            <Button
+              // disabled={admin?.roles[0]?.role?.name !=="super_admin"}
+              variant="outline"
+              size="sm"
               onClick={() => setIsEditDialogOpen(true)}
               className="px-4"
             >
@@ -157,10 +157,10 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
       </div>
 
       {isEditDialogOpen && (
-        <EditRolesDialog 
-          adminData={adminData} 
-          roles={roles} 
-          onClose={() => setIsEditDialogOpen(false)} 
+        <EditRolesDialog
+          adminData={adminData}
+          roles={roles}
+          onClose={() => setIsEditDialogOpen(false)}
         />
       )}
     </>
@@ -178,10 +178,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
   const currentRoles = adminData?.roles?.map((role: any) => role.name) || [];
   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
 
-  const { updateRolesPayload, updateRolesIsLoading } = useUpdateAdminRoles(() => {
-    toast.success("Admin roles updated successfully");
-    onClose();
-  });
+  const { updateRoles, isUpdating, updateRolesError } = useUpdateAdminRoles();
 
   const handleRoleToggle = (roleName: string) => {
     setSelectedRoles((prev) =>
@@ -193,13 +190,17 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
 
   const handleSubmit = async () => {
     if (!adminId) return;
+
     try {
-      await updateRolesPayload(adminId, selectedRoles);
+      await updateRoles(adminId, selectedRoles);
+      toast.success("Admin roles updated successfully");
+      onClose();
     } catch (error) {
       toast.error("Failed to update roles");
       console.error("Update roles error:", error);
     }
   };
+
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -220,7 +221,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
 
           {roles && roles.length > 0 ? (
             <div className="space-y-4">
-              {roles.map((role:any) => (
+              {roles.map((role: any) => (
                 <div key={role.id} className="flex items-center space-x-3 p-3 border rounded-md">
                   <input
                     type="checkbox"
@@ -251,9 +252,9 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
             variant="warning"
             className="px-6"
             onClick={handleSubmit}
-            disabled={updateRolesIsLoading}
+            disabled={isUpdating}
           >
-            {updateRolesIsLoading ? "Updating..." : "Save Changes"}
+            {isUpdating ? "Updating..." : "Save Changes"}
           </Button>
         </div>
       </DialogContent>

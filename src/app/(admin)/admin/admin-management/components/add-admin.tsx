@@ -76,40 +76,43 @@ type FormSchemaType = z.infer<typeof formSchema>;
 const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Enhanced success callback with detailed validation
-  // In your CreateAdmin component, update the success callback:
-  const { inviteAdminPayload, inviteAdminIsLoading, inviteAdminError } = useInviteAdmin(
-    (data: InviteResponse) => {
-      console.log("✅ SUCCESS: Admin invitation callback received:", data);
+  // ✅ Updated to use the new hook API without callback parameter
+  const { inviteAdmin, isLoading: inviteAdminIsLoading, error: inviteAdminError } = useInviteAdmin();
 
-      if (data?.success && data?.data?.inviteUrl) {
-        console.log("✅ Generated URL:", data.data.inviteUrl);
+  // Helper function to handle successful invitation
+  const handleInviteSuccess = (data: InviteResponse) => {
+    console.log("✅ SUCCESS: Admin invitation successful:", data);
 
-        // ✅ PARSE AND CHECK THE URL
-        try {
-          const url = new URL(data.data.inviteUrl);
-          const params = Object.fromEntries(url.searchParams);
-          console.log("📋 URL Parameters:", params);
+    if (data?.success && data?.data?.inviteUrl) {
+      console.log("✅ Generated URL:", data.data.inviteUrl);
 
-          const required = ['email', 'userId', 'token', 'signature', 'timestamp'];
-          const missing = required.filter(param => !params[param]);
+      // ✅ PARSE AND CHECK THE URL
+      try {
+        const url = new URL(data.data.inviteUrl);
+        const params = Object.fromEntries(url.searchParams);
+        console.log("📋 URL Parameters:", params);
 
-          if (missing.length > 0) {
-            console.error('❌ Generated URL missing:', missing);
-            toast.error(`Generated URL is missing: ${missing.join(', ')}`);
-          } else {
-            console.log('✅ All required parameters present in URL');
-            toast.success("Admin invitation sent successfully");
-            setUrl(data.data.inviteUrl);
-            setClose();
-          }
-        } catch (urlError) {
-          console.error("❌ Invalid URL:", urlError);
-          toast.error("Generated URL is invalid");
+        const required = ['email', 'userId', 'token', 'signature', 'timestamp'];
+        const missing = required.filter(param => !params[param]);
+
+        if (missing.length > 0) {
+          console.error('❌ Generated URL missing:', missing);
+          toast.error(`Generated URL is missing: ${missing.join(', ')}`);
+        } else {
+          console.log('✅ All required parameters present in URL');
+          toast.success("Admin invitation sent successfully");
+          setUrl(data.data.inviteUrl);
+          setClose();
         }
+      } catch (urlError) {
+        console.error("❌ Invalid URL:", urlError);
+        toast.error("Generated URL is invalid");
       }
+    } else {
+      console.warn("⚠️ Invitation response missing URL or success flag");
+      toast.error("Invitation sent but URL generation failed");
     }
-  );
+  };
 
   // Filter to only show admin roles
   const adminRoles = roles.filter((role: RoleData) =>
@@ -150,12 +153,32 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
       console.log("Sending payload:", payload);
 
-      const response = await inviteAdminPayload(payload);
+      // ✅ Updated to use the new hook method
+      const response = await inviteAdmin(payload);
       console.log("API Response:", response);
 
-      // Additional success handling
-      if (response?.success) {
-        console.log("✅ Invitation sent successfully");
+      // ✅ Handle success manually since no callback
+      if (response) {
+        // Try to extract the response data based on possible structures
+        let responseData = response;
+
+        // Handle nested response structures
+        if (response?.data?.data) {
+          responseData = {
+            success: true,
+            message: response.data.message || "Invitation sent successfully",
+            data: response.data.data
+          };
+        } else if (response?.data) {
+          responseData = {
+            success: true,
+            message: response.message || "Invitation sent successfully",
+            data: response.data
+          };
+        }
+
+        console.log("✅ Processing success response:", responseData);
+        handleInviteSuccess(responseData as InviteResponse);
       }
 
     } catch (error: any) {
@@ -166,6 +189,8 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
       if (error?.response?.data?.error) {
         errorMessage = error.response.data.error;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
       } else if (error?.message) {
         errorMessage = error.message;
       } else if (typeof error === 'string') {
@@ -179,6 +204,10 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
         toast.error("Server configuration error. Please contact administrator.");
       } else if (errorMessage.includes('token')) {
         toast.error("Failed to generate secure invitation link");
+      } else if (errorMessage.includes('Invalid email')) {
+        toast.error("Please enter a valid email address");
+      } else if (errorMessage.includes('Role not found')) {
+        toast.error("Selected role is not available");
       } else {
         toast.error(errorMessage);
       }

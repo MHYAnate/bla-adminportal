@@ -46,7 +46,7 @@ const DataTable: React.FC<DataTableProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [nameFilter, setNameFilter] = useState<string>("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-	const [adminToDelete, setAdminToDelete] = useState<null | AdminsData>(null);
+  const [adminToDelete, setAdminToDelete] = useState<null | AdminsData>(null);
 
   const [email, setEmail] = useState("");
 
@@ -94,16 +94,12 @@ const DataTable: React.FC<DataTableProps> = ({
       return matchesName && matchesRole && matchesStatus;
     }) || [];
 
-  const { deleteAdminPayload, deleteAdminIsLoading } = useDeleteAdmin(() => {
-    toast.success("Admin deleted successfully");
-    setDeleteDialogOpen(false);
-    refetch();
-  });
+  const { deleteAdmin, isLoading: deleteAdminIsLoading } = useDeleteAdmin();
 
   const handleDeleteAdmin = async () => {
     if (adminToDelete) {
       try {
-        await deleteAdminPayload(adminToDelete.id);
+        await deleteAdmin(adminToDelete.id);
       } catch (error: any) {
         toast.error(
           error?.response?.data?.error || "Failed to delete admin"
@@ -185,8 +181,8 @@ const DataTable: React.FC<DataTableProps> = ({
           item?.status?.toLowerCase() === "active"
             ? "success"
             : item?.status?.toLowerCase() === "pending"
-            ? "tertiary"
-            : "warning"
+              ? "tertiary"
+              : "warning"
         }
         className="py-1 px-[26px] font-medium"
       >
@@ -267,41 +263,38 @@ const DataTable: React.FC<DataTableProps> = ({
           columnLabels={columnLabels}
           isLoading={loading}
         />
-      </CardContent>		
- 			<Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
- 				<DialogContent className="fixed inset-0 flex items-center justify-center z-50">
- 					<div className="sm:max-w-[425px] w-full bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
- 						<DialogHeader>
- 							<DialogTitle className="text-xl font-semibold text-slate-900">
- 								Confirm deletion
- 							</DialogTitle>
- 							<DialogDescription className="text-sm text-slate-600 mt-1">
- 								Are you sure you want to delete {adminToDelete?.name}? This
- 								action cannot be undone.
- 							</DialogDescription>
- 						</DialogHeader>
- 						<DialogFooter className="mt-6 flex justify-end space-x-3">
- 							<Button
-								variant="outline"
-								onClick={() => setDeleteDialogOpen(false)}
-							>
-								Cancel
-							</Button>
-							<Button
+      </CardContent>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="sm:max-w-[425px] w-full bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-slate-900">
+                Confirm deletion
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-600 mt-1">
+                Are you sure you want to delete {adminToDelete?.name}? This
+                action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="mt-6 flex justify-end space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
                 variant="destructive"
                 onClick={handleDeleteAdmin}
-                // disabled={
-                //   deleteAdminIsLoading ||
-                //   loggedInAdmin?.roles[0]?.role?.name !== "super_admin"
-                // }
+                disabled={deleteAdminIsLoading}
               >
-								{deleteAdminIsLoading ? "Deleting..." : "Delete Admin"}
-							</Button>
-						</DialogFooter>
-					</div>
-				</DialogContent>
-			</Dialog>
-		</Card>
+                {deleteAdminIsLoading ? "Deleting..." : "Delete Admin"}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 };
 
