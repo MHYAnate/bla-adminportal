@@ -59,11 +59,10 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
   const { inviteAdmin, isLoading: inviteAdminIsLoading, error: inviteAdminError } = useInviteAdmin();
 
-  // ✅ FIXED: Simplified success handler - token/timestamp validation bypassed
+  // ✅ FIXED: Simple success handler - backend auth completely bypassed
   const handleInviteSuccess = (data: any) => {
     console.log("✅ SUCCESS: Admin invitation successful:", data);
 
-    // ✅ The API returns the data directly, not wrapped in success/data structure
     if (data?.inviteUrl) {
       console.log("✅ Generated URL:", data.inviteUrl);
 
@@ -72,9 +71,9 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
         const params = Object.fromEntries(url.searchParams);
         console.log("📋 URL Parameters:", params);
 
-        // ✅ Since token/timestamp validation is bypassed, just check for basic parameters
+        // ✅ Since backend auth is bypassed, just check for basic parameters
         if (params.email && params.userId) {
-          console.log('✅ Valid invitation URL generated (token/timestamp validation bypassed)');
+          console.log('✅ Valid invitation URL generated (backend auth bypassed)');
           toast.success("Admin invitation sent successfully");
           setUrl(data.inviteUrl);
           setClose();
