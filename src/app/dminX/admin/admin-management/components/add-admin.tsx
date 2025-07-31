@@ -43,8 +43,14 @@ interface IProps {
 const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
 
-  const { inviteAdmin, isLoading } = useInviteAdmin();
+  const { inviteAdminPayload, inviteAdminIsLoading } = useInviteAdmin((data: any) => {
+    toast.success("Admin invitation sent successfully");
+    console.log(data, "check reg data");
+    setUrl(data.data.inviteUrl)
+    // Use the response data passed to onSuccess
+    setClose();
 
+  });
 
 
   console.log("inviteRolesss", roles)
@@ -60,9 +66,9 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
   // Handle form submission
   async function onSubmit(values: FormSchemaType) {
     try {
-      await inviteAdmin({
+      await inviteAdminPayload({
         email: values.email,
-        roleNames: [values.role],
+        roleNames: [values.role]
       });
     } catch (error) {
       toast.error("Failed to send admin invitation");
@@ -142,7 +148,7 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
               Cancel
             </Button>
             <Button
-              disabled={isLoading}
+              disabled={inviteAdminIsLoading}
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"

@@ -178,7 +178,10 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
   const currentRoles = adminData?.roles?.map((role: any) => role.name) || [];
   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
 
-  const { updateRoles, isLoading: isUpdating } = useUpdateAdminRoles();
+  const { updateRolesPayload, updateRolesIsLoading } = useUpdateAdminRoles(() => {
+    toast.success("Admin roles updated successfully");
+    onClose();
+  });
 
   const handleRoleToggle = (roleName: string) => {
     setSelectedRoles((prev) =>
@@ -190,17 +193,13 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
 
   const handleSubmit = async () => {
     if (!adminId) return;
-
     try {
-      await updateRoles(adminId, selectedRoles);
-      toast.success("Admin roles updated successfully");
-      onClose();
+      await updateRolesPayload(adminId, selectedRoles);
     } catch (error) {
       toast.error("Failed to update roles");
       console.error("Update roles error:", error);
     }
   };
-
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -252,9 +251,9 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
             variant="warning"
             className="px-6"
             onClick={handleSubmit}
-            disabled={isUpdating}
+            disabled={updateRolesIsLoading}
           >
-            {isUpdating ? "Updating..." : "Save Changes"}
+            {updateRolesIsLoading ? "Updating..." : "Save Changes"}
           </Button>
         </div>
       </DialogContent>
