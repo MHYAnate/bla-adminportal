@@ -106,9 +106,60 @@ export const useGetManufacturerProducts = () => {
     retry: 2,
   });
 
+  // Debug logging to see what data structure we're getting
+  console.log('🔍 useGetManufacturerProducts - Raw data:', data);
+  console.log('🔍 useGetManufacturerProducts - data.data:', data?.data);
+  console.log('🔍 useGetManufacturerProducts - data type:', typeof data);
+  console.log('🔍 useGetManufacturerProducts - is data array:', Array.isArray(data));
+
+  // Process data using the same logic as useGetManufacturers
+  let processedData = [];
+  let paginationData = null;
+
+  if (data) {
+    // Check if data is directly an array
+    if (Array.isArray(data)) {
+      processedData = data;
+    }
+    // Check if data has a 'data' property that's an array
+    else if (data.data && Array.isArray(data.data)) {
+      processedData = data.data;
+      paginationData = data.pagination || data.meta;
+    }
+    // Check if data has other common property names
+    else if (data.result && Array.isArray(data.result)) {
+      processedData = data.result;
+      paginationData = data.pagination || data.meta;
+    }
+    else if (data.products && Array.isArray(data.products)) {
+      processedData = data.products;
+      paginationData = data.pagination || data.meta;
+    }
+    else if (data.items && Array.isArray(data.items)) {
+      processedData = data.items;
+      paginationData = data.pagination || data.meta;
+    }
+    // If data is an object with pagination and data properties
+    else if (data.data) {
+      processedData = Array.isArray(data.data) ? data.data : [];
+      paginationData = data.pagination || data.meta;
+    }
+    else {
+      console.warn('🚨 Unknown data structure for manufacturer products:', data);
+      processedData = [];
+    }
+  }
+
+  console.log('🔍 useGetManufacturerProducts - Processed data:', processedData);
+  console.log('🔍 useGetManufacturerProducts - Processed data length:', processedData.length);
+  console.log('🔍 useGetManufacturerProducts - Pagination data:', paginationData);
+
   return {
     getManufacturerProductsIsLoading: isLoading,
-    getManufacturerProductsData: data?.data || [],
+    getManufacturerProductsData: {
+      data: processedData,
+      pagination: paginationData
+    },
     getManufacturerProductsError: ErrorHandler(error),
     refetchManufacturerProducts: refetch,
     setManufacturerProductsFilter: setFilter,
