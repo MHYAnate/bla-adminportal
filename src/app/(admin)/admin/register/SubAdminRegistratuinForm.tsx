@@ -37,11 +37,18 @@ export default function AdminRegistration() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [errors, setErrors] = useState<FormErrors>({})
-  const [loading, setLoading] = useState(false) // ✅ Manual loading state
+  const [loading, setLoading] = useState(false)
 
   const phoneRegex = /^\+?\d+$/;
 
-  // ✅ FIXED: Direct API call instead of hook
+  // ✅ FIXED: Get auth token from localStorage (your app stores it there)
+  const getAuthToken = () => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+    }
+    return '';
+  };
+
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault()
 
@@ -81,18 +88,29 @@ export default function AdminRegistration() {
 
       console.log('🚀 Making API call to backend')
 
-      // ✅ FIXED: Use correct backend URL
       const backendUrl = 'https://buylocalapi-staging.up.railway.app'
       const apiUrl = `${backendUrl}/api/admin/manage/register?${queryParams.toString()}`
 
       console.log('URL:', apiUrl)
       console.log('Body:', { ...requestBody, password: '[HIDDEN]' })
 
+      // ✅ FIXED: Add auth token to headers
+      const authToken = getAuthToken();
+      const headers: { [key: string]: string } = {
+        'Content-Type': 'application/json',
+      };
+
+      // Add authorization header if token exists
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+        console.log('✅ Added Authorization header with token');
+      } else {
+        console.log('⚠️ No auth token found - making request without authentication');
+      }
+
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(requestBody),
       })
 
@@ -103,6 +121,10 @@ export default function AdminRegistration() {
       console.log('📋 API Response:', result)
 
       if (!response.ok) {
+        // Handle specific error cases
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please try using the invitation link again.')
+        }
         throw new Error(result?.error || result?.message || 'Registration failed')
       }
 
@@ -119,7 +141,9 @@ export default function AdminRegistration() {
 
       let errorMessage = 'Registration failed. Please try again.'
 
-      if (error.message.includes('Username') || error.message.includes('username')) {
+      if (error.message.includes('Authentication failed')) {
+        errorMessage = 'Authentication failed. Please use a fresh invitation link.'
+      } else if (error.message.includes('Username') || error.message.includes('username')) {
         errorMessage = 'Username already taken. Please choose a different username.'
       } else if (error.message.includes('phone') || error.message.includes('Phone')) {
         errorMessage = 'Phone number already in use. Please use a different phone number.'
@@ -127,6 +151,8 @@ export default function AdminRegistration() {
         errorMessage = 'This user already has an admin profile.'
       } else if (error.message.includes('Failed to fetch')) {
         errorMessage = 'Cannot connect to server. Please check your internet connection.'
+      } else if (error.message.includes('No token provided')) {
+        errorMessage = 'Authentication token missing. Please use the invitation link again.'
       } else if (error.message) {
         errorMessage = error.message
       }
@@ -159,7 +185,6 @@ export default function AdminRegistration() {
     )
   }
 
-  // ✅ Rest of your JSX stays the same...
   return (
     <div className="flex flex-col md:flex-row w-full min-h-screen">
       {/* Left Column */}
@@ -355,6 +380,7 @@ export default function AdminRegistration() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
+                  autoComplete="new-password"
                   className={`w-full pl-10 pr-10 py-2 border ${errors.password ? "border-red-500" : "border-gray-200"
                     } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={password}
@@ -388,6 +414,7 @@ export default function AdminRegistration() {
                   name="confirmPassword"
                   type={showConfirm ? "text" : "password"}
                   placeholder="Confirm your password"
+                  autoComplete="new-password"
                   className={`w-full pl-10 pr-10 py-2 border ${errors.confirmPassword ? "border-red-500" : "border-gray-200"
                     } rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]`}
                   value={confirmPassword}
