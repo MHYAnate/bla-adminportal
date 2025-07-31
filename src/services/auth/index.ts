@@ -20,6 +20,13 @@ interface ErrorResponse {
   message?: string;
 }
 
+interface UseChangePasswordResponse {
+  changePasswordData: any;
+  changePasswordDataError: string;
+  changePasswordIsLoading: boolean;
+  changePasswordPayload: (requestPayload: any) => Promise<void>;
+}
+
 interface UseLoginResponse {
   loginData: any;
   loginDataError: string;
@@ -117,6 +124,33 @@ export const useResetPassword = (
     resetPasswordDataError: ErrorHandler(error) || "An error occurred!",
     resetPasswordIsLoading: isPending,
     resetPasswordPayload: async (requestPayload: any): Promise<void> => {
+      await mutateAsync(requestPayload);
+    },
+  };
+};
+
+export const useChangePassword = (
+  handleSuccess: HandleSuccess
+): UseChangePasswordResponse => {
+  const { data, error, isPending, mutateAsync } = useMutateItem({
+    mutationFn: (payload: any) =>
+      httpService.postData(payload, routes.changePassword()), // Different endpoint
+    queryKeys: ["change-password"],
+    onSuccess: (requestParams: any) => {
+      const resData = requestParams?.data || {};
+      handleSuccess(resData);
+      showSuccessAlert(resData?.message || "Password changed successfully!");
+    },
+    onError: (error: any) => {
+      showErrorAlert(error?.response?.data?.error || "Password change failed!");
+    },
+  });
+
+  return {
+    changePasswordData: data,
+    changePasswordDataError: ErrorHandler(error) || "An error occurred!",
+    changePasswordIsLoading: isPending,
+    changePasswordPayload: async (requestPayload: any): Promise<void> => {
       await mutateAsync(requestPayload);
     },
   };

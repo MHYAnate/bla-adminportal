@@ -4,6 +4,7 @@ export const routes = {
   logout: () => "auth/logout",
   forgotPassword: () => `auth/reset`,
   resetPassword: () => "auth/reset-password",
+  changePassword: () => "auth/change-password",
   profile: () => "/api/user/info",
   dashboard: () => "admin/dashboard",
   checkAuth: () => `auth/check`,

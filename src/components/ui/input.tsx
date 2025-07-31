@@ -1,9 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
 import { Label } from "./label";
 import { EyeOutlineIcon, SearchIcon } from "../../../public/icons";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 interface InputProps extends React.ComponentProps<"input"> {
   label?: string;
