@@ -205,7 +205,7 @@ const httpService = {
     });
     return logResponse(response, endpoint);
   },
-  postDataWithToken,
+  
 };
 
 export default httpService;
