@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useChangePassword } from "@/services/auth"; // Import the new hook
-import { showErrorAlert, showSuccessAlert } from "@/lib/utils"; // Add this import
+import { showErrorAlert } from "@/lib/utils";
 
 interface FormValues {
   currentpassword: string;
