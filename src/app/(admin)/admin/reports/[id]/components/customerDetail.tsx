@@ -21,7 +21,28 @@ import { useGetAdmins } from "@/services/admin";
 import { useGetDashboardInfo } from "@/services/dashboard";
 import { useGetAdminRoles } from "@/services/admin/index";
 
+// Define TypeScript interfaces for the dashboard data
+interface DashboardData {
+  recentActivity?: {
+    newCustomers?: Array<{
+      id: string | number;
+      name?: string;
+      email?: string;
+      status?: string;
+      role?: string;
+      type?: string;
+      kycStatus?: string;
+      joinDate?: string;
+      [key: string]: any;
+    }>;
+  };
+  [key: string]: any;
+}
 
+interface RolesData {
+  data?: any[];
+  [key: string]: any;
+}
 
 interface UserDetailProps {
   adminId: string;
@@ -32,33 +53,31 @@ const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
   const params = useSearchParams();
   const tabParam = params.get("tab");
   const { handlePush } = useHandlePush();
-  
-  console.log("customerId", adminId)
 
+  console.log("customerId", adminId);
+  console.log("compare to saferroledata", roles);
 
-     console.log("compare to saferroledata", roles)
+  const { rolesData: rawRolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
+  const rolesData = rawRolesData as RolesData;
+  const safeRolesData = Array.isArray(rolesData?.data) ? rolesData.data : [];
 
-     const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
-    const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
-    const {
-      isDashboardInfoLoading,
-      isFetchingDashboardInfo,
-      dashboardData: data,
-      refetchDashboardData,
-    } = useGetDashboardInfo({ enabled: true });
+  const {
+    isDashboardInfoLoading,
+    isFetchingDashboardInfo,
+    dashboardData: rawData,
+    refetchDashboardData,
+  } = useGetDashboardInfo({ enabled: true });
 
-  //  const User = data .find(
-  //   (admin:any) => admin.recentActivity.
-  //   newCustomers.id == adminId
-  // );
+  // Type assertion for dashboard data
+  const data = rawData as DashboardData;
 
-  console.log("fixCheckerCustomerData", data?.recentActivity?.newCustomers)
+  console.log("fixCheckerCustomerData", data?.recentActivity?.newCustomers);
 
   const User = data?.recentActivity?.newCustomers?.find(
     (customer: any) => customer.id == adminId
   );
 
-  console.log("CustomerData", User,"data" ,data);
+  console.log("CustomerData", User, "data", data);
 
   const tabs = [
     {
@@ -90,7 +109,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
   }
 
   // If we have data, determine the status
-  const status =User?.status;
+  const status = User?.status;
   const UserRole = User?.role;
   const UserName = User?.name;
   const UserType = User?.type;
@@ -118,7 +137,6 @@ const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
                 <h6 className="text-center text-[#111827] text-xl mb-2.5">{UserName}</h6>
                 <p className="text-[#687588] text-sm mb-2.5 text-center">
                   {UserRole}
-                  
                 </p>
                 <p className="text-[#687588] text-sm mb-6 text-center">
                   @{UserName?.toLowerCase().replace(/\s+/g, "_")}
@@ -129,8 +147,8 @@ const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
                       status?.toLowerCase() === "active"
                         ? "success"
                         : status?.toLowerCase() === "pending"
-                        ? "tertiary"
-                        : "warning"
+                          ? "tertiary"
+                          : "warning"
                     }
                     className="py-1 px-[26px] font-medium"
                   >
@@ -152,7 +170,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
                   </p>
                 </div>
                 <div className="flex gap-3 items-center mb-4">
-                 <CalendarIcon />
+                  <CalendarIcon />
                   <p className="font-semibold text-sm text-[#111827]">
                     {UserJD || "Not specified"}
                   </p>
@@ -183,11 +201,10 @@ const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
                     }
                   >
                     <p
-                      className={`w-full text-center pb-[9px] ${
-                        (tabParam || "general") === tab.value
+                      className={`w-full text-center pb-[9px] ${(tabParam || "general") === tab.value
                           ? "border-b-2 border-[#EC9F01] text-[#030C0A]"
                           : "border-b-2 border-transparent text-[#111827]"
-                      }`}
+                        }`}
                     >
                       {tab.text}
                     </p>
@@ -196,7 +213,7 @@ const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
               </TabsList>
 
               <TabsContent value="general">
-                <GeneralInfo Data={User} roles={roles.data} />
+                <GeneralInfo Data={User} roles={safeRolesData} />
               </TabsContent>
               <TabsContent value="permissions">
                 <PermissionsTab Data={User} />
@@ -209,4 +226,4 @@ const UserDetail: React.FC<UserDetailProps> = ({ adminId, roles }) => {
   );
 };
 
-export default  UserDetail;
+export default UserDetail;
