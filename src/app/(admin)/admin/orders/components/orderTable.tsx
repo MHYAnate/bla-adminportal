@@ -23,36 +23,45 @@ import {
   ViewIcon,
 } from "../../../../../../public/icons";
 
-// ... (getStatusColor, getPaymentStatus, getStatusBadge functions remain the same)
+// Define interface for the orders data structure
+interface OrdersData {
+  data: any[];
+  pagination: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
+}
 
-const OrderTrackingModal = ({ order, onClose }: { 
-  order: any; 
-  onClose: () => void 
+const OrderTrackingModal = ({ order, onClose }: {
+  order: any;
+  onClose: () => void
 }) => {
   if (!order) return null;
 
   const getTrackingSteps = (status: string, paymentStatus: string) => {
     const steps = [
       { id: 1, name: "Order Placed", status: "completed", icon: "💰" },
-      { 
-        id: 2, 
-        name: "Payment", 
-        status: paymentStatus === "PAID" ? "completed" : 
-                paymentStatus === "PARTIALLY_PAID" ? "current" : "pending", 
-        icon: "💳" 
+      {
+        id: 2,
+        name: "Payment",
+        status: paymentStatus === "PAID" ? "completed" :
+          paymentStatus === "PARTIALLY_PAID" ? "current" : "pending",
+        icon: "💳"
       },
-      { 
-        id: 3, 
-        name: "Processing", 
-        status: status === "PROCESSING" ? "current" : 
-                status === "COMPLETED" ? "completed" : "pending", 
-        icon: "📦" 
+      {
+        id: 3,
+        name: "Processing",
+        status: status === "PROCESSING" ? "current" :
+          status === "COMPLETED" ? "completed" : "pending",
+        icon: "📦"
       },
-      { 
-        id: 4, 
-        name: "Delivered", 
-        status: status === "COMPLETED" ? "completed" : "pending", 
-        icon: "🏠" 
+      {
+        id: 4,
+        name: "Delivered",
+        status: status === "COMPLETED" ? "completed" : "pending",
+        icon: "🏠"
       },
     ];
     return steps;
@@ -78,7 +87,7 @@ const OrderTrackingModal = ({ order, onClose }: {
   };
 
   const trackingSteps = getTrackingSteps(order.status, order.paymentStatus);
-  
+
   // Calculate unit price
   const unitPrice = order.breakdown.itemsSubtotal / order.totalQuantity;
   const formattedUnitPrice = new Intl.NumberFormat("en-NG", {
@@ -88,14 +97,14 @@ const OrderTrackingModal = ({ order, onClose }: {
   }).format(unitPrice);
 
   return (
-    <div className="fixed top-0 right-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 overflow-auto">
       <div className="w-full max-w-4xl bg-white rounded-lg p-8 shadow-sm max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               className="p-1"
               onClick={onClose}
             >
@@ -126,24 +135,22 @@ const OrderTrackingModal = ({ order, onClose }: {
               <div key={step.id} className="flex flex-col items-center relative z-10">
                 {/* Step icon */}
                 <div
-                  className={`w-12 h-12 rounded-full flex items-center justify-center text-lg mb-2 border-4 border-white shadow-sm ${
-                    step.status === "completed" 
-                      ? "bg-green-500 text-white" 
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-lg mb-2 border-4 border-white shadow-sm ${step.status === "completed"
+                      ? "bg-green-500 text-white"
                       : step.status === "current"
-                      ? "bg-yellow-500 text-white"
-                      : "bg-gray-200 text-gray-400"
-                  }`}
+                        ? "bg-yellow-500 text-white"
+                        : "bg-gray-200 text-gray-400"
+                    }`}
                 >
                   {step.icon}
                 </div>
 
                 {/* Step label */}
                 <span
-                  className={`text-xs text-center max-w-16 ${
-                    step.status === "completed" || step.status === "current"
+                  className={`text-xs text-center max-w-16 ${step.status === "completed" || step.status === "current"
                       ? "text-gray-800 font-medium"
                       : "text-gray-400"
-                  }`}
+                    }`}
                 >
                   {step.name}
                 </span>
@@ -236,18 +243,17 @@ const OrderTrackingModal = ({ order, onClose }: {
               Total: {order.breakdown.formatted.items}
             </p>
             <Badge
-              className={`${
-                order.status === "COMPLETED"
+              className={`${order.status === "COMPLETED"
                   ? "bg-green-100 text-green-800"
                   : order.status === "PROCESSING"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-gray-100 text-gray-800"
-              } hover:bg-opacity-80`}
+                    ? "bg-yellow-100 text-yellow-800"
+                    : "bg-gray-100 text-gray-800"
+                } hover:bg-opacity-80`}
             >
               {order.status === "COMPLETED"
                 ? "Delivered"
                 : order.status.charAt(0) +
-                  order.status.slice(1).toLowerCase()}
+                order.status.slice(1).toLowerCase()}
             </Badge>
           </div>
         </div>
@@ -255,7 +261,6 @@ const OrderTrackingModal = ({ order, onClose }: {
     </div>
   );
 };
-
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -310,11 +315,14 @@ const getStatusBadge = (status: string) => {
 
 export default function DetailedOrderTable() {
   const {
-    getOrdersData: data,
+    getOrdersData: rawOrdersData,
     getOrdersError,
     getOrdersIsLoading,
     setOrdersFilter,
   } = useGetOrders();
+
+  // Type assertion for the data
+  const data = rawOrdersData as OrdersData;
 
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
 
@@ -328,12 +336,12 @@ export default function DetailedOrderTable() {
     );
   }
 
-  if (getOrdersError || !data?.success) {
+  if (getOrdersError || !data?.data) {
     return (
       <div className="w-full max-w-7xl mx-auto p-8 bg-gray-50">
         <div className="bg-white rounded-lg shadow-sm p-6">
           <p className="text-red-500">
-            Error loading orders: { "Unknown error"}
+            Error loading orders: {getOrdersError || "Unknown error"}
           </p>
         </div>
       </div>
@@ -354,79 +362,79 @@ export default function DetailedOrderTable() {
 
       {/* Rest of the table component */}
       <div className="bg-white rounded-lg shadow-sm">
-               <div className="p-6 border-b border-gray-200">
-           <h1 className="text-xl font-semibold text-gray-800">
-             Detailed Order Table
-           </h1>
-         </div>
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-semibold text-gray-800">
+            Detailed Order Table
+          </h1>
+        </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
           <Table>
-                       <TableHeader>
-               <TableRow className="bg-gray-50">
-                 <TableHead className="w-12">
-                   <Checkbox />
-                 </TableHead>
-                 <TableHead className="font-medium text-gray-600">Name</TableHead>
-                 <TableHead className="font-medium text-gray-600">
-                   Customer
-                 </TableHead>
-                 <TableHead className="font-medium text-gray-600">
-                   Amount
-                 </TableHead>
-                 <TableHead className="font-medium text-gray-600">
-                   Product Name
-                 </TableHead>
-                 <TableHead className="font-medium text-gray-600">
-                   Order ID
-                 </TableHead>
-                 <TableHead className="font-medium text-gray-600">
-                   Order Status
-                 </TableHead>
-                 <TableHead className="font-medium text-gray-600">
-                   Action
-                 </TableHead>
-               </TableRow>
-             </TableHeader>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="w-12">
+                  <Checkbox />
+                </TableHead>
+                <TableHead className="font-medium text-gray-600">Name</TableHead>
+                <TableHead className="font-medium text-gray-600">
+                  Customer
+                </TableHead>
+                <TableHead className="font-medium text-gray-600">
+                  Amount
+                </TableHead>
+                <TableHead className="font-medium text-gray-600">
+                  Product Name
+                </TableHead>
+                <TableHead className="font-medium text-gray-600">
+                  Order ID
+                </TableHead>
+                <TableHead className="font-medium text-gray-600">
+                  Order Status
+                </TableHead>
+                <TableHead className="font-medium text-gray-600">
+                  Action
+                </TableHead>
+              </TableRow>
+            </TableHeader>
             <TableBody>
-              {orders.map((order:any) => (
+              {orders.map((order: any) => (
                 <TableRow key={order.id} className="hover:bg-gray-50">
-                                    <TableCell>
-                     <Checkbox />
-                   </TableCell>
-                   <TableCell>
-                     <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                         <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
-                       </div>
-                       <div>
-                         <p className="font-medium text-gray-800">
-                           {order.customer.name}
-                         </p>
-                         <p className="text-sm text-gray-500">
-                           {order.customer.email}
-                         </p>
-                       </div>
-                     </div>
-                   </TableCell>
-                   <TableCell>
-                     <span className="text-gray-700 capitalize">
-                       {order.customer.type}
-                     </span>
-                     <p className="text-sm text-gray-500">
-                       {getPaymentStatus(order.paymentStatus)}
-                     </p>
-                   </TableCell>
-                   <TableCell>
-                     <span className="font-medium text-gray-800">
-                       {order.breakdown.formatted.total}
-                     </span>
-                   </TableCell>
-                   <TableCell>
-                     <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 rounded overflow-hidden bg-gray-200">
-                         <img
+                  <TableCell>
+                    <Checkbox />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                        <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-800">
+                          {order.customer.name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {order.customer.email}
+                        </p>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-gray-700 capitalize">
+                      {order.customer.type}
+                    </span>
+                    <p className="text-sm text-gray-500">
+                      {getPaymentStatus(order.paymentStatus)}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium text-gray-800">
+                      {order.breakdown.formatted.total}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded overflow-hidden bg-gray-200">
+                        <img
                           src={order.product.image}
                           alt={order.product.name}
                           className="w-full h-full object-cover"
@@ -452,25 +460,21 @@ export default function DetailedOrderTable() {
                     </span>
                   </TableCell>
                   <TableCell>{getStatusBadge(order.status)}</TableCell>
-                  
+
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <div
-                        
-                       className="bg-[#27A376] p-2.5 rounded-lg"
+                        className="bg-[#27A376] p-2.5 rounded-lg cursor-pointer"
                         onClick={() => setSelectedOrder(order)}
                       >
-                        <ViewIcon/>
+                        <ViewIcon />
                       </div>
-                      {/* <Button size="sm" variant="destructive" className="p-2">
-                        <DeleteIcon/>
-                      </Button> */}
-                          <div
-                                onClick={()=>{}}
-                                className="bg-[#E03137] p-2.5 rounded-lg cursor-pointer"
-                              >
-                                <DeleteIcon />
-                              </div>
+                      <div
+                        onClick={() => { }}
+                        className="bg-[#E03137] p-2.5 rounded-lg cursor-pointer"
+                      >
+                        <DeleteIcon />
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>
