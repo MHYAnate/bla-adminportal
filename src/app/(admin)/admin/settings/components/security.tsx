@@ -13,16 +13,30 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { useResetPassword } from "@/services/auth"; // Adjust the import path as necessary
+import { useState } from "react";
 
-const formSchema = z.object({
-  currentpassword: z.string(),
-  newpassword: z.string(),
-  confirmpassword: z.string(),
-});
+// Form validation schema
+const formSchema = z
+  .object({
+    currentpassword: z.string().min(6, "Current password is required"),
+    newpassword: z.string().min(6, "New password must be at least 6 characters"),
+    confirmpassword: z.string().min(6, "Confirm password must be at least 6 characters"),
+  })
+  .refine((data) => data.newpassword === data.confirmpassword, {
+    message: "Passwords do not match",
+    path: ["confirmpassword"],
+  });
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
 const Security: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+
+  const { resetPasswordPayload, resetPasswordIsLoading } = useResetPassword(() => {
+    form.reset(); // Reset form on success
+  });
+
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -33,8 +47,18 @@ const Security: React.FC = () => {
   });
 
   async function onSubmit(values: FormSchemaType) {
-    await Promise.resolve(true);
-    console.warn(values);
+    const payload = {
+      currentpassword: values.currentpassword,
+      newpassword: values.newpassword,
+      confirmpassword: values.confirmpassword,
+    };
+
+    try {
+      setLoading(true);
+      await resetPasswordPayload(payload);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -51,7 +75,7 @@ const Security: React.FC = () => {
                 <FormControl>
                   <Input
                     type="password"
-                    placeholder="admin1524887"
+                    placeholder="Enter current password"
                     {...field}
                   />
                 </FormControl>
@@ -69,7 +93,7 @@ const Security: React.FC = () => {
                 <FormControl>
                   <Input
                     type="password"
-                    placeholder="admin1524887"
+                    placeholder="Enter new password"
                     {...field}
                   />
                 </FormControl>
@@ -77,6 +101,7 @@ const Security: React.FC = () => {
               </FormItem>
             )}
           />
+
           <FormField
             control={form.control}
             name="confirmpassword"
@@ -86,7 +111,7 @@ const Security: React.FC = () => {
                 <FormControl>
                   <Input
                     type="password"
-                    placeholder="admin1524887"
+                    placeholder="Re-enter new password"
                     {...field}
                   />
                 </FormControl>
@@ -98,10 +123,12 @@ const Security: React.FC = () => {
           <div className="gap-5 justify-end flex">
             <Button
               variant="warning"
+              type="submit"
+              disabled={loading || resetPasswordIsLoading}
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"
             >
-              Submit
+              {loading || resetPasswordIsLoading ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </form>
