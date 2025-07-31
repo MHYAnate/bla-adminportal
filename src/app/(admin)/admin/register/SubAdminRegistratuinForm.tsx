@@ -241,7 +241,7 @@ export default function AdminRegistration() {
                   id="username"
                   name="username"
                   placeholder="Choose a username (optional)"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-[#0F3D30] focus:border-[#0F3D30]"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
