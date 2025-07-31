@@ -178,7 +178,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({ adminData, roles, onC
   const currentRoles = adminData?.roles?.map((role: any) => role.name) || [];
   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
 
-  const { updateRoles, isUpdating, updateRolesError } = useUpdateAdminRoles();
+  const { updateRoles, isLoading: isUpdating } = useUpdateAdminRoles();
 
   const handleRoleToggle = (roleName: string) => {
     setSelectedRoles((prev) =>
