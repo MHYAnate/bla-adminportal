@@ -20,45 +20,84 @@ import { TopOrdersChart } from "./total-orders";
 import { useGetAdmins } from "@/services/admin";
 import { useSearchParams } from 'next/navigation';
 import { Storage } from "@/lib/utils";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import SalesPerformance from "./dashboardTopChart";
 
-const Dashboard: React.FC = () => {
+// Add this interface for type safety
+interface DashboardData {
+  metrics?: {
+    revenue?: {
+      total?: number;
+      trend?: string;
+      changePercentage?: number;
+    };
+    profits?: {
+      total?: number;
+      trend?: string;
+      changePercentage?: number;
+    };
+    orders?: {
+      total?: number;
+      trend?: string;
+      changePercentage?: number;
+    };
+    customers?: {
+      total?: number;
+      trend?: string;
+      changePercentage?: number;
+    };
+  };
+  charts?: {
+    salesPerformance?: any[];
+    orderSummary?: any[];
+  };
+  topPerformers?: {
+    products?: any[];
+    customers?: any[];
+  };
+  recentActivity?: {
+    newCustomers?: any[];
+  };
+}
 
-  const[email, setEmail] = useState("");
-  
+const Dashboard: React.FC = () => {
+  const [email, setEmail] = useState("");
+
   const {
     isDashboardInfoLoading,
     isFetchingDashboardInfo,
-    dashboardData: data,
+    dashboardData: rawData,
   } = useGetDashboardInfo({ enabled: true });
 
-  console.log( data, "compareData")
-  
+  // Type the data here
+  const data = rawData as DashboardData;
+
+  console.log(data, "compareData")
+
   const userEmail = Storage.get("userEmail");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const email = localStorage.getItem("userEmail") || 
-                   sessionStorage.getItem("userEmail");
+      const email = localStorage.getItem("userEmail") ||
+        sessionStorage.getItem("userEmail");
       // Use the email
-      setEmail(email? email : "")
+      setEmail(email ? email : "")
     }
   }, []);
 
   const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
-  const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
+  const admin = adminsData?.find((admin: { email: string }) => admin.email === email);
 
-  console.log(email, "email", adminsData, "data", admin, "filter" )
+  console.log(email, "email", adminsData, "data", admin, "filter")
 
   return (
     <section>
       <Header
-      title={`Good morning, ${admin?.adminProfile?.
-        fullName
-        || 'Admin'}.`}
-      subtext="Welcome to Buylocal Admin. Manage Inventory, Store and Assign Roles."
-    />
+        title={`Good morning, ${admin?.adminProfile?.
+          fullName
+          || 'Admin'}.`}
+        subtext="Welcome to Buylocal Admin. Manage Inventory, Store and Assign Roles."
+      />
       <Card className="mt-[26px] mb-6">
         <CardContent className="p-4 gap-4 flex">
           <div className="grid grid-cols-2 flex-1 h-full">
@@ -71,13 +110,12 @@ const Dashboard: React.FC = () => {
               </h1>
               <div className="mt-auto mb-1">
                 <div
-                  className={`${
-                    data?.metrics?.revenue?.trend.toLowerCase() !== "down"
-                      ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
-                      : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
-                  }`}
+                  className={`${data?.metrics?.revenue?.trend?.toLowerCase() !== "down"
+                    ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+                    : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+                    }`}
                 >
-                  {data?.metrics?.revenue?.trend.toLowerCase() === "down" ? (
+                  {data?.metrics?.revenue?.trend?.toLowerCase() === "down" ? (
                     <DowngressIcon />
                   ) : (
                     <ProgressIcon />
@@ -85,8 +123,8 @@ const Dashboard: React.FC = () => {
                   <p>
                     {data?.metrics?.revenue?.changePercentage
                       ? formatNumber(
-                          Number(data?.metrics?.revenue?.changePercentage)
-                        )
+                        Number(data?.metrics?.revenue?.changePercentage)
+                      )
                       : "0.00"}
                     %
                   </p>
@@ -105,13 +143,12 @@ const Dashboard: React.FC = () => {
               </h1>
               <div className="mt-auto mb-1">
                 <div
-                  className={`${
-                    data?.metrics?.revenue?.trend.toLowerCase() !== "down"
-                      ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
-                      : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
-                  }`}
+                  className={`${data?.metrics?.profits?.trend?.toLowerCase() !== "down"
+                    ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+                    : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+                    }`}
                 >
-                  {data?.metrics?.profits?.trend.toLowerCase() === "down" ? (
+                  {data?.metrics?.profits?.trend?.toLowerCase() === "down" ? (
                     <DowngressIcon />
                   ) : (
                     <ProgressIcon />
@@ -119,8 +156,8 @@ const Dashboard: React.FC = () => {
                   <p>
                     {data?.metrics?.profits?.changePercentage
                       ? formatNumber(
-                          Number(data?.metrics?.profits?.changePercentage)
-                        )
+                        Number(data?.metrics?.profits?.changePercentage)
+                      )
                       : "0.00"}
                     %
                   </p>
@@ -139,13 +176,12 @@ const Dashboard: React.FC = () => {
               </h1>
               <div className="mt-auto mb-1">
                 <div
-                  className={`${
-                    data?.metrics?.orders?.trend.toLowerCase() !== "down"
-                      ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
-                      : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
-                  }`}
+                  className={`${data?.metrics?.orders?.trend?.toLowerCase() !== "down"
+                    ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+                    : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+                    }`}
                 >
-                  {data?.metrics?.orders?.trend.toLowerCase() === "down" ? (
+                  {data?.metrics?.orders?.trend?.toLowerCase() === "down" ? (
                     <DowngressIcon />
                   ) : (
                     <ProgressIcon />
@@ -153,8 +189,8 @@ const Dashboard: React.FC = () => {
                   <p>
                     {data?.metrics?.orders?.changePercentage
                       ? formatNumber(
-                          Number(data?.orders?.revenue?.changePercentage)
-                        )
+                        Number(data?.metrics?.orders?.changePercentage)
+                      )
                       : "0.00"}
                     %
                   </p>
@@ -173,13 +209,12 @@ const Dashboard: React.FC = () => {
               </h1>
               <div className="mt-auto mb-1">
                 <div
-                  className={`${
-                    data?.metrics?.customers?.trend.toLowerCase() !== "down"
-                      ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
-                      : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
-                  }`}
+                  className={`${data?.metrics?.customers?.trend?.toLowerCase() !== "down"
+                    ? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+                    : "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+                    }`}
                 >
-                  {data?.metrics?.customers?.trend.toLowerCase() === "down" ? (
+                  {data?.metrics?.customers?.trend?.toLowerCase() === "down" ? (
                     <DowngressIcon />
                   ) : (
                     <ProgressIcon />
@@ -187,8 +222,8 @@ const Dashboard: React.FC = () => {
                   <p>
                     {data?.metrics?.customers?.changePercentage
                       ? formatNumber(
-                          Number(data?.metrics?.customers?.changePercentage)
-                        )
+                        Number(data?.metrics?.customers?.changePercentage)
+                      )
                       : "0.00"}
                     %
                   </p>
@@ -201,7 +236,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div className="flex-1 h-auto">
             {/* <LineGraphComponent data={data?.charts?.salesPerformance || []} /> */}
-            <SalesPerformance data={data}/>
+            <SalesPerformance data={data} />
           </div>
         </CardContent>
       </Card>
@@ -214,7 +249,7 @@ const Dashboard: React.FC = () => {
 
       <CustomersDataTable
         data={data?.recentActivity?.newCustomers || []}
-        loading={isDashboardInfoLoading || isDashboardInfoLoading}
+        loading={isDashboardInfoLoading || isFetchingDashboardInfo}
       />
     </section>
   );

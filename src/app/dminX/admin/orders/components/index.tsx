@@ -36,27 +36,58 @@ import {
 } from "@/components/ui/dialog";
 import DatePickerWithRange from "@/components/ui/date-picker";
 
+// Define interfaces for the API responses
+interface OrdersData {
+  data: any[];
+  pagination: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
+}
+
+interface OrdersSummaryData {
+  data: {
+    cancelled?: number;
+    processing?: number;
+    pending?: number;
+    scheduled?: number;
+    totalRevenue?: number;
+    [key: string]: any;
+  };
+}
+
+interface OrdersAnalyticsData {
+  data: any[];
+}
+
 export default function Orders() {
   const {
-    getOrdersData: data,
+    getOrdersData: rawOrdersData,
     getOrdersError,
     getOrdersIsLoading,
     setOrdersFilter,
   } = useGetOrders();
 
   const {
-    getOrdersSummaryData,
+    getOrdersSummaryData: rawOrdersSummaryData,
     getOrdersSummaryIsLoading,
     refetchOrdersSummary,
     setOrdersSummaryFilter,
   } = useGetOrdersSummary();
 
   const {
-    getOrdersAnalyticsData,
+    getOrdersAnalyticsData: rawOrdersAnalyticsData,
     getOrdersAnalyticsIsLoading,
     refetchOrdersAnalytics,
     setOrdersAnalyticsFilter,
   } = useGetOrdersAnalytics();
+
+  // Type assertions for the data
+  const data = rawOrdersData as OrdersData;
+  const getOrdersSummaryData = rawOrdersSummaryData as OrdersSummaryData;
+  const getOrdersAnalyticsData = rawOrdersAnalyticsData as OrdersAnalyticsData;
 
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [filter, setFilter] = useState<string>("");
@@ -68,6 +99,7 @@ export default function Orders() {
   const [startDateSales, setStartDateSales] = useState<string | null>(null);
   const [endDateSales, setEndDateSales] = useState<string | null>(null);
   const [filterSales, setFilterSales] = useState<string>("");
+
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -208,7 +240,7 @@ export default function Orders() {
                 currentPage={currentPage}
                 onPageChange={onPageChange}
                 pageSize={Number(pageSize)}
-                totalPages={data?.total}
+                totalPages={data?.pagination?.total || 0}
                 setPageSize={setPageSize}
                 handleDelete={() => {
                   setIsOpen(true);
@@ -219,7 +251,7 @@ export default function Orders() {
           </div>
         </CardContent>
       </Card>
-      <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
+      <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
         <DialogContent
           className={`${"max-w-[33.75rem] left-[50%] translate-x-[-50%]"}`}
         >
@@ -229,7 +261,12 @@ export default function Orders() {
             </DialogTitle>
           </DialogHeader>
           {/* <CreateCustomer setClose={() => setIsOpen(false)} /> */}
-          <DeleteContent isLoading={()=>{}} handleClick={()=>{}} handleClose={() => setIsOpen(false)} title="Order" />
+          <DeleteContent
+            isLoading={() => { }}
+            handleClick={() => { }}
+            handleClose={() => setIsOpen(false)}
+            title="Order"
+          />
         </DialogContent>
       </Dialog>
     </section>

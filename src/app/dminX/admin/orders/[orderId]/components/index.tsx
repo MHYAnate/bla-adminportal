@@ -137,7 +137,7 @@ export default function OrderDetails({ orderId }: { orderId: string }) {
             </Card>
             <Card className="mb-6">
               <CardContent className="py-2 px-6">
-                <h6 className="mb-4 font-bold text-2xl mb-4 text-[#0B0B0B]">
+                <h6 className="mb-4 font-bold text-2xl text-[#0B0B0B]">
                   Order Timeline
                 </h6>
                 <div className="flex gap-4 items-start">
@@ -321,8 +321,8 @@ export default function OrderDetails({ orderId }: { orderId: string }) {
                           status.toLowerCase() === "active"
                             ? "success"
                             : status.toLowerCase() === "pending"
-                            ? "tertiary"
-                            : "warning"
+                              ? "tertiary"
+                              : "warning"
                         }
                         className="py-1 px-[26px] font-medium"
                       >

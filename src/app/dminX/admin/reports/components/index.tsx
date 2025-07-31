@@ -29,17 +29,97 @@ import {
 import { useGetAdminRoles } from "@/services/admin/index";
 import RegDataTable from "./RegData-table";
 
+// Define TypeScript interfaces
+interface DashboardData {
+	metrics?: {
+		customers?: {
+			changePercentage?: number;
+			total?: number;
+			trend?: string;
+		};
+		revenue?: {
+			changePercentage?: number;
+			total?: number;
+			trend?: string;
+		};
+		orders?: {
+			changePercentage?: number;
+			total?: number;
+			trend?: string;
+		};
+		profits?: {
+			changePercentage?: number;
+			total?: number;
+			trend?: string;
+		};
+	};
+	charts?: {
+		orderSummary?: Array<{
+			sales?: number;
+			[key: string]: any;
+		}>;
+		salesPerformance?: Array<{
+			month: string;
+			orders_count: number;
+			total_sales: number;
+		}>;
+	};
+	topPerformers?: {
+		customers?: Array<{
+			userId?: number;
+			email?: string;
+			totalSpent?: number;
+			orderCount?: number;
+			status?: string;
+			[key: string]: any;
+		}>;
+	};
+	recentActivity?: {
+		newCustomers?: Array<{
+			id: number;
+			email: string;
+			type: string;
+			name: string;
+			status: string;
+			kycStatus: string;
+			joinDate: string;
+			role: string;
+		}>;
+	};
+}
+
+interface RolesData {
+	data?: any[];
+	[key: string]: any;
+}
+
+// Define the expected customer interface for DataTable
+interface DataTableCustomer {
+	userId: number;
+	email: string;
+	totalSpent: number;
+	orderCount: number;
+	status: string;
+}
+
 export default function Reports() {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [url, setUrl] = useState("");
-	const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
-	const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
+
+	// Type the hook responses
+	const { rolesData: rawRolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
+	const rolesData = rawRolesData as RolesData;
+	const safeRolesData = Array.isArray(rolesData?.data) ? rolesData.data : [];
+
 	const {
 		isDashboardInfoLoading,
 		isFetchingDashboardInfo,
-		dashboardData: data,
+		dashboardData: rawData,
 		refetchDashboardData,
 	} = useGetDashboardInfo({ enabled: true });
+
+	// Type assertion for dashboard data
+	const data = rawData as DashboardData;
 
 	if (!data || isDashboardInfoLoading)
 		return (
@@ -49,35 +129,35 @@ export default function Reports() {
 		);
 	console.log(data, "datafull");
 
-	const reportlist = [
+	const reportlist: IReportCard[] = [
 		{
 			description: "From previous month",
-			count: data?.metrics?.customers?.changePercentage,
-			value: data?.metrics?.customers?.total?.toLocaleString(),
+			count: data?.metrics?.customers?.changePercentage || 0,
+			value: data?.metrics?.customers?.total?.toLocaleString() || "0",
 			isProgressive: data?.metrics?.customers?.trend === "up",
 			icon: <TotalUserIcon />,
 			title: "Total Customers",
 		},
 		{
 			description: "From previous month",
-			count: data?.metrics?.revenue?.changePercentage,
-			value: `NGN${data?.metrics?.revenue?.total?.toLocaleString()}`,
+			count: data?.metrics?.revenue?.changePercentage || 0,
+			value: `NGN${data?.metrics?.revenue?.total?.toLocaleString() || "0"}`,
 			isProgressive: data?.metrics?.revenue?.trend === "up",
 			icon: <TotalSalesIcon />,
 			title: "Total Sales",
 		},
 		{
 			description: "From previous month",
-			count: data?.metrics?.orders?.changePercentage,
-			value: data?.metrics?.orders?.total?.toLocaleString(),
+			count: data?.metrics?.orders?.changePercentage || 0,
+			value: data?.metrics?.orders?.total?.toLocaleString() || "0",
 			isProgressive: data?.metrics?.orders?.trend === "up",
 			icon: <TotalOrderIcon />,
 			title: "Total Order",
 		},
 		{
 			description: "From previous month",
-			count: data?.metrics?.profits?.changePercentage,
-			value: `NGN${data?.metrics?.profits?.total?.toLocaleString()}`,
+			count: data?.metrics?.profits?.changePercentage || 0,
+			value: `NGN${data?.metrics?.profits?.total?.toLocaleString() || "0"}`,
 			isProgressive: data?.metrics?.profits?.trend === "up",
 			icon: <TotalPendingIcon />,
 			title: "Total Profit",
@@ -96,22 +176,35 @@ export default function Reports() {
 		{
 			description: "From previous month",
 			// count: data.metrics.orders.changePercentage,
-			value: data?.charts?.orderSummary[2]?.sales,
+			value: data?.charts?.orderSummary?.[2]?.sales?.toString() || "",
 			isProgressive: data?.metrics?.revenue?.trend === "up",
 			icon: <TotalOrderIcon />,
 			title: "Total Pending",
 		},
 	];
 
+	// Fixed chartData mapping with proper type handling
 	const chartData = data?.topPerformers?.customers?.map(
-		(customer: { email: any; totalSpent: any }, index: number) => ({
-			title: customer?.email,
-			values: customer?.totalSpent,
+		(customer, index: number) => ({
+			title: customer?.email || "",
+			values: customer?.totalSpent || 0,
 			fill: ["#FE964A", "#2DD4BF", "#8C62FF", "#8C62FF"][index % 4],
 		})
-	);
+	) || [];
 
+	// Safe data handling with fallbacks and proper transformations
+	const salesData = data?.charts?.salesPerformance || [];
+	const customerValue = data?.metrics?.customers?.total || 0;
+	const newCustomers = data?.recentActivity?.newCustomers || [];
 
+	// Transform topCustomers data to match DataTable expectations
+	const topCustomers: DataTableCustomer[] = (data?.topPerformers?.customers || []).map((customer, index) => ({
+		userId: customer?.userId || customer?.id || index + 1,
+		email: customer?.email || "",
+		totalSpent: customer?.totalSpent || 0,
+		orderCount: customer?.orderCount || 0,
+		status: customer?.status || "active",
+	}));
 
 	return (
 		<section>
@@ -158,22 +251,22 @@ export default function Reports() {
 			</div>
 
 			<div className="flex gap-4 mb-6">
-				<MultiLineGraphComponent salesData={data?.charts?.salesPerformance} />
+				<MultiLineGraphComponent salesData={salesData} />
 				<div className="w-[339px]">
 					<PieChartComponent
 						title="Total Customers"
-						value={data?.metrics?.customers?.total}
+						value={customerValue}
 						chartData={chartData}
 					/>
 				</div>
 			</div>
 			<DataTable
-				customers={data?.topPerformers?.customers}
+				customers={topCustomers}
 				refetch={refetchDashboardData}
 			/>
 			<div className="mt-5 mb-5" />
 			<RegDataTable
-				customers={data?.recentActivity?.newCustomers}
+				customers={newCustomers}
 				refetch={refetchDashboardData}
 			/>
 			<Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -193,7 +286,6 @@ export default function Reports() {
 					/>
 				</DialogContent>
 			</Dialog>
-      
 		</section>
 	);
 }
