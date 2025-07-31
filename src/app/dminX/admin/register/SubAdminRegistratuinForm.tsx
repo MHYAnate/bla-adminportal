@@ -3,7 +3,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Eye, EyeOff, User, Lock, Phone, Mail, Loader2, Check } from "lucide-react"
 import { toast } from "sonner"
-import { useCreateAdmin } from "@/services/admin"
+import { useRegisterAdmin } from "@/services/admin"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 
@@ -60,8 +60,12 @@ export default function AdminRegistration() {
   const [errors, setErrors] = useState<FormErrors>({})
 
   // Hook for registering admin
-  const { createAdmin: registerAdminPayload, isCreating: loading } = useCreateAdmin()
-
+  const { registerAdminPayload, loading } = useRegisterAdmin({
+    onSuccess: () => {
+      toast.success("Admin registered successfully!")
+      setRegistrationComplete(true)
+    },
+  })
 
 
   // Validate and submit form
