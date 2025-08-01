@@ -1,5 +1,3 @@
-"use client";
-
 import Image from "next/image";
 import {
   CallIcon,
@@ -11,10 +9,266 @@ import OrderItemCard from "@/components/order-item";
 import { Button } from "@/components/ui/button";
 import { useGetOrderInfo } from "@/services/orders";
 import { formatDate, formatDateTime } from "@/lib/utils";
-import React, { useEffect, useMemo, useCallback } from "react";
+import React, { useEffect, useMemo, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Edit, RefreshCw, Truck } from "lucide-react";
+import { ArrowLeft, Edit, RefreshCw, Truck, Calendar, Eye } from "lucide-react";
 import { IOrderItem } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+// Order Tracking Modal Component
+const OrderTrackingModal = ({
+  order,
+  onClose,
+  isOpen
+}: {
+  order: any;
+  onClose: () => void;
+  isOpen: boolean;
+}) => {
+  if (!order) return null;
+
+  const getTrackingSteps = (status: string, paymentStatus: string) => {
+    const steps = [
+      { id: 1, name: "Order Placed", status: "completed", icon: "💰" },
+      {
+        id: 2,
+        name: "Payment Pending",
+        status: paymentStatus === "PAID" ? "completed" :
+          paymentStatus === "PARTIALLY_PAID" ? "current" :
+            status === "ongoing" ? "current" : "pending",
+        icon: "💳"
+      },
+      {
+        id: 3,
+        name: "Payment Confirmed",
+        status: paymentStatus === "PAID" ? "completed" : "pending",
+        icon: "💳"
+      },
+      {
+        id: 4,
+        name: "Processing",
+        status: status === "ongoing" ? "current" :
+          status === "delivered" ? "completed" : "pending",
+        icon: "📦"
+      },
+      {
+        id: 5,
+        name: "Delivered",
+        status: status === "delivered" ? "completed" : "pending",
+        icon: "🏠"
+      },
+    ];
+    return steps;
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "Not available";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getEstimatedDelivery = (createdAt: string, processingDays: number = 7) => {
+    if (!createdAt) return "Not available";
+    const date = new Date(createdAt);
+    date.setDate(date.getDate() + processingDays);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const trackingSteps = getTrackingSteps(order.status, order.paymentStatus);
+  const firstItem = Array.isArray(order.items) && order.items.length > 0 ? order.items[0] : null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-3 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="p-1"
+              onClick={onClose}
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <span className="text-2xl font-semibold text-gray-800">
+              Order Tracking - {order.orderId || order.id}
+            </span>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <span>Home</span>
+            <span>›</span>
+            <span>Orders</span>
+            <span>›</span>
+            <span className="text-gray-800">Tracking</span>
+          </div>
+
+          {/* Progress Tracker */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between relative">
+              {/* Progress line background */}
+              <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 z-0"></div>
+
+              {trackingSteps.map((step, index) => (
+                <div key={step.id} className="flex flex-col items-center relative z-10">
+                  {/* Step icon */}
+                  <div
+                    className={`w-12 h-12 rounded-full flex items-center justify-center text-lg mb-2 border-4 border-white shadow-sm ${step.status === "completed"
+                      ? "bg-green-500 text-white"
+                      : step.status === "current"
+                        ? "bg-yellow-500 text-white"
+                        : "bg-gray-200 text-gray-400"
+                      }`}
+                  >
+                    {step.icon}
+                  </div>
+
+                  {/* Step label */}
+                  <span
+                    className={`text-xs text-center max-w-16 ${step.status === "completed" || step.status === "current"
+                      ? "text-gray-800 font-medium"
+                      : "text-gray-400"
+                      }`}
+                  >
+                    {step.name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Product Details Section */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">
+              Product Details
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="space-y-4">
+                <div>
+                  <span className="text-gray-500 text-sm">Order ID</span>
+                  <p className="font-semibold text-gray-800">{order.orderId || order.id}</p>
+                </div>
+
+                {firstItem?.product && (
+                  <>
+                    <div>
+                      <span className="text-gray-500 text-sm">Brand:</span>
+                      <p className="font-semibold text-gray-800">
+                        {firstItem.product.manufacturer?.name || "Unknown Brand"}
+                      </p>
+                    </div>
+
+                    <div>
+                      <span className="text-gray-500 text-sm">Category:</span>
+                      <p className="font-semibold text-gray-800">
+                        {firstItem.product.category?.name || "Unknown Category"}
+                      </p>
+                    </div>
+                  </>
+                )}
+
+                <div>
+                  <span className="text-gray-500 text-sm">Quantity:</span>
+                  <p className="font-semibold text-gray-800">
+                    {order.items?.reduce((total: number, item: OrderItem) => total + (item.quantity || 0), 0) || 1}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <span className="text-gray-500 text-sm">Date Created</span>
+                  <p className="font-semibold text-gray-800">
+                    {formatDate(order.createdAt)}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-green-500" />
+                  <span className="text-green-500 font-medium">
+                    Estimated delivery: {getEstimatedDelivery(order.createdAt)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Card */}
+          {firstItem && (
+            <div className="flex flex-col md:flex-row items-start gap-6 p-6 bg-gray-50 rounded-lg">
+              <div className="w-full md:w-32 h-40 bg-white rounded-lg overflow-hidden shadow-sm flex items-center justify-center">
+                <img
+                  src={firstItem.product?.image || firstItem.image || "/images/placeholder-product.png"}
+                  alt={firstItem.product?.name || "Product"}
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/images/placeholder-product.png";
+                  }}
+                />
+              </div>
+
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                  {firstItem.product?.name || firstItem.productName || "Unknown Product"}
+                </h3>
+                <p className="text-gray-600 mb-3">
+                  {order.items?.length || 1} item(s)
+                </p>
+                <p className="text-gray-600 mb-3">
+                  ₦{((firstItem.price || 0) * (firstItem.quantity || 1)).toLocaleString()} × {firstItem.quantity || 1}
+                </p>
+                <p className="text-xl font-bold text-gray-800 mb-3">
+                  Total: ₦{order.totalPrice?.toLocaleString() || "0"}
+                </p>
+                <Badge
+                  className={`${order.status === "delivered"
+                    ? "bg-green-100 text-green-800"
+                    : order.status === "ongoing"
+                      ? "bg-yellow-100 text-yellow-800"
+                      : "bg-gray-100 text-gray-800"
+                    } hover:bg-opacity-80`}
+                >
+                  {order.status === "delivered"
+                    ? "Delivered"
+                    : order.status === "ongoing"
+                      ? "In Progress"
+                      : order.status?.charAt(0).toUpperCase() + order.status?.slice(1) || "Unknown"}
+                </Badge>
+              </div>
+            </div>
+          )}
+
+          {/* Close Button */}
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={onClose}
+              className="bg-orange-500 hover:bg-orange-600"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 // Define interfaces for type safety
 interface Profile {
@@ -67,11 +321,13 @@ interface OrderData {
   totalPrice: number;
   paymentStatus: string;
   breakdown?: Breakdown;
+  orderId?: string;
 }
 
-// Extend IOrderItem to include productId
+// Extend IOrderItem to include productId and view handler
 interface ExtendedIOrderItem extends IOrderItem {
   productId?: string;
+  onView?: () => void;
 }
 
 interface OrderDetailsProps {
@@ -86,6 +342,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   isModal = false
 }) => {
   const router = useRouter();
+  const [trackingModalOpen, setTrackingModalOpen] = useState(false);
 
   const {
     getOrderInfoData: rawData,
@@ -94,15 +351,29 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     setOrderInfoFilter,
   } = useGetOrderInfo();
 
-  // Type the data properly and provide defaults - handle the actual service response structure
+  // Map backend status to frontend status
+  const mapStatusToFrontend = useCallback((backendStatus: string): string => {
+    switch (backendStatus?.toLowerCase()) {
+      case 'pending':
+      case 'processing':
+      case 'shipped':
+      case 'confirmed':
+        return 'ongoing';
+      case 'delivered':
+      case 'completed':
+        return 'delivered';
+      case 'cancelled':
+      case 'refunded':
+        return 'cancelled';
+      default:
+        return 'ongoing';
+    }
+  }, []);
+
+  // Type the data properly and provide defaults
   const data: OrderData | null = useMemo(() => {
     if (!rawData) return null;
 
-    // Handle the case where rawData might be the simplified structure from the service
-    // The service returns { items: any, user: any, breakdown: any }
-    // But we need to access the original data properties
-
-    // Type guard to check if rawData has the expected properties
     const hasFullOrderData = (obj: any): obj is OrderData => {
       return obj &&
         typeof obj.id !== 'undefined' &&
@@ -112,32 +383,31 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     };
 
     if (hasFullOrderData(rawData)) {
-      // Direct structure - rawData is the full order data
       return {
         id: rawData.id || '',
         user: rawData.user || { email: '' },
         items: Array.isArray(rawData.items) ? rawData.items : [],
-        status: rawData.status || 'pending',
+        status: mapStatusToFrontend(rawData.status || 'ongoing'),
         createdAt: rawData.createdAt || '',
         totalPrice: rawData.totalPrice || 0,
         paymentStatus: rawData.paymentStatus || 'PENDING',
         breakdown: rawData.breakdown || undefined,
+        orderId: rawData.orderId || rawData.id,
       } as OrderData;
     } else {
-      // The service processed the data and returned a simplified structure
-      // We need to extract from the available data or provide sensible defaults
       return {
-        id: orderId || '', // Use the orderId from props as fallback
+        id: orderId || '',
         user: rawData.user || { email: '' },
         items: Array.isArray(rawData.items) ? rawData.items : [],
-        status: 'pending', // Default status since it's not available
-        createdAt: '', // Default empty since it's not available
-        totalPrice: 0, // Default since it's not available
-        paymentStatus: 'PENDING', // Default since it's not available
+        status: 'ongoing',
+        createdAt: '',
+        totalPrice: 0,
+        paymentStatus: 'PENDING',
         breakdown: rawData.breakdown || undefined,
+        orderId: orderId,
       } as OrderData;
     }
-  }, [rawData, orderId]);
+  }, [rawData, orderId, mapStatusToFrontend]);
 
   // Memoize the filter to prevent unnecessary re-renders
   const orderFilter = useMemo(() => ({ orderId }), [orderId]);
@@ -148,6 +418,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     }
   }, [orderId, setOrderInfoFilter, orderFilter]);
 
+  // Handle opening tracking modal
+  const handleOpenTrackingModal = useCallback(() => {
+    setTrackingModalOpen(true);
+  }, []);
+
   // Memoize the transformed items to prevent re-computation
   const transformedItems = useMemo((): ExtendedIOrderItem[] => {
     if (!data?.items || !Array.isArray(data.items)) return [];
@@ -157,13 +432,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       quantity: item.quantity || 0,
       price: item.price?.toLocaleString() || "0",
       total: ((item.price || 0) * (item.quantity || 0))?.toLocaleString() || "0",
-      status: item.status || data.status || "pending",
+      status: mapStatusToFrontend(item.status || data.status || "ongoing"),
       image: item.product?.image || item.product?.options?.[0]?.image?.[0] || "/images/placeholder-product.png",
       productId: item.product?.id?.toString() || `item-${index}`,
       category: item.product?.category?.name || "No Category",
       brand: item.product?.manufacturer?.name || "No Brand",
+      onView: handleOpenTrackingModal, // Add view handler for tracking modal
     }));
-  }, [data?.items, data?.status]);
+  }, [data?.items, data?.status, mapStatusToFrontend, handleOpenTrackingModal]);
 
   // Calculate totalPrice from items if not available
   const calculatedTotalPrice = useMemo(() => {
@@ -171,7 +447,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       return data.totalPrice;
     }
 
-    // Calculate from items
     if (data?.items && Array.isArray(data.items)) {
       return data.items.reduce((total, item) => {
         return total + ((item.price || 0) * (item.quantity || 0));
@@ -185,11 +460,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const getStatusVariant = useCallback((status: string) => {
     switch (status.toLowerCase()) {
       case 'delivered':
-      case 'completed':
         return 'success';
-      case 'pending':
-        return 'tertiary';
-      case 'processing':
+      case 'ongoing':
         return 'warning';
       case 'cancelled':
         return 'destructive';
@@ -294,6 +566,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
         </div>
       )}
 
+      {/* Customer Profile Section */}
       <div className="text-center mb-6">
         <Image
           width={100}
@@ -312,13 +585,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             </h5>
             <Badge
               variant={getStatusVariant(data.status)}
-              className="py-2 px-6 font-bold text-sm"
+              className="py-2 px-6 font-bold text-sm uppercase"
             >
-              {data.status?.toUpperCase() || "UNKNOWN"}
+              {data.status || "UNKNOWN"}
             </Badge>
           </div>
         </div>
 
+        {/* Contact Information */}
         <div className="bg-gray-50 rounded-lg p-6 space-y-4">
           <h6 className="font-semibold text-lg text-[#111827] mb-4">
             Contact Information
@@ -355,6 +629,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
           </div>
         </div>
 
+        {/* Order Information */}
         <div className="bg-gray-50 rounded-lg p-6 space-y-4">
           <h6 className="font-semibold text-lg text-[#111827] mb-4">
             Order Information
@@ -364,7 +639,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             <div>
               <p className="text-sm text-gray-500">Order ID</p>
               <p className="font-semibold text-sm text-[#111827]">
-                #{data.id || orderId || 'N/A'}
+                #{data.orderId || data.id || 'N/A'}
               </p>
             </div>
 
@@ -406,8 +681,29 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               </p>
             </div>
           </div>
+
+          {/* Estimated Delivery */}
+          {data.createdAt && (
+            <div className="flex items-center gap-2 mt-4">
+              <Calendar className="w-4 h-4 text-green-500" />
+              <span className="text-green-500 font-medium">
+                Estimated delivery: {
+                  (() => {
+                    const date = new Date(data.createdAt);
+                    date.setDate(date.getDate() + 7); // Add 7 days for estimated delivery
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    });
+                  })()
+                }
+              </span>
+            </div>
+          )}
         </div>
 
+        {/* Order Items */}
         <div>
           <h5 className="text-lg font-semibold text-[#111827] mb-4">
             Order Items ({transformedItems.length})
@@ -426,6 +722,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
           )}
         </div>
 
+        {/* Order Summary */}
         {data.breakdown && (
           <div className="bg-gray-50 rounded-lg p-6">
             <h6 className="font-semibold text-lg text-[#111827] mb-4">
@@ -454,6 +751,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
           </div>
         )}
 
+        {/* Action Buttons */}
         <div className="flex justify-end gap-4 pt-6">
           {isModal ? (
             <Button

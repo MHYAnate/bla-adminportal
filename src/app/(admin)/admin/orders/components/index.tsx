@@ -9,7 +9,6 @@ import {
   ExportIcon,
   InprogressIcon,
   OrderCancelIcon,
-  OrderDeliveringIcon,
   OrderShippedIcon,
   PaymentRefundIcon,
   PendingPaymentIcon,
@@ -39,29 +38,21 @@ import {
 import DatePickerWithRange from "@/components/ui/date-picker";
 import SalesChart from "./orderSales";
 import OrderSummary from "./orderSummarySide";
-import DetailedOrderTable from "./orderTable";
 import { toast } from "sonner";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Type definitions
-interface SalesDataItem {
-  month: string;
-  individual: number;
-  businessOwner: number;
-  total: number;
-}
-
-interface SalesDataResponse {
-  data?: SalesDataItem[];
-}
-
 interface OrderSummaryData {
+  paymentRefund?: number;
   orderCancel?: number;
   orderShipped?: number;
-  processing?: number;
-  pending?: number;
-  scheduled?: number;
+  inProgress?: number;
+  pendingReview?: number;
+  pendingPayment?: number;
   delivered?: number;
+  ongoing?: number;
   totalRevenue?: number;
+  totalOrders?: number;
 }
 
 interface OrdersSummaryResponse {
@@ -70,6 +61,7 @@ interface OrdersSummaryResponse {
 
 interface Order {
   id: string;
+  status: string;
   // Add other order properties as needed
 }
 
@@ -81,16 +73,9 @@ interface OrdersResponse {
 }
 
 export default function Orders() {
-  // Debug authentication state
-  useEffect(() => {
-    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
-    console.log('🔍 Auth Debug:', {
-      token: token ? 'exists' : 'missing',
-      tokenLength: token?.length,
-      tokenStart: token?.substring(0, 10) + '...',
-      currentURL: window.location.href,
-    });
-  }, []);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get('status') || '';
 
   // Hooks for data fetching with proper typing
   const {
@@ -131,12 +116,7 @@ export default function Orders() {
     isSalesLoading,
     salesError,
     setSalesFilter
-  } = useGetSalesData() as {
-    salesData: SalesDataResponse;
-    isSalesLoading: boolean;
-    salesError: any;
-    setSalesFilter: (filter: any) => void;
-  };
+  } = useGetSalesData();
 
   const {
     getOrdersAnalyticsData,
@@ -149,7 +129,7 @@ export default function Orders() {
   // Local state
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
   const [filter, setFilter] = useState<string>("");
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<string>(statusFilter);
   const [customerType, setCustomerType] = useState<string>("");
   const [pageSize, setPageSize] = useState<string>("10");
   const [currentPage, setCurrentPage] = useState(1);
@@ -159,28 +139,50 @@ export default function Orders() {
   const [endDateSales, setEndDateSales] = useState<string | null>(null);
   const [filterSales, setFilterSales] = useState<string>("");
 
-  // FIXED: Filter options with valid values (no empty strings)
+  // Map backend status to frontend status
+  const mapStatusToFrontend = (backendStatus: string): string => {
+    switch (backendStatus?.toLowerCase()) {
+      case 'pending':
+      case 'processing':
+      case 'shipped':
+      case 'confirmed':
+        return 'ongoing';
+      case 'delivered':
+      case 'completed':
+        return 'delivered';
+      case 'cancelled':
+      case 'refunded':
+        return 'cancelled';
+      default:
+        return 'ongoing';
+    }
+  };
+
+  // Filter options with valid values
   const customerList = useMemo(() => [
-    { text: "All Types", value: "all" }, // Changed from "" to "all"
+    { text: "All Types", value: "all" },
     { text: "Individual", value: "individual" },
     { text: "Business", value: "business" },
   ], []);
 
   const statusList = useMemo(() => [
-    { text: "All Status", value: "all" }, // Changed from "" to "all"
-    { text: "Pending", value: "pending" },
-    { text: "Processing", value: "processing" },
-    { text: "Shipped", value: "shipped" },
+    { text: "All Status", value: "all" },
+    { text: "Ongoing", value: "ongoing" },
     { text: "Delivered", value: "delivered" },
     { text: "Cancelled", value: "cancelled" },
   ], []);
 
-  // Order cards data with proper typing - memoized to prevent re-renders
+  // Order cards data - updated to match your requirements
   const orderlist: IOrderCard[] = useMemo(() => [
+    {
+      value: getOrdersSummaryData?.data?.paymentRefund || 0,
+      icon: <PaymentRefundIcon />,
+      title: "Payment Refund",
+    },
     {
       value: getOrdersSummaryData?.data?.orderCancel || 0,
       icon: <OrderCancelIcon />,
-      title: "Order Cancelled",
+      title: "Order Cancel",
     },
     {
       value: getOrdersSummaryData?.data?.orderShipped || 0,
@@ -188,19 +190,19 @@ export default function Orders() {
       title: "Order Shipped",
     },
     {
-      value: getOrdersSummaryData?.data?.processing || 0,
-      icon: <OrderDeliveringIcon />,
-      title: "Order Processing",
+      value: getOrdersSummaryData?.data?.inProgress || getOrdersSummaryData?.data?.ongoing || 0,
+      icon: <InprogressIcon />,
+      title: "In Progress",
     },
     {
-      value: getOrdersSummaryData?.data?.pending || 0,
-      icon: <PendingPaymentIcon />,
-      title: "Pending Orders",
-    },
-    {
-      value: getOrdersSummaryData?.data?.scheduled || 0,
+      value: getOrdersSummaryData?.data?.pendingReview || 0,
       icon: <PendingReviewIcon />,
-      title: "Order Scheduled",
+      title: "Pending Review",
+    },
+    {
+      value: getOrdersSummaryData?.data?.pendingPayment || 0,
+      icon: <PendingPaymentIcon />,
+      title: "Pending Payment",
     },
     {
       value: getOrdersSummaryData?.data?.delivered || 0,
@@ -220,8 +222,8 @@ export default function Orders() {
     page: currentPage,
     limit: parseInt(pageSize),
     search: filter,
-    status: status === "all" ? undefined : status || undefined, // Handle "all" value
-    customerType: customerType === "all" ? undefined : customerType || undefined, // Handle "all" value
+    status: status === "all" ? undefined : status || undefined,
+    customerType: customerType === "all" ? undefined : customerType || undefined,
     dateFrom: startDate || undefined,
     dateTo: endDate || undefined,
   }), [currentPage, pageSize, filter, status, customerType, startDate, endDate]);
@@ -244,16 +246,22 @@ export default function Orders() {
     setCurrentPage(page);
   }, []);
 
-  // FIXED: Filter change handlers that handle "all" value properly
+  // Filter change handlers
   const handleCustomerTypeChange = useCallback((value: string) => {
-    console.log('🔍 Customer type changed:', value);
     setCustomerType(value);
   }, []);
 
   const handleStatusChange = useCallback((value: string) => {
-    console.log('🔍 Status changed:', value);
     setStatus(value);
-  }, []);
+    // Update URL to reflect status filter
+    const params = new URLSearchParams(searchParams.toString());
+    if (value === "all") {
+      params.delete('status');
+    } else {
+      params.set('status', value);
+    }
+    router.push(`/admin/orders?${params.toString()}`);
+  }, [router, searchParams]);
 
   // Handle export
   const handleExport = useCallback(async () => {
@@ -298,67 +306,61 @@ export default function Orders() {
     }
   }, [refetchOrdersSummary]);
 
-  // Apply filters effect - using memoized filter object
+  // Apply filters effect
   useEffect(() => {
     if (setOrdersFilter) {
-      console.log('🔍 Setting orders filter:', ordersFilter);
       setOrdersFilter(ordersFilter);
     }
   }, [ordersFilter, setOrdersFilter]);
 
-  // Apply analytics filters - using memoized filter object
+  // Apply analytics filters
   useEffect(() => {
     if (setSalesFilter) {
       setSalesFilter(salesFilter);
     }
   }, [salesFilter, setSalesFilter]);
 
-  // Apply analytics filters for order analytics - using memoized filter object
   useEffect(() => {
     if (setOrdersAnalyticsFilter) {
       setOrdersAnalyticsFilter(analyticsFilter);
     }
   }, [analyticsFilter, setOrdersAnalyticsFilter]);
 
-  // Show error messages - memoized to prevent unnecessary re-renders
+  // Set status from URL params
+  useEffect(() => {
+    if (statusFilter && statusFilter !== status) {
+      setStatus(statusFilter);
+    }
+  }, [statusFilter]);
+
+  // Show error messages
   useEffect(() => {
     if (getOrdersError) {
-      console.error('🔍 Orders error:', getOrdersError);
+      console.error('Orders error:', getOrdersError);
       toast.error("Failed to load orders");
     }
   }, [getOrdersError]);
 
   useEffect(() => {
     if (getOrdersSummaryError) {
-      console.error('🔍 Orders summary error:', getOrdersSummaryError);
+      console.error('Orders summary error:', getOrdersSummaryError);
       toast.error("Failed to load order summary");
     }
   }, [getOrdersSummaryError]);
 
   useEffect(() => {
     if (orderSummaryError) {
-      console.error('🔍 Order summary chart error:', orderSummaryError);
+      console.error('Order summary chart error:', orderSummaryError);
       toast.error("Failed to load order chart data");
     }
   }, [orderSummaryError]);
 
   useEffect(() => {
     if (salesError) {
-      console.error('🔍 Sales error:', salesError);
+      console.error('Sales error:', salesError);
       toast.error("Failed to load sales data");
     }
   }, [salesError]);
-
-  // Error boundary catch for component-level errors
-  useEffect(() => {
-    const handleError = (event: ErrorEvent) => {
-      console.error('🔍 Component error caught:', event.error);
-      // Don't redirect on component errors, just log them
-    };
-
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
-  }, []);
 
   return (
     <section>
@@ -407,7 +409,7 @@ export default function Orders() {
                 Detailed Order Table
               </h6>
 
-              {/* FIXED: Filters with proper error handling */}
+              {/* Filters */}
               <div className="flex flex-wrap items-center gap-4 mb-6">
                 <div className="min-w-[200px]">
                   <InputFilter
@@ -427,6 +429,7 @@ export default function Orders() {
                     setFilter={handleStatusChange}
                     placeholder="Order Status"
                     list={statusList}
+                    value={status}
                   />
                 </div>
                 <div className="min-w-[250px]">
@@ -437,7 +440,15 @@ export default function Orders() {
                 </div>
               </div>
 
-              <DetailedOrderTable />
+              <DataTable
+                data={data?.data || []}
+                currentPage={currentPage}
+                onPageChange={onPageChange}
+                pageSize={parseInt(pageSize)}
+                totalPages={Math.ceil((data?.total || 0) / parseInt(pageSize))}
+                setPageSize={setPageSize}
+                loading={getOrdersIsLoading}
+              />
             </div>
           </div>
         </CardContent>
