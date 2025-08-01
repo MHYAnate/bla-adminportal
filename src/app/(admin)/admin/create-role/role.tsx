@@ -16,6 +16,12 @@ interface Permission {
   category: string;
 }
 
+interface RoleResponse {
+  message?: string;
+  data?: any; // Or more specific type if you know the structure
+  error?: string;
+}
+
 export default function CreateRoleForm() {
   const [formData, setFormData] = useState({
     name: "",
@@ -29,8 +35,8 @@ export default function CreateRoleForm() {
 
   // ✅ Create role hook
   const {
-    createRole,
-    isCreating: createRoleIsLoading,
+    createRolePayload: createRole,
+    createRoleIsLoading,
   } = useCreateAdminRole();
 
   // ✅ Process permissions data
@@ -89,7 +95,7 @@ export default function CreateRoleForm() {
       const response = await createRole({
         ...formData,
         permissionIds: Array.from(selectedPermissionIds),
-      });
+      }) as any;
 
       console.log("Role created successfully:", response);
       toast.success(response?.message || "Role created successfully!");
