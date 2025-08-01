@@ -53,7 +53,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
     return new Date(parseInt(year) || 0, (parseInt(month) || 1) - 1);
   };
 
-  // Calculate statistics
+  // Calculate statistics - ONLY from chart data, not external sources
   const stats = React.useMemo(() => {
     if (!chartData.length) return { totalSales: 0, totalOrders: 0, avgMonthlySales: 0 };
 
@@ -79,10 +79,13 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
     return (
       <Card className="flex-1">
         <CardHeader>
-          <CardTitle>Sales Performance</CardTitle>
+          <CardTitle>Monthly Sales Performance</CardTitle>
         </CardHeader>
         <CardContent className="flex items-center justify-center h-[300px]">
-          <p className="text-gray-500">No sales data available</p>
+          <div className="text-center">
+            <p className="text-gray-500 mb-2">No monthly sales data available</p>
+            <p className="text-sm text-gray-400">Chart will display when data is loaded</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -94,28 +97,37 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
           <CardTitle>Monthly Sales Performance</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Track revenue and order trends over time
+            Revenue and order trends over {chartData.length} month{chartData.length !== 1 ? 's' : ''}
           </p>
         </div>
 
-        {/* Stats Summary */}
+        {/* Stats Summary - ONLY from monthly chart data */}
         <div className="flex">
           <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 text-left sm:px-8 sm:py-6 border-r">
-            <span className="text-xs text-muted-foreground">Total Sales</span>
+            <span className="text-xs text-muted-foreground">Chart Period Sales</span>
             <span className="text-lg font-bold leading-none sm:text-2xl">
               ₦{stats.totalSales.toLocaleString(undefined, { maximumFractionDigits: 0 })}
             </span>
+            <span className="text-xs text-green-600">
+              Sum of {chartData.length} months
+            </span>
           </div>
           <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 text-left sm:px-8 sm:py-6 border-r">
-            <span className="text-xs text-muted-foreground">Total Orders</span>
+            <span className="text-xs text-muted-foreground">Chart Period Orders</span>
             <span className="text-lg font-bold leading-none sm:text-2xl">
               {stats.totalOrders.toLocaleString()}
             </span>
+            <span className="text-xs text-blue-600">
+              Total orders
+            </span>
           </div>
           <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-4 text-left sm:px-8 sm:py-6">
-            <span className="text-xs text-muted-foreground">Monthly Avg</span>
+            <span className="text-xs text-muted-foreground">Monthly Average</span>
             <span className="text-lg font-bold leading-none sm:text-2xl">
               ₦{stats.avgMonthlySales.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </span>
+            <span className="text-xs text-purple-600">
+              Per month avg
             </span>
           </div>
         </div>
@@ -126,7 +138,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
         {performance && (
           <div className="mb-4 grid grid-cols-2 gap-4">
             <div className="bg-green-50 p-3 rounded-lg">
-              <p className="text-xs text-green-600 font-medium">Best Month</p>
+              <p className="text-xs text-green-600 font-medium">Best Performing Month</p>
               <p className="text-sm font-semibold text-green-800">
                 {parseMonth(performance.bestMonth.date).toLocaleDateString("en-US", {
                   month: "short",
@@ -138,7 +150,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
               </p>
             </div>
             <div className="bg-orange-50 p-3 rounded-lg">
-              <p className="text-xs text-orange-600 font-medium">Lowest Month</p>
+              <p className="text-xs text-orange-600 font-medium">Lowest Performing Month</p>
               <p className="text-sm font-semibold text-orange-800">
                 {parseMonth(performance.worstMonth.date).toLocaleDateString("en-US", {
                   month: "short",
@@ -207,13 +219,13 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
                           `₦${Number(value).toLocaleString(undefined, {
                             maximumFractionDigits: 0
                           })}`,
-                          "Sales"
+                          "Monthly Sales"
                         ];
                       }
                       if (name === "orders") {
                         return [
                           `${Number(value).toLocaleString()} orders`,
-                          "Orders"
+                          "Monthly Orders"
                         ];
                       }
                       return [value, name];
@@ -248,12 +260,21 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
         <div className="flex justify-center gap-6 mt-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-[hsl(var(--chart-1))] rounded-full"></div>
-            <span className="text-sm text-gray-600">Sales Revenue (₦)</span>
+            <span className="text-sm text-gray-600">Monthly Sales Revenue (₦)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 border-2 border-[hsl(var(--chart-2))] rounded-full bg-white"></div>
-            <span className="text-sm text-gray-600">Order Count</span>
+            <span className="text-sm text-gray-600">Monthly Order Count</span>
           </div>
+        </div>
+
+        {/* Data Period Info */}
+        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+          <p className="text-xs text-gray-600 text-center">
+            📊 This chart shows monthly performance data •
+            Period: {chartData.length} months •
+            Data source: Monthly aggregated sales performance
+          </p>
         </div>
       </CardContent>
     </Card>

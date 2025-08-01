@@ -214,6 +214,18 @@ export default function Reports() {
 		fill: ["#FE964A", "#2DD4BF", "#8C62FF", "#E03137"][index % 4],
 	}));
 
+	const monthlyPerformanceStats = React.useMemo(() => {
+		if (!salesData || salesData.length === 0) {
+			return { totalSales: 0, totalOrders: 0, avgMonthlySales: 0 };
+		}
+
+		const totalSales = salesData.reduce((acc, curr) => acc + (curr.total_sales || 0), 0);
+		const totalOrders = salesData.reduce((acc, curr) => acc + (curr.orders_count || 0), 0);
+		const avgMonthlySales = totalSales / salesData.length;
+
+		return { totalSales, totalOrders, avgMonthlySales };
+	}, [salesData]);
+
 	return (
 		<section>
 			{/* Header */}
@@ -276,14 +288,39 @@ export default function Reports() {
 				<div className="flex gap-4">
 					<div className="flex-1">
 						<MultiLineGraphComponent salesData={salesData} />
-						{/* Line Graph Summary */}
+						{/* CORRECTED Line Graph Summary - uses ONLY monthly data */}
 						<Card className="mt-4 bg-blue-50">
 							<CardContent className="p-4">
-								<div className="flex justify-between items-center">
-									<span className="text-sm font-medium text-blue-800">Monthly Performance Total:</span>
-									<span className="text-lg font-bold text-blue-900">
-										₦{lineGraphTotal.toLocaleString()}
-									</span>
+								<h6 className="font-semibold text-blue-800 mb-3">Monthly Performance Summary</h6>
+								<div className="grid grid-cols-3 gap-4">
+									<div className="text-center">
+										<p className="text-sm text-blue-600">Period Total Sales</p>
+										<p className="text-xl font-bold text-blue-900">
+											₦{monthlyPerformanceStats.totalSales.toLocaleString()}
+										</p>
+										<p className="text-xs text-blue-600 mt-1">
+											({salesData.length} months)
+										</p>
+									</div>
+									<div className="text-center">
+										<p className="text-sm text-blue-600">Period Total Orders</p>
+										<p className="text-xl font-bold text-blue-900">
+											{monthlyPerformanceStats.totalOrders.toLocaleString()}
+										</p>
+									</div>
+									<div className="text-center">
+										<p className="text-sm text-blue-600">Monthly Average</p>
+										<p className="text-xl font-bold text-blue-900">
+											₦{monthlyPerformanceStats.avgMonthlySales.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+										</p>
+									</div>
+								</div>
+
+								{/* Add comparison note */}
+								<div className="mt-3 pt-3 border-t border-blue-200">
+									<p className="text-xs text-blue-700 text-center">
+										* This shows performance for the {salesData.length} month{salesData.length !== 1 ? 's' : ''} in the chart period
+									</p>
 								</div>
 							</CardContent>
 						</Card>
