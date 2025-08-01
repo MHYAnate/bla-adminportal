@@ -60,7 +60,7 @@ const AddCustomer: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
 
 
-  const { inviteAdmin, isLoading: inviteAdminIsLoading } = useInviteAdmin();
+  const { inviteAdminPayload: inviteAdmin, inviteAdminIsLoading } = useInviteAdmin();
 
 
   console.log("inviteRolesss", roles)
