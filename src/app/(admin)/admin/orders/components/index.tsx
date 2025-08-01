@@ -28,7 +28,7 @@ import {
 } from "@/services/orders";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import DeleteContent from "@/app/(admin)/components/delete-content";
 import {
   Dialog,
@@ -149,23 +149,23 @@ export default function Orders() {
   const [filterSales, setFilterSales] = useState<string>("");
 
   // Filter options
-  const customerList = [
+  const customerList = useMemo(() => [
     { text: "All Types", value: "" },
     { text: "Individual", value: "individual" },
     { text: "Business", value: "business" },
-  ];
+  ], []);
 
-  const statusList = [
+  const statusList = useMemo(() => [
     { text: "All Status", value: "" },
     { text: "Pending", value: "pending" },
     { text: "Processing", value: "processing" },
     { text: "Shipped", value: "shipped" },
     { text: "Delivered", value: "delivered" },
     { text: "Cancelled", value: "cancelled" },
-  ];
+  ], []);
 
-  // Order cards data with proper typing
-  const orderlist: IOrderCard[] = [
+  // Order cards data with proper typing - memoized to prevent re-renders
+  const orderlist: IOrderCard[] = useMemo(() => [
     {
       value: getOrdersSummaryData?.data?.orderCancel || 0,
       icon: <OrderCancelIcon />,
@@ -202,15 +202,39 @@ export default function Orders() {
       title: "Total Revenue",
       isRevenue: true,
     },
-  ];
+  ], [getOrdersSummaryData?.data]);
+
+  // Memoize filter objects to prevent unnecessary re-renders
+  const ordersFilter = useMemo(() => ({
+    page: currentPage,
+    limit: parseInt(pageSize),
+    search: filter,
+    status: status || undefined,
+    customerType: customerType || undefined,
+    dateFrom: startDate || undefined,
+    dateTo: endDate || undefined,
+  }), [currentPage, pageSize, filter, status, customerType, startDate, endDate]);
+
+  const analyticsFilter = useMemo(() => ({
+    period: filterSales,
+    startDate: startDateSales,
+    endDate: endDateSales,
+  }), [filterSales, startDateSales, endDateSales]);
+
+  const salesFilter = useMemo(() => ({
+    period: filterSales,
+    startDate: startDateSales,
+    endDate: endDateSales,
+    year: new Date().getFullYear(),
+  }), [filterSales, startDateSales, endDateSales]);
 
   // Handle page change
-  const onPageChange = (page: number) => {
+  const onPageChange = useCallback((page: number) => {
     setCurrentPage(page);
-  };
+  }, []);
 
   // Handle export
-  const handleExport = async () => {
+  const handleExport = useCallback(async () => {
     try {
       const exportData = {
         orders: data?.data || [],
@@ -238,10 +262,10 @@ export default function Orders() {
       console.error('Export error:', error);
       toast.error("Failed to export orders");
     }
-  };
+  }, [data?.data, filter, status, customerType, startDate, endDate]);
 
   // Handle delete
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     try {
       setIsDeleteOpen(false);
       toast.success("Order deleted successfully");
@@ -250,60 +274,53 @@ export default function Orders() {
       console.error('Delete error:', error);
       toast.error("Failed to delete order");
     }
-  };
+  }, [refetchOrdersSummary]);
 
-  // Apply filters effect
+  // Apply filters effect - using memoized filter object
   useEffect(() => {
-    const payload = {
-      page: currentPage,
-      limit: parseInt(pageSize),
-      search: filter,
-      status: status || undefined,
-      customerType: customerType || undefined,
-      dateFrom: startDate || undefined,
-      dateTo: endDate || undefined,
-    };
-    setOrdersFilter(payload);
-  }, [currentPage, pageSize, filter, status, customerType, startDate, endDate, setOrdersFilter]);
+    if (setOrdersFilter) {
+      setOrdersFilter(ordersFilter);
+    }
+  }, [ordersFilter, setOrdersFilter]);
 
-  // Apply analytics filters
+  // Apply analytics filters - using memoized filter object
   useEffect(() => {
     if (setSalesFilter) {
-      const payload = {
-        period: filterSales,
-        startDate: startDateSales,
-        endDate: endDateSales,
-        year: new Date().getFullYear(),
-      };
-      setSalesFilter(payload);
+      setSalesFilter(salesFilter);
     }
-  }, [filterSales, startDateSales, endDateSales, setSalesFilter]);
+  }, [salesFilter, setSalesFilter]);
 
-  // Apply analytics filters for order analytics
+  // Apply analytics filters for order analytics - using memoized filter object
   useEffect(() => {
-    const payload = {
-      period: filterSales,
-      startDate: startDateSales,
-      endDate: endDateSales,
-    };
-    setOrdersAnalyticsFilter(payload);
-  }, [filterSales, startDateSales, endDateSales, setOrdersAnalyticsFilter]);
+    if (setOrdersAnalyticsFilter) {
+      setOrdersAnalyticsFilter(analyticsFilter);
+    }
+  }, [analyticsFilter, setOrdersAnalyticsFilter]);
 
-  // Show error messages
+  // Show error messages - memoized to prevent unnecessary re-renders
   useEffect(() => {
     if (getOrdersError) {
       toast.error("Failed to load orders");
     }
+  }, [getOrdersError]);
+
+  useEffect(() => {
     if (getOrdersSummaryError) {
       toast.error("Failed to load order summary");
     }
+  }, [getOrdersSummaryError]);
+
+  useEffect(() => {
     if (orderSummaryError) {
       toast.error("Failed to load order chart data");
     }
+  }, [orderSummaryError]);
+
+  useEffect(() => {
     if (salesError) {
       toast.error("Failed to load sales data");
     }
-  }, [getOrdersError, getOrdersSummaryError, orderSummaryError, salesError]);
+  }, [salesError]);
 
   return (
     <section>
@@ -331,7 +348,7 @@ export default function Orders() {
             {orderlist.map((report: IOrderCard, index) => (
               <OrderCard
                 report={report}
-                key={index}
+                key={`order-card-${index}`}
                 loading={getOrdersSummaryIsLoading}
               />
             ))}

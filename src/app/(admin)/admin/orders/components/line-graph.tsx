@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/chart";
 import { useGetOrderSummaryChart } from "@/services/orders";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 
 const chartConfig = {
   ordered: {
@@ -23,6 +23,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
+interface ChartDataItem {
+  month: string;
+  ordered: number;
+  delivered: number;
+}
+
 export default function LineGraphComponent() {
   const [timeframe, setTimeframe] = useState<"3m" | "5m" | "6m" | "12m">("5m");
 
@@ -34,17 +40,34 @@ export default function LineGraphComponent() {
     setOrderSummaryFilter
   } = useGetOrderSummaryChart({ timeframe });
 
-  // Transform the data for the chart
-  const chartData = orderSummary?.data?.map((item: any) => ({
-    month: item.month,
-    ordered: item.ordered,
-    delivered: item.delivered,
-  })) || [];
+  // Memoize the chart data transformation to prevent unnecessary re-computations
+  const chartData = useMemo((): ChartDataItem[] => {
+    if (!orderSummary?.data || !Array.isArray(orderSummary.data)) {
+      return [];
+    }
 
-  const handleTimeframeChange = (value: "3m" | "5m" | "6m" | "12m") => {
+    return orderSummary.data.map((item: any) => ({
+      month: item.month || '',
+      ordered: Number(item.ordered) || 0,
+      delivered: Number(item.delivered) || 0,
+    }));
+  }, [orderSummary?.data]);
+
+  // Memoize the timeframe change handler
+  const handleTimeframeChange = useCallback((value: "3m" | "5m" | "6m" | "12m") => {
     setTimeframe(value);
-    setOrderSummaryFilter({ timeframe: value });
-  };
+    if (setOrderSummaryFilter) {
+      setOrderSummaryFilter({ timeframe: value });
+    }
+  }, [setOrderSummaryFilter]);
+
+  // Memoize timeframe options
+  const timeframeOptions = useMemo(() => [
+    { value: "3m" as const, label: "3M" },
+    { value: "5m" as const, label: "5M" },
+    { value: "6m" as const, label: "6M" },
+    { value: "12m" as const, label: "12M" },
+  ], []);
 
   return (
     <Card className="py-6 flex-1 px-1">
@@ -53,15 +76,15 @@ export default function LineGraphComponent() {
 
         {/* Timeframe selector */}
         <div className="flex gap-2">
-          {["3m", "5m", "6m", "12m"].map((period) => (
+          {timeframeOptions.map((option) => (
             <Button
-              key={period}
-              variant={timeframe === period ? "default" : "outline"}
+              key={option.value}
+              variant={timeframe === option.value ? "default" : "outline"}
               size="sm"
-              onClick={() => handleTimeframeChange(period as any)}
+              onClick={() => handleTimeframeChange(option.value)}
               className="text-xs"
             >
-              {period === "3m" ? "3M" : period === "5m" ? "5M" : period === "6m" ? "6M" : "12M"}
+              {option.label}
             </Button>
           ))}
         </div>
@@ -70,11 +93,23 @@ export default function LineGraphComponent() {
       <CardContent className="p-0 mb-5">
         {isOrderSummaryLoading ? (
           <div className="h-[280px] flex items-center justify-center">
-            <p>Loading chart data...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+            <p className="ml-3">Loading chart data...</p>
           </div>
         ) : orderSummaryError ? (
+          <div className="h-[280px] flex items-center justify-center flex-col">
+            <p className="text-red-500 mb-2">Error loading chart data</p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleTimeframeChange(timeframe)}
+            >
+              Retry
+            </Button>
+          </div>
+        ) : chartData.length === 0 ? (
           <div className="h-[280px] flex items-center justify-center">
-            <p className="text-red-500">Error loading chart data</p>
+            <p className="text-gray-500">No chart data available</p>
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-[280px] w-full">

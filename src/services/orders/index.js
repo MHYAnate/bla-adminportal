@@ -3,6 +3,7 @@ import { ErrorHandler } from "../errorHandler";
 import httpService from "../httpService";
 import useFetchItem from "../useFetchItem";
 import useMutateItem from "../useMutateItem";
+import { useMemo } from "react";
 
 export const useGetOrders = ({
   enabled = true,
@@ -53,7 +54,6 @@ export const useGetOrders = ({
   };
 };
 
-
 export const useGetOrderInfo = ({
   enabled = true,
   orderId,
@@ -66,9 +66,10 @@ export const useGetOrderInfo = ({
     isFetching,
     setFilter,
   } = useFetchItem({
-    queryKey: ["orderInfo"],
+    queryKey: ["orderInfo", orderId],
     queryFn: (params) => {
       const id = params?.orderId || orderId;
+      if (!id) return Promise.reject(new Error("Order ID is required"));
       return httpService.getData(routes.getOrderInfo(id));
     },
     enabled: enabled && !!orderId,
@@ -77,12 +78,26 @@ export const useGetOrderInfo = ({
     staleTime: 30 * 1000, // 30 seconds for individual order
   });
 
+  // Memoize the processed data to prevent unnecessary re-renders
+  const processedData = useMemo(() => {
+    if (!data) return null;
+    
+    return {
+      ...data,
+      // Ensure arrays are properly initialized
+      items: Array.isArray(data.items) ? data.items : [],
+      // Ensure nested objects exist
+      user: data.user || {},
+      breakdown: data.breakdown || {},
+    };
+  }, [data]);
+
   return {
-    getOrderInfoData: data,
+    getOrderInfoData: processedData,
     getOrderInfoIsLoading: isLoading,
     getOrderInfoError: ErrorHandler(error),
     refetchOrderInfo: refetch,
-    setOrderInfoFilter: setFilter, // For setting orderId
+    setOrderInfoFilter: setFilter,
     isFetchingOrderInfo: isFetching,
   };
 };
@@ -108,16 +123,25 @@ export const useGetOrdersSummary = ({
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
+  // Memoize the processed data
+  const processedData = useMemo(() => {
+    if (!data) return null;
+    
+    return {
+      ...data,
+      data: data.data || {},
+    };
+  }, [data]);
+
   return {
-    getOrdersSummaryData: data,
+    getOrdersSummaryData: processedData,
     getOrdersSummaryIsLoading: isLoading,
     getOrdersSummaryError: ErrorHandler(error),
     refetchOrdersSummary: refetch,
-    setOrdersSummaryFilter: setFilter, // Ensure this is available
+    setOrdersSummaryFilter: setFilter,
     isFetchingOrdersSummary: isFetching,
   };
 };
-
 
 export const useGetOrderSummaryChart = ({
   enabled = true,
@@ -132,20 +156,27 @@ export const useGetOrderSummaryChart = ({
     isFetching,
     setFilter,
   } = useFetchItem({
-    queryKey: ["orderSummaryChart"],
-    queryFn: (params) => httpService.getData(routes.orderSummaryChart(params?.timeframe)),
+    queryKey: ["orderSummaryChart", timeframe],
+    queryFn: (params) => {
+      const tf = params?.timeframe || timeframe;
+      return httpService.getData(routes.orderSummaryChart(tf));
+    },
     enabled,
     retry: 2,
     initialFilter: { timeframe, ...filter },
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Process the data to ensure consistent structure
-  const processedData = data ? {
-    data: data.data || [],
-    summary: data.summary || {},
-    debug: data.debug || {}
-  } : null;
+  // Memoize the processed data to ensure consistent structure
+  const processedData = useMemo(() => {
+    if (!data) return null;
+    
+    return {
+      data: Array.isArray(data.data) ? data.data : [],
+      summary: data.summary || {},
+      debug: data.debug || {}
+    };
+  }, [data]);
 
   return {
     orderSummary: processedData,
@@ -153,7 +184,7 @@ export const useGetOrderSummaryChart = ({
     isOrderSummaryLoading: isLoading,
     orderSummaryError: ErrorHandler(error),
     refetchOrderSummary: refetch,
-    setOrderSummaryFilter: setFilter, // Ensure this is available
+    setOrderSummaryFilter: setFilter,
     isFetchingOrderSummary: isFetching,
     currentTimeframe: timeframe,
   };
@@ -179,16 +210,25 @@ export const useGetOrdersAnalytics = ({
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // Memoize the processed data
+  const processedData = useMemo(() => {
+    if (!data) return null;
+    
+    return {
+      ...data,
+      data: Array.isArray(data.data) ? data.data : [],
+    };
+  }, [data]);
+
   return {
-    getOrdersAnalyticsData: data,
+    getOrdersAnalyticsData: processedData,
     getOrdersAnalyticsIsLoading: isLoading,
     getOrdersAnalyticsError: ErrorHandler(error),
     refetchOrdersAnalytics: refetch,
-    setOrdersAnalyticsFilter: setFilter, // Ensure this is available
+    setOrdersAnalyticsFilter: setFilter,
     isFetchingOrdersAnalytics: isFetching,
   };
 };
-
 
 export const useGetSalesData = ({
   enabled = true,
@@ -202,14 +242,13 @@ export const useGetSalesData = ({
     data,
     refetch,
     isFetching,
-    setFilter, // This comes from useFetchItem
+    setFilter,
     pageNumber,
     setPageNumber,
     setPageSize,
   } = useFetchItem({
     queryKey: ['salesData'],
     queryFn: (params) => {
-      // Construct the route with the year parameter
       const routeWithParams = routes.salesData(params?.year || year);
       return httpService.getData(routeWithParams);
     },
@@ -219,17 +258,126 @@ export const useGetSalesData = ({
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  // Memoize the processed data
+  const processedData = useMemo(() => {
+    if (!data) return null;
+    
+    return {
+      ...data,
+      data: Array.isArray(data.data) ? data.data : [],
+    };
+  }, [data]);
+
   return {
     isSalesLoading: isLoading,
     isFetchingSales: isFetching,
-    salesData: data,
-    salesYear: year || new Date().getFullYear(),
+    salesData: processedData,
+    salesYear: (params) => {
+      if (setFilter) {
+        setFilter({ ...initialFilter, ...params });
+      }
+    },
     salesError: ErrorHandler(error),
     refetchSales: refetch,
-    setSalesFilter: setFilter, // Now properly mapped from useFetchItem
+    setSalesFilter: setFilter,
     // Additional utilities
     currentFilters: initialFilter,
-    hasData: Boolean(data?.data),
+    hasData: Boolean(processedData?.data?.length),
   };
 };
 
+// Additional order management hooks
+
+export const useUpdateOrderStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, status, notes, trackingNumber, carrier }) => {
+      return httpService.patchData(routes.updateOrderStatus(orderId), {
+        status,
+        notes,
+        trackingNumber,
+        carrier
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orderInfo'] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+    },
+    onError: (error) => ErrorHandler(error)
+  });
+};
+
+export const useBulkUpdateOrderStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderIds, status, notes }) => {
+      return httpService.patchData(routes.bulkUpdateOrderStatus(), {
+        orderIds,
+        status,
+        notes
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+    },
+    onError: (error) => ErrorHandler(error)
+  });
+};
+
+export const useCancelOrder = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, reason }) => {
+      return httpService.postData(routes.cancelOrder(orderId), { reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orderInfo'] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+    },
+    onError: (error) => ErrorHandler(error)
+  });
+};
+
+export const useShipOrder = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, trackingNumber, carrier }) => {
+      return httpService.postData(routes.shipOrder(orderId), {
+        trackingNumber,
+        carrier
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orderInfo'] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+    },
+    onError: (error) => ErrorHandler(error)
+  });
+};
+
+export const useProcessRefund = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, amount, reason }) => {
+      return httpService.postData(routes.processRefund(orderId), {
+        amount,
+        reason
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orderInfo'] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+    },
+    onError: (error) => ErrorHandler(error)
+  });
+};

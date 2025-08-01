@@ -11,11 +11,10 @@ import {
   Line,
 } from "recharts"
 import html2canvas from "html2canvas"
-import { useState, useEffect, useRef, useCallback } from "react"
-import { Download } from "lucide-react"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { Download, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useGetSalesData } from "@/services/orders"
-import LoadingSvg from "@/components/load"
 
 // Define types for the data
 interface SalesDataItem {
@@ -42,6 +41,13 @@ interface UseSalesDataReturn {
   setSalesFilter: React.Dispatch<React.SetStateAction<any>>;
   currentFilters: {};
   hasData: boolean;
+}
+
+interface TransformedDataItem {
+  month: string;
+  Individual: number;
+  "Business Owner": number;
+  Total: number;
 }
 
 const CustomLegend = () => (
@@ -72,30 +78,38 @@ export default function SalesChart() {
     setSalesFilter,
   } = useGetSalesData() as UseSalesDataReturn
 
-  // Type assertion for the sales data
-  const data = rawData as SalesDataResponse
+  // Type assertion for the sales data with proper null checking
+  const data = useMemo(() => rawData as SalesDataResponse, [rawData])
 
-  // Fetch data when timeframe changes
+  // Memoize the data fetching effect
   useEffect(() => {
     if (salesYear) {
-      salesYear({ timeframe })
+      try {
+        salesYear({ timeframe })
+      } catch (error) {
+        console.error("Error fetching sales data:", error)
+      }
     }
   }, [timeframe, salesYear])
 
-  // Transform data with proper typing and error handling
-  const transformData = useCallback((data: SalesDataItem[] = []) => {
+  // Transform data with proper typing and error handling - memoized
+  const transformData = useCallback((data: SalesDataItem[] = []): TransformedDataItem[] => {
+    if (!Array.isArray(data)) return [];
+
     return data.map(item => ({
-      month: item.month,
-      Individual: item.individual || 0,
-      "Business Owner": item.businessOwner || 0,
-      Total: (item.individual || 0) + (item.businessOwner || 0),
+      month: item.month || '',
+      Individual: Number(item.individual) || 0,
+      "Business Owner": Number(item.businessOwner) || 0,
+      Total: (Number(item.individual) || 0) + (Number(item.businessOwner) || 0),
     }))
   }, [])
 
-  const transformedData = data?.data ? transformData(data.data) : []
+  const transformedData = useMemo(() => {
+    return data?.data ? transformData(data.data) : []
+  }, [data?.data, transformData])
 
-  // Calculate average line if data exists
-  const avgLine = useCallback(() => {
+  // Calculate average line if data exists - memoized
+  const avgLine = useMemo(() => {
     if (!transformedData.length) return null
     const totalAvg = transformedData.reduce((sum, d) => sum + (d.Total || 0), 0) / transformedData.length
     return (
@@ -110,7 +124,8 @@ export default function SalesChart() {
     )
   }, [transformedData])
 
-  const exportChart = async () => {
+  // Memoize export function
+  const exportChart = useCallback(async () => {
     if (!chartRef.current) return
     try {
       const canvas = await html2canvas(chartRef.current)
@@ -121,18 +136,29 @@ export default function SalesChart() {
     } catch (error) {
       console.error("Error exporting chart:", error)
     }
-  }
+  }, [])
 
+  // Memoize refresh handler
+  const handleRefresh = useCallback(() => {
+    if (refetchSalesData) {
+      refetchSalesData();
+    }
+  }, [refetchSalesData]);
+
+  // Loading state
   if (isSalesLoading || isFetchingSales) {
     return (
-      <div className="flex justify-center items-center h-96">
-        <LoadingSvg />
+      <div className="w-full bg-white rounded-lg p-8 shadow-sm">
+        <div className="flex justify-center items-center h-96">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mr-3"></div>
+          <span>Loading sales data...</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="w-full min-h-screen">
+    <div className="w-full">
       <div className="bg-white rounded-lg p-8 shadow-sm" ref={chartRef}>
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-light text-gray-800">Sales Analytics</h1>
@@ -142,45 +168,93 @@ export default function SalesChart() {
               variant="ghost"
               size="icon"
               disabled={!transformedData.length}
+              title="Export Chart"
             >
               <Download className="w-5 h-5" />
             </Button>
             <Button
               variant="outline"
-              onClick={() => refetchSalesData()}
+              onClick={handleRefresh}
               disabled={isSalesLoading || isFetchingSales}
+              className="flex items-center gap-2"
             >
-              Refresh Data
+              <RefreshCw className={`w-4 h-4 ${(isSalesLoading || isFetchingSales) ? 'animate-spin' : ''}`} />
+              Refresh
             </Button>
           </div>
         </div>
 
         <div className="h-80">
           {salesError ? (
-            <div className="text-red-500 text-center">
-              Error loading sales data: {salesError}
+            <div className="flex flex-col items-center justify-center h-full text-red-500">
+              <p className="text-center mb-4">Error loading sales data: {salesError}</p>
+              <Button variant="outline" onClick={handleRefresh}>
+                Try Again
+              </Button>
             </div>
           ) : data?.error ? (
-            <div className="text-red-500 text-center">
-              {data.error}
+            <div className="flex flex-col items-center justify-center h-full text-red-500">
+              <p className="text-center mb-4">{data.error}</p>
+              <Button variant="outline" onClick={handleRefresh}>
+                Try Again
+              </Button>
             </div>
           ) : !transformedData.length ? (
             <div className="flex justify-center items-center h-full text-gray-500">
-              No sales data available
+              <div className="text-center">
+                <p className="mb-4">No sales data available</p>
+                <Button variant="outline" onClick={handleRefresh}>
+                  Refresh Data
+                </Button>
+              </div>
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={transformedData}
                 margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
+                barCategoryGap="20%"
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="Individual" fill="#065f46" />
-                <Bar dataKey="Business Owner" fill="#fbbf24" />
-                {avgLine()}
+                <CartesianGrid
+                  strokeDasharray="none"
+                  stroke="#e5e7eb"
+                  horizontal={true}
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#9ca3af", fontSize: 14 }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: "#9ca3af", fontSize: 14 }}
+                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+                  domain={[0, "auto"]}
+                />
+                <Tooltip
+                  formatter={(value, name) => [
+                    typeof value === 'number' ? value.toLocaleString() : value,
+                    name
+                  ]}
+                  labelFormatter={(label) => `Month: ${label}`}
+                />
+                <Bar
+                  dataKey="Individual"
+                  fill="#065f46"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+                <Bar
+                  dataKey="Business Owner"
+                  fill="#fbbf24"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={40}
+                />
+                {avgLine}
               </BarChart>
             </ResponsiveContainer>
           )}
