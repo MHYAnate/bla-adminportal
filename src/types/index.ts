@@ -475,16 +475,26 @@ export interface IOrderCard {
 
 export interface IOrderItem {
   productName: string;
+  url?: string;
   quantity: number;
-  price: string;
-  total: string;
+  price: number | string;
+  total: number | string;
+  status: string;
+}
+
+
+export interface IOrderItem {
+  productName: string;
+  url?: string;
+  quantity: number;
+  price: number | string;
+  total: number | string;
   status: string;
   image?: string;
   productId?: string; // Add this property
   category?: string;
   brand?: string;
 }
-
 export interface ISupplierCard {
   products: any;
   status: boolean;
