@@ -29,7 +29,7 @@ import {
 import { useGetAdminRoles } from "@/services/admin/index";
 import RegDataTable from "./RegData-table";
 
-// Define TypeScript interfaces for the dashboard data
+// Enhanced TypeScript interfaces
 interface DashboardData {
 	metrics?: {
 		customers?: {
@@ -58,7 +58,11 @@ interface DashboardData {
 			sales?: number;
 			[key: string]: any;
 		}>;
-		salesPerformance?: any[];
+		salesPerformance?: Array<{
+			month: string;
+			orders_count: number;
+			total_sales: number;
+		}>;
 	};
 	topPerformers?: {
 		customers?: Array<{
@@ -80,7 +84,6 @@ interface RolesData {
 	[key: string]: any;
 }
 
-// Define the expected customer interface for DataTable
 interface DataTableCustomer {
 	userId: number;
 	email: string;
@@ -89,11 +92,26 @@ interface DataTableCustomer {
 	status: string;
 }
 
+// Helper function to calculate summary statistics
+const calculateSummaryStats = (customers: DataTableCustomer[]) => {
+	const totalSales = customers.reduce((acc, customer) => acc + customer.totalSpent, 0);
+	const totalOrders = customers.reduce((acc, customer) => acc + customer.orderCount, 0);
+	const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
+	const customerCount = customers.length;
+
+	return {
+		totalSales,
+		totalOrders,
+		avgOrderValue,
+		customerCount,
+	};
+};
+
 export default function Reports() {
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [url, setUrl] = useState("");
 
-	// Type the hook responses
+	// API hooks
 	const { rolesData: rawRolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
 	const rolesData = rawRolesData as RolesData;
 	const safeRolesData = Array.isArray(rolesData?.data) ? rolesData.data : [];
@@ -105,81 +123,17 @@ export default function Reports() {
 		refetchDashboardData,
 	} = useGetDashboardInfo({ enabled: true });
 
-	// Type assertion for dashboard data
 	const data = rawData as DashboardData;
 
-	if (!data || isDashboardInfoLoading)
+	if (!data || isDashboardInfoLoading) {
 		return (
-			<div className="flex justify-center items-center">
+			<div className="flex justify-center items-center h-96">
 				<LoadingSvg />
 			</div>
 		);
-	console.log(data, "datafull");
+	}
 
-	const reportlist: IReportCard[] = [
-		{
-			description: "From previous month",
-			count: data?.metrics?.customers?.changePercentage || 0,
-			value: data?.metrics?.customers?.total?.toLocaleString() || "0",
-			isProgressive: data?.metrics?.customers?.trend === "up",
-			icon: <TotalUserIcon />,
-			title: "Total Customers",
-		},
-		{
-			description: "From previous month",
-			count: data?.metrics?.revenue?.changePercentage || 0,
-			value: `NGN${data?.metrics?.revenue?.total?.toLocaleString() || "0"}`,
-			isProgressive: data?.metrics?.revenue?.trend === "up",
-			icon: <TotalSalesIcon />,
-			title: "Total Sales",
-		},
-		{
-			description: "From previous month",
-			count: data?.metrics?.orders?.changePercentage || 0,
-			value: data?.metrics?.orders?.total?.toLocaleString() || "0",
-			isProgressive: data?.metrics?.orders?.trend === "up",
-			icon: <TotalOrderIcon />,
-			title: "Total Order",
-		},
-		{
-			description: "From previous month",
-			count: data?.metrics?.profits?.changePercentage || 0,
-			value: `NGN${data?.metrics?.profits?.total?.toLocaleString() || "0"}`,
-			isProgressive: data?.metrics?.profits?.trend === "up",
-			icon: <TotalPendingIcon />,
-			title: "Total Profit",
-		},
-	];
-
-	const reportlist1 = [
-		{
-			description: "From previous month",
-			count: "",
-			value: "",
-			isProgressive: data?.metrics?.customers?.trend === "up",
-			icon: <TotalUserIcon />,
-			title: "Total Delivered",
-		},
-		{
-			description: "From previous month",
-			// count: data.metrics.orders.changePercentage,
-			value: data?.charts?.orderSummary?.[2]?.sales?.toString() || "",
-			isProgressive: data?.metrics?.revenue?.trend === "up",
-			icon: <TotalOrderIcon />,
-			title: "Total Pending",
-		},
-	];
-
-	// Safe chartData mapping with proper type handling
-	const chartData = data?.topPerformers?.customers?.map(
-		(customer, index: number) => ({
-			title: customer?.email || "",
-			values: customer?.totalSpent || 0,
-			fill: ["#FE964A", "#2DD4BF", "#8C62FF", "#8C62FF"][index % 4],
-		})
-	) || [];
-
-	// Transform topCustomers data to match DataTable expectations
+	// Transform and prepare data
 	const topCustomers: DataTableCustomer[] = (data?.topPerformers?.customers || []).map((customer, index) => ({
 		userId: customer?.userId || customer?.id || index + 1,
 		email: customer?.email || "",
@@ -188,16 +142,84 @@ export default function Reports() {
 		status: customer?.status || "active",
 	}));
 
-	// Safe data handling with fallbacks
-	const salesData = data?.charts?.salesPerformance || [];
-	const customerValue = data?.metrics?.customers?.total || 0;
 	const newCustomers = data?.recentActivity?.newCustomers || [];
+	const salesData = data?.charts?.salesPerformance || [];
+
+	// Calculate summary statistics for top performers
+	const topPerformerStats = calculateSummaryStats(topCustomers);
+
+	// Calculate line graph total for comparison
+	const lineGraphTotal = salesData.reduce((acc, curr) => acc + curr.total_sales, 0);
+
+	// Main business metrics (overall stats)
+	const reportlist: IReportCard[] = [
+		{
+			description: "Total across all customers",
+			count: data?.metrics?.customers?.changePercentage || 0,
+			value: data?.metrics?.customers?.total?.toLocaleString() || "0",
+			isProgressive: data?.metrics?.customers?.trend === "up",
+			icon: <TotalUserIcon />,
+			title: "All Customers",
+		},
+		{
+			description: "Total business revenue",
+			count: data?.metrics?.revenue?.changePercentage || 0,
+			value: `₦${data?.metrics?.revenue?.total?.toLocaleString() || "0"}`,
+			isProgressive: data?.metrics?.revenue?.trend === "up",
+			icon: <TotalSalesIcon />,
+			title: "Total Revenue",
+		},
+		{
+			description: "Total orders processed",
+			count: data?.metrics?.orders?.changePercentage || 0,
+			value: data?.metrics?.orders?.total?.toLocaleString() || "0",
+			isProgressive: data?.metrics?.orders?.trend === "up",
+			icon: <TotalOrderIcon />,
+			title: "Total Orders",
+		},
+		{
+			description: "Total business profit",
+			count: data?.metrics?.profits?.changePercentage || 0,
+			value: `₦${data?.metrics?.profits?.total?.toLocaleString() || "0"}`,
+			isProgressive: data?.metrics?.profits?.trend === "up",
+			icon: <TotalPendingIcon />,
+			title: "Total Profit",
+		},
+	];
+
+	// Secondary metrics
+	const reportlist1 = [
+		{
+			description: "Orders delivered successfully",
+			count: "",
+			value: data?.charts?.orderSummary?.[0]?.sales?.toString() || "0",
+			isProgressive: true,
+			icon: <TotalUserIcon />,
+			title: "Total Delivered",
+		},
+		{
+			description: "Orders awaiting processing",
+			count: "",
+			value: data?.charts?.orderSummary?.[2]?.sales?.toString() || "0",
+			isProgressive: false,
+			icon: <TotalOrderIcon />,
+			title: "Total Pending",
+		},
+	];
+
+	// Pie chart data for top customers
+	const chartData = topCustomers.slice(0, 4).map((customer, index) => ({
+		title: customer.email.split('@')[0],
+		values: customer.totalSpent,
+		fill: ["#FE964A", "#2DD4BF", "#8C62FF", "#E03137"][index % 4],
+	}));
 
 	return (
 		<section>
+			{/* Header */}
 			<Card className="bg-white mb-8">
 				<CardContent className="p-4 flex justify-between items-center">
-					<Header title="Customer Reports" subtext="Manage customers." />
+					<Header title="Customer Reports" subtext="Comprehensive customer analytics and management." />
 					<div className="flex gap-5">
 						<Button
 							variant={"outline"}
@@ -217,45 +239,114 @@ export default function Reports() {
 					</div>
 				</CardContent>
 			</Card>
+
+			{/* URL Display */}
 			{url !== "" && (
 				<div className="p-4 mb-8 bg-white rounded-lg shadow w-full max-w-md">
-					<h2 className="text-lg font-semibold mb-2">Copy Link</h2>
+					<h2 className="text-lg font-semibold mb-2">Generated Link</h2>
 					<div className="bg-gray-100 text-sm text-gray-700 px-3 py-2 rounded break-words w-full">
 						{url}
 					</div>
 				</div>
 			)}
 
-			<div className="grid grid-cols-4 gap-4 mb-6">
-				{reportlist?.map((report: IReportCard, index) => (
-					<ReportCard report={report} key={index} />
-				))}
-			</div>
-			<div className="grid grid-cols-2 gap-4 mb-6">
-				{reportlist1?.map((report: any, index) => (
-					<ReportCard1 report={report} key={index} />
-				))}
-			</div>
-
-			<div className="flex gap-4 mb-6">
-				<MultiLineGraphComponent salesData={salesData} />
-				<div className="w-[339px]">
-					<PieChartComponent
-						title="Total Customers"
-						value={customerValue}
-						chartData={chartData}
-					/>
+			{/* Main Business Metrics */}
+			<div className="mb-6">
+				<h3 className="text-lg font-semibold text-gray-800 mb-4">Overall Business Metrics</h3>
+				<div className="grid grid-cols-4 gap-4">
+					{reportlist?.map((report: IReportCard, index) => (
+						<ReportCard report={report} key={index} />
+					))}
 				</div>
 			</div>
-			<DataTable
-				customers={topCustomers}
-				refetch={refetchDashboardData}
-			/>
-			<div className="mt-5 mb-5" />
-			<RegDataTable
-				customers={newCustomers}
-				refetch={refetchDashboardData}
-			/>
+
+			{/* Order Status Metrics */}
+			<div className="mb-6">
+				<h3 className="text-lg font-semibold text-gray-800 mb-4">Order Status Overview</h3>
+				<div className="grid grid-cols-2 gap-4">
+					{reportlist1?.map((report: any, index) => (
+						<ReportCard1 report={report} key={index} />
+					))}
+				</div>
+			</div>
+
+			{/* Charts Section */}
+			<div className="mb-6">
+				<h3 className="text-lg font-semibold text-gray-800 mb-4">Performance Analytics</h3>
+				<div className="flex gap-4">
+					<div className="flex-1">
+						<MultiLineGraphComponent salesData={salesData} />
+						{/* Line Graph Summary */}
+						<Card className="mt-4 bg-blue-50">
+							<CardContent className="p-4">
+								<div className="flex justify-between items-center">
+									<span className="text-sm font-medium text-blue-800">Monthly Performance Total:</span>
+									<span className="text-lg font-bold text-blue-900">
+										₦{lineGraphTotal.toLocaleString()}
+									</span>
+								</div>
+							</CardContent>
+						</Card>
+					</div>
+					<div className="w-[339px]">
+						<PieChartComponent
+							title="Top Customer Distribution"
+							value={topPerformerStats.customerCount}
+							chartData={chartData}
+						/>
+					</div>
+				</div>
+			</div>
+
+			{/* Top Performers Section */}
+			<div className="mb-6">
+				<h3 className="text-lg font-semibold text-gray-800 mb-4">Top Performing Customers</h3>
+
+				{/* Top Performers Summary */}
+				<Card className="mb-4 bg-green-50">
+					<CardContent className="p-4">
+						<h6 className="font-semibold text-green-800 mb-3">Top Performers Summary</h6>
+						<div className="grid grid-cols-4 gap-4">
+							<div className="text-center">
+								<p className="text-sm text-green-600">Customers</p>
+								<p className="text-xl font-bold text-green-900">{topPerformerStats.customerCount}</p>
+							</div>
+							<div className="text-center">
+								<p className="text-sm text-green-600">Total Sales</p>
+								<p className="text-xl font-bold text-green-900">
+									₦{topPerformerStats.totalSales.toLocaleString()}
+								</p>
+							</div>
+							<div className="text-center">
+								<p className="text-sm text-green-600">Total Orders</p>
+								<p className="text-xl font-bold text-green-900">{topPerformerStats.totalOrders}</p>
+							</div>
+							<div className="text-center">
+								<p className="text-sm text-green-600">Avg Order Value</p>
+								<p className="text-xl font-bold text-green-900">
+									₦{topPerformerStats.avgOrderValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+								</p>
+							</div>
+						</div>
+					</CardContent>
+				</Card>
+
+				<DataTable
+					customers={topCustomers}
+					refetch={refetchDashboardData}
+				/>
+			</div>
+
+			{/* New Customers Section */}
+			<div className="mb-6">
+				<h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Customer Registrations</h3>
+				<RegDataTable
+					customers={newCustomers}
+					refetch={refetchDashboardData}
+				/>
+			</div>
+
+			{/* Add Customer Dialog */}
 			<Dialog open={isOpen} onOpenChange={setIsOpen}>
 				<DialogContent className="right-[30px] p-8 max-w-[35.56rem]">
 					<DialogHeader>
