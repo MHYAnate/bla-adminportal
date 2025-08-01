@@ -55,6 +55,9 @@ const DataTable: React.FC<DataTableProps> = ({
   // Ensure adminData is an array and filter it properly
   const safeAdminData = Array.isArray(adminData) ? adminData : [];
 
+  console.log("First admin object structure:", adminData[0]);
+  console.log("Admin object keys:", adminData[0] ? Object.keys(adminData[0]) : "No data");
+
   const filteredData: Admin[] = safeAdminData.filter((admin) => {
     if (!admin || typeof admin !== 'object') return false;
 
