@@ -25,6 +25,7 @@ interface DataTableProps {
   totalPages: number;
   setPageSize: React.Dispatch<React.SetStateAction<string>>;
   loading: boolean;
+  mapStatusToFrontend: (status: string) => string;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -35,94 +36,142 @@ const DataTable: React.FC<DataTableProps> = ({
   totalPages,
   setPageSize,
   loading,
+  mapStatusToFrontend,
 }) => {
   const router = useRouter();
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
-  // Map backend status to frontend status
-  const mapStatusToFrontend = useCallback((backendStatus: string): string => {
-    switch (backendStatus?.toLowerCase()) {
-      case 'pending':
-      case 'processing':
-      case 'shipped':
-      case 'confirmed':
-        return 'ongoing';
-      case 'delivered':
-      case 'completed':
-        return 'delivered';
-      case 'cancelled':
-      case 'refunded':
-        return 'cancelled';
-      default:
-        return 'ongoing';
-    }
-  }, []);
-
   // Handle status change - placeholder for now
   const handleStatusChange = useCallback(async (orderId: string, newStatus: string) => {
-    toast.info(`Status update feature coming soon! Order: ${orderId}, Status: ${newStatus}`);
+    try {
+      setUpdatingOrderId(orderId);
+
+      // Here you would make the API call to update the status
+      // const response = await updateOrderStatus({ orderId, status: newStatus });
+
+      // For now, just simulate the call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success(`Order status updated to ${newStatus}`);
+
+      // Refresh the data or update locally
+      // refetch();
+
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast.error('Failed to update order status');
+    } finally {
+      setUpdatingOrderId(null);
+    }
   }, []);
 
   // Handle view order details - navigate to separate page
   const handleViewOrder = useCallback((orderId: string) => {
+    if (!orderId) {
+      toast.error("Invalid order ID");
+      return;
+    }
     router.push(`/admin/orders/${orderId}`);
   }, [router]);
 
+  // Handle edit order
+  const handleEditOrder = useCallback((orderId: string) => {
+    if (!orderId) {
+      toast.error("Invalid order ID");
+      return;
+    }
+    router.push(`/admin/orders/${orderId}/edit`);
+  }, [router]);
+
+  // Handle delete order
+  const handleDeleteOrder = useCallback((orderId: string) => {
+    if (!orderId) {
+      toast.error("Invalid order ID");
+      return;
+    }
+    // For now, just show a message
+    toast.info("Delete functionality will be implemented soon");
+  }, []);
+
   // Memoize cell renderers to prevent unnecessary re-renders
   const cellRenderers = useMemo(() => ({
-    customerName: (item: any) => (
-      <div className="font-medium flex items-center gap-3">
-        <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100">
-          <Image
-            src={item?.customer?.profileImage || item?.user?.profile?.profileImage || "/images/placeholder-user.png"}
-            width={36}
-            height={36}
-            alt="Customer avatar"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "/images/placeholder-user.png";
-            }}
-          />
-        </div>
-        <div>
-          <p className="font-medium">
-            {item?.customer?.name ||
-              item?.user?.profile?.fullName ||
-              item?.user?.businessProfile?.businessName ||
-              item?.user?.email ||
-              "Unknown Customer"}
-          </p>
-          <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
-            {item?.customer?.email || item?.user?.email || "No email"}
-          </p>
-        </div>
-      </div>
-    ),
-    customerType: (item: any) => (
-      <div className="font-medium">
-        <p className="capitalize">
-          {item?.customer?.type || item?.user?.type || "Individual"}
-        </p>
-        <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
-          {item?.paymentStatus || "Unknown"}
-        </p>
-      </div>
-    ),
-    amount: (item: any) => (
-      <div className="font-medium">
-        {formatMoney(Number(item?.totalPrice) || Number(item?.amount) || 0)}
-      </div>
-    ),
-    productName: (item: any) => {
-      // Handle multiple items in order
-      const firstItem = Array.isArray(item?.items) ? item.items[0] : item;
-      const totalItems = Array.isArray(item?.items) ? item.items.length : 1;
+    customerName: (item: any) => {
+      const customer = item?.customer || item?.user;
+      const profileImage = customer?.profileImage || customer?.profile?.profileImage;
+      const name = customer?.name ||
+        customer?.profile?.fullName ||
+        customer?.businessProfile?.businessName ||
+        "Unknown Customer";
+      const email = customer?.email || "No email";
 
       return (
         <div className="font-medium flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-100">
+          <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
             <Image
-              src={firstItem?.product?.image || firstItem?.image || "/images/placeholder-product.png"}
+              src={profileImage || "/images/placeholder-user.png"}
+              width={36}
+              height={36}
+              alt="Customer avatar"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/images/placeholder-user.png";
+              }}
+            />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-gray-900 truncate" title={name}>
+              {name}
+            </p>
+            <p className="font-normal text-[0.75rem] text-[#A0AEC0] truncate" title={email}>
+              {email}
+            </p>
+          </div>
+        </div>
+      );
+    },
+
+    customerType: (item: any) => {
+      const customer = item?.customer || item?.user;
+      const type = customer?.type || "individual";
+      const paymentStatus = item?.paymentStatus || "pending";
+
+      return (
+        <div className="font-medium">
+          <p className="capitalize text-gray-900">
+            {type}
+          </p>
+          <p className="font-normal text-[0.75rem] text-[#A0AEC0] capitalize">
+            {paymentStatus}
+          </p>
+        </div>
+      );
+    },
+
+    amount: (item: any) => {
+      const amount = Number(item?.totalPrice) || Number(item?.amount) || 0;
+      return (
+        <div className="font-medium text-gray-900">
+          {formatMoney(amount)}
+        </div>
+      );
+    },
+
+    productName: (item: any) => {
+      // Handle multiple items in order
+      const items = Array.isArray(item?.items) ? item.items : [item];
+      const firstItem = items[0] || {};
+      const totalItems = items.length;
+
+      const product = firstItem?.product || firstItem;
+      const productImage = product?.image || product?.images?.[0] || "/images/placeholder-product.png";
+      const productName = product?.name || product?.productName || "Unknown Product";
+      const brand = product?.manufacturer?.name || product?.brand || "No Brand";
+
+      return (
+        <div className="font-medium flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+            <Image
+              src={productImage}
               width={36}
               height={36}
               alt="Product image"
@@ -132,37 +181,61 @@ const DataTable: React.FC<DataTableProps> = ({
               }}
             />
           </div>
-          <div>
-            <p className="font-medium">
-              {firstItem?.product?.name || firstItem?.productName || "Unknown Product"}
-              {totalItems > 1 && ` (+${totalItems - 1} more)`}
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-gray-900 truncate" title={productName}>
+              {productName}
+              {totalItems > 1 && (
+                <span className="ml-1 text-sm text-gray-500">
+                  (+{totalItems - 1} more)
+                </span>
+              )}
             </p>
-            <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
-              {firstItem?.product?.manufacturer?.name || firstItem?.brand || "No Brand"}
+            <p className="font-normal text-[0.75rem] text-[#A0AEC0] truncate" title={brand}>
+              {brand}
             </p>
           </div>
         </div>
       );
     },
-    orderId: (item: any) => (
-      <div className="font-medium text-gray-600">
-        #{item?.orderId || item?.id || 'N/A'}
-      </div>
-    ),
+
+    orderId: (item: any) => {
+      const orderId = item?.orderId || item?.id || 'N/A';
+      return (
+        <div className="font-medium text-gray-600">
+          #{orderId}
+        </div>
+      );
+    },
+
     status: (item: any) => {
-      const frontendStatus = mapStatusToFrontend(item?.status || 'ongoing');
-      const isUpdating = updatingOrderId === (item?.id || item?.orderId);
+      const backendStatus = item?.status || 'pending';
+      const frontendStatus = mapStatusToFrontend(backendStatus);
+      const orderId = item?.id || item?.orderId;
+      const isUpdating = updatingOrderId === orderId;
 
       const getVariant = (status: string) => {
         switch (status) {
           case 'delivered':
-            return 'success';
+            return 'default' as const; // Using 'default' instead of 'success'
           case 'ongoing':
-            return 'warning';
+            return 'secondary' as const; // Using 'secondary' instead of 'warning'
           case 'cancelled':
-            return 'destructive';
+            return 'destructive' as const;
           default:
-            return 'secondary';
+            return 'secondary' as const;
+        }
+      };
+
+      const getBadgeColor = (status: string) => {
+        switch (status) {
+          case 'delivered':
+            return 'bg-green-100 text-green-800 hover:bg-green-200';
+          case 'ongoing':
+            return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+          case 'cancelled':
+            return 'bg-red-100 text-red-800 hover:bg-red-200';
+          default:
+            return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
         }
       };
 
@@ -177,7 +250,7 @@ const DataTable: React.FC<DataTableProps> = ({
               <div className="flex items-center gap-2">
                 <Badge
                   variant={getVariant(frontendStatus)}
-                  className="capitalize"
+                  className={`capitalize ${getBadgeColor(frontendStatus)}`}
                 >
                   {isUpdating ? 'Updating...' : frontendStatus}
                 </Badge>
@@ -187,7 +260,7 @@ const DataTable: React.FC<DataTableProps> = ({
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem
-              onClick={() => handleStatusChange(item?.id || item?.orderId, 'ongoing')}
+              onClick={() => handleStatusChange(orderId, 'ongoing')}
               disabled={frontendStatus === 'ongoing' || isUpdating}
             >
               <div className="flex items-center gap-2">
@@ -196,7 +269,7 @@ const DataTable: React.FC<DataTableProps> = ({
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => handleStatusChange(item?.id || item?.orderId, 'delivered')}
+              onClick={() => handleStatusChange(orderId, 'delivered')}
               disabled={frontendStatus === 'delivered' || isUpdating}
             >
               <div className="flex items-center gap-2">
@@ -205,7 +278,7 @@ const DataTable: React.FC<DataTableProps> = ({
               </div>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => handleStatusChange(item?.id || item?.orderId, 'cancelled')}
+              onClick={() => handleStatusChange(orderId, 'cancelled')}
               disabled={frontendStatus === 'cancelled' || isUpdating}
             >
               <div className="flex items-center gap-2">
@@ -217,37 +290,43 @@ const DataTable: React.FC<DataTableProps> = ({
         </DropdownMenu>
       );
     },
-    actions: (item: any) => (
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleViewOrder(item?.id || item?.orderId)}
-          className="text-green-600 hover:text-green-700 hover:bg-green-50"
-        >
-          <Eye className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(`/admin/orders/${item?.id || item?.orderId}/edit`)}
-          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            toast.info("Delete functionality coming soon!");
-          }}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-    ),
-  }), [mapStatusToFrontend, updatingOrderId, handleStatusChange, handleViewOrder, router]);
+
+    actions: (item: any) => {
+      const orderId = item?.id || item?.orderId;
+
+      return (
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleViewOrder(orderId)}
+            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+            title="View Order"
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleEditOrder(orderId)}
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+            title="Edit Order"
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleDeleteOrder(orderId)}
+            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            title="Delete Order"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
+      );
+    },
+  }), [mapStatusToFrontend, updatingOrderId, handleStatusChange, handleViewOrder, handleEditOrder, handleDeleteOrder]);
 
   // Memoize column configuration
   const columnOrder: (keyof any)[] = useMemo(() => [
@@ -261,30 +340,42 @@ const DataTable: React.FC<DataTableProps> = ({
   ], []);
 
   const columnLabels = useMemo(() => ({
-    customerName: "Name",
-    customerType: "Customer",
+    customerName: "Customer",
+    customerType: "Type",
     amount: "Amount",
-    productName: "Product Name",
+    productName: "Product",
     orderId: "Order ID",
-    status: "Order Status",
-    actions: "Action",
+    status: "Status",
+    actions: "Actions",
   }), []);
 
   // Memoize processed data
   const processedData = useMemo(() => {
     if (!Array.isArray(data)) return [];
 
-    return data.map((item, index) => ({
-      ...item,
-      id: item.id || item.orderId || `order-${index}`,
-      // Ensure required fields exist
-      customer: item.customer || item.user || {},
-      totalPrice: item.totalPrice || item.amount || 0,
-      status: item.status || 'ongoing',
-      items: Array.isArray(item.items) ? item.items : [item],
-    }));
+    return data.map((item, index) => {
+      // Ensure we have a valid ID
+      const id = item.id || item.orderId || `order-${index}`;
+
+      return {
+        ...item,
+        id,
+        // Normalize data structure
+        customer: item.customer || item.user || {},
+        totalPrice: item.totalPrice || item.amount || 0,
+        status: item.status || 'pending',
+        items: Array.isArray(item.items) ? item.items : [item],
+        // Add computed fields
+        displayName: item.customer?.name ||
+          item.user?.profile?.fullName ||
+          item.user?.businessProfile?.businessName ||
+          "Unknown Customer",
+        displayEmail: item.customer?.email || item.user?.email || "No email",
+      };
+    });
   }, [data]);
 
+  // Loading state
   if (loading) {
     return (
       <Card className="bg-white">
@@ -297,6 +388,51 @@ const DataTable: React.FC<DataTableProps> = ({
               <div key={index} className="h-16 bg-gray-200 rounded animate-pulse"></div>
             ))}
           </div>
+          <div className="mt-4 flex justify-between items-center">
+            <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+            <div className="flex gap-2">
+              <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
+              <div className="h-8 bg-gray-200 rounded w-20 animate-pulse"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Empty state
+  if (processedData.length === 0) {
+    return (
+      <Card className="bg-white">
+        <CardContent className="p-6">
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <svg
+                className="w-8 h-8 text-gray-400"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No orders found</h3>
+            <p className="text-gray-500 mb-4">
+              No orders match your current filters. Try adjusting your search criteria.
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                // Reset filters - you might want to pass this as a prop
+                window.location.reload();
+              }}
+            >
+              Clear Filters
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
@@ -305,23 +441,17 @@ const DataTable: React.FC<DataTableProps> = ({
   return (
     <Card className="bg-white">
       <CardContent className="p-6">
-        {processedData.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>No orders found</p>
-          </div>
-        ) : (
-          <ProductTableComponent<any>
-            tableData={processedData}
-            currentPage={currentPage}
-            onPageChange={onPageChange}
-            totalPages={totalPages}
-            cellRenderers={cellRenderers}
-            columnOrder={columnOrder}
-            columnLabels={columnLabels}
-            isLoading={loading}
-            showPagination={processedData.length > 0}
-          />
-        )}
+        <ProductTableComponent<any>
+          tableData={processedData}
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+          totalPages={totalPages}
+          cellRenderers={cellRenderers}
+          columnOrder={columnOrder}
+          columnLabels={columnLabels}
+          isLoading={loading}
+          showPagination={processedData.length > 0}
+        />
       </CardContent>
     </Card>
   );

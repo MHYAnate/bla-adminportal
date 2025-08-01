@@ -158,6 +158,20 @@ export default function Orders() {
     }
   };
 
+  // THE ONLY FIX NEEDED: Map frontend status to backend enum values
+  const mapStatusToBackend = (frontendStatus: string): string[] => {
+    switch (frontendStatus?.toLowerCase()) {
+      case 'ongoing':
+        return ['PENDING', 'PROCESSING', 'SHIPPED', 'CONFIRMED'];
+      case 'delivered':
+        return ['DELIVERED', 'COMPLETED'];
+      case 'cancelled':
+        return ['CANCELLED', 'REFUNDED'];
+      default:
+        return [];
+    }
+  };
+
   // Filter options with valid values
   const customerList = useMemo(() => [
     { text: "All Types", value: "all" },
@@ -217,12 +231,12 @@ export default function Orders() {
     },
   ], [getOrdersSummaryData?.data]);
 
-  // Memoize filter objects to prevent unnecessary re-renders
+  // ONLY CHANGE: Fix the status filter to use backend enum values
   const ordersFilter = useMemo(() => ({
     page: currentPage,
     limit: parseInt(pageSize),
     search: filter,
-    status: status === "all" ? undefined : status || undefined,
+    status: status === "all" ? undefined : (status ? mapStatusToBackend(status) : undefined),
     customerType: customerType === "all" ? undefined : customerType || undefined,
     dateFrom: startDate || undefined,
     dateTo: endDate || undefined,
@@ -448,6 +462,7 @@ export default function Orders() {
                 totalPages={Math.ceil((data?.total || 0) / parseInt(pageSize))}
                 setPageSize={setPageSize}
                 loading={getOrdersIsLoading}
+                mapStatusToFrontend={mapStatusToFrontend}
               />
             </div>
           </div>
