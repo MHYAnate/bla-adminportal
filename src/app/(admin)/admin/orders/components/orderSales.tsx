@@ -11,12 +11,13 @@ import {
   Line,
 } from "recharts"
 import html2canvas from "html2canvas"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useGetSalesData } from "@/services/orders" // Your existing JS hook
+import { useGetSalesData } from "@/services/orders"
+import LoadingSvg from "@/components/load"
 
-// Define types for the hook's return value
+// Define types for the data
 interface SalesDataItem {
   month: string;
   individual: number;
@@ -27,16 +28,20 @@ interface SalesDataItem {
 interface SalesDataResponse {
   data?: SalesDataItem[];
   success?: boolean;
-  summary?: any;
-  debug?: any;
+  error?: string;
 }
 
+// Type for the hook's return value based on what we can see
 interface UseSalesDataReturn {
-  salesData?: SalesDataResponse;
   isSalesLoading: boolean;
-  salesError?: Error;
-  salesYear?: (params: { timeframe: string }) => void;
-  setSalesFilter?: (params: { timeframe: string }) => void;
+  isFetchingSales: boolean;
+  salesData: unknown;
+  salesYear: (params: { timeframe: string }) => void;
+  salesError: string | undefined;
+  refetchSales: (options?: any) => Promise<any>;
+  setSalesFilter: React.Dispatch<React.SetStateAction<any>>;
+  currentFilters: {};
+  hasData: boolean;
 }
 
 const CustomLegend = () => (
@@ -56,13 +61,19 @@ export default function SalesChart() {
   const chartRef = useRef<HTMLDivElement>(null)
   const [timeframe, setTimeframe] = useState<"3m" | "6m" | "12m">("6m")
 
-  // Type the hook response
+  // Type the hook response based on its actual return values
   const {
-    salesData,
     isSalesLoading,
-    salesError,
+    isFetchingSales,
+    salesData: rawData,
     salesYear,
+    salesError,
+    refetchSales: refetchSalesData,
+    setSalesFilter,
   } = useGetSalesData() as UseSalesDataReturn
+
+  // Type assertion for the sales data
+  const data = rawData as SalesDataResponse
 
   // Fetch data when timeframe changes
   useEffect(() => {
@@ -71,33 +82,33 @@ export default function SalesChart() {
     }
   }, [timeframe, salesYear])
 
-  // Transform data with proper typing
-  const transform = (data: SalesDataItem[] = []) => {
-    return data.map((item) => ({
+  // Transform data with proper typing and error handling
+  const transformData = useCallback((data: SalesDataItem[] = []) => {
+    return data.map(item => ({
       month: item.month,
-      Individual: item.individual,
-      "Business Owner": item.businessOwner,
-      Total: (item.individual + item.businessOwner) || 0,
+      Individual: item.individual || 0,
+      "Business Owner": item.businessOwner || 0,
+      Total: (item.individual || 0) + (item.businessOwner || 0),
     }))
-  }
+  }, [])
 
-  const mainData = salesData?.data ? transform(salesData.data) : []
+  const transformedData = data?.data ? transformData(data.data) : []
 
   // Calculate average line if data exists
-  const avgLine = () => {
-    if (!mainData.length) return null
-    const totalAvg = mainData.reduce((sum, d) => sum + (d.Total || 0), 0) / mainData.length
+  const avgLine = useCallback(() => {
+    if (!transformedData.length) return null
+    const totalAvg = transformedData.reduce((sum, d) => sum + (d.Total || 0), 0) / transformedData.length
     return (
       <Line
         type="monotone"
-        dataKey={() => totalAvg}
         stroke="#94a3b8"
         strokeDasharray="5 5"
         dot={false}
         name="Avg. Sales"
+        dataKey={() => totalAvg}
       />
     )
-  }
+  }, [transformedData])
 
   const exportChart = async () => {
     if (!chartRef.current) return
@@ -112,85 +123,69 @@ export default function SalesChart() {
     }
   }
 
+  if (isSalesLoading || isFetchingSales) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <LoadingSvg />
+      </div>
+    )
+  }
+
   return (
     <div className="w-full min-h-screen">
-      <div className="bg-white rounded-lg p-8 shadow-sm">
-        {/* Header */}
+      <div className="bg-white rounded-lg p-8 shadow-sm" ref={chartRef}>
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-light text-gray-800">Sales</h1>
+          <h1 className="text-3xl font-light text-gray-800">Sales Analytics</h1>
           <div className="flex items-center gap-2">
             <Button
               onClick={exportChart}
               variant="ghost"
               size="icon"
-              disabled={isSalesLoading || !mainData.length}
+              disabled={!transformedData.length}
             >
               <Download className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => refetchSalesData()}
+              disabled={isSalesLoading || isFetchingSales}
+            >
+              Refresh Data
             </Button>
           </div>
         </div>
 
-        {/* Chart */}
-        <div className="h-80" ref={chartRef}>
-          {isSalesLoading ? (
-            <div className="flex justify-center items-center h-full text-gray-500">
-              Loading sales data...
-            </div>
-          ) : salesError ? (
+        <div className="h-80">
+          {salesError ? (
             <div className="text-red-500 text-center">
-              Failed to load sales data.
+              Error loading sales data: {salesError}
             </div>
-          ) : !mainData.length ? (
+          ) : data?.error ? (
+            <div className="text-red-500 text-center">
+              {data.error}
+            </div>
+          ) : !transformedData.length ? (
             <div className="flex justify-center items-center h-full text-gray-500">
               No sales data available
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={mainData}
+                data={transformedData}
                 margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
-                barCategoryGap="20%"
               >
-                <CartesianGrid
-                  strokeDasharray="none"
-                  stroke="#e5e7eb"
-                  horizontal={true}
-                  vertical={false}
-                />
-                <XAxis
-                  dataKey="month"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9ca3af", fontSize: 14 }}
-                  dy={10}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9ca3af", fontSize: 14 }}
-                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
-                  domain={[0, "auto"]}
-                />
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
                 <Tooltip />
-                <Bar
-                  dataKey="Individual"
-                  fill="#065f46"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
-                />
-                <Bar
-                  dataKey="Business Owner"
-                  fill="#fbbf24"
-                  radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
-                />
+                <Bar dataKey="Individual" fill="#065f46" />
+                <Bar dataKey="Business Owner" fill="#fbbf24" />
                 {avgLine()}
               </BarChart>
             </ResponsiveContainer>
           )}
         </div>
 
-        {/* Legend */}
         <CustomLegend />
       </div>
     </div>
