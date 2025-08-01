@@ -472,13 +472,21 @@ export const useAdminRegistration = (onSuccess) => {
     setError(null);
 
     try {
-      const response = await httpService.postData(payload, routes.registerInvitedAdmin());
-      setData(response.data);
-      if (onSuccess) onSuccess(response.data);
-      return response.data;
+      // The httpService will now properly handle the invitation params
+      const response = await httpService.postData(
+        payload, 
+        'admin/manage/register'
+      );
+      
+      setData(response);
+      if (onSuccess) onSuccess(response);
+      return response;
     } catch (error) {
-      setError(error);
-      throw ErrorHandler(error);
+      const errorMsg = error?.response?.data?.error || 
+                      error?.message || 
+                      "Registration failed";
+      setError(errorMsg);
+      throw errorMsg;
     } finally {
       setIsLoading(false);
     }
@@ -487,7 +495,7 @@ export const useAdminRegistration = (onSuccess) => {
   return {
     registerAdmin,
     isLoading,
-    error: ErrorHandler(error),
+    error,
     data
   };
 };

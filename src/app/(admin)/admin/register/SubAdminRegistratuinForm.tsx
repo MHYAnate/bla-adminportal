@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff, User, Lock, Phone, Mail, Loader2, Check, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
@@ -111,21 +111,28 @@ export default function SubAdminRegistrationForm({ inviteParams }: Props) {
       // ✅ Prepare secure registration payload
       const registrationData = {
         fullName: `${firstName.trim()} ${lastName.trim()}`,
-        username: username.trim() || undefined, // Let backend generate if empty
+        username: username.trim() || undefined,
         phone: phone.trim() || undefined,
         gender: gender || undefined,
         password: password,
-        // Include invitation verification data in query params (handled by URL)
-      };
-
-      console.log('🔐 Submitting secure registration with verification');
-      console.log('Registration data:', { ...registrationData, password: '[HIDDEN]' });
-      console.log('Invitation params:', {
+        // Include invitation verification data
         email: inviteParams.email,
         userId: inviteParams.userId,
-        hasToken: !!inviteParams.token,
-        hasSignature: !!inviteParams.signature
+        token: inviteParams.token,
+        signature: inviteParams.signature,
+        timestamp: inviteParams.timestamp,
+        // Optional expiry data
+        ...(inviteParams.expires && { expires: inviteParams.expires }),
+        noExpiry: inviteParams.noExpiry
+      };
+
+      console.log('🔐 Complete registration payload:', {
+        ...registrationData,
+        password: '[HIDDEN]',
+        token: '[HIDDEN]',
+        signature: '[HIDDEN]'
       });
+
 
       // ✅ The registration hook will handle URL parameter verification
       const result = await registerAdmin(registrationData);
@@ -166,6 +173,17 @@ export default function SubAdminRegistrationForm({ inviteParams }: Props) {
       setLoading(false);
     }
   };
+
+  // In your registration form component
+  useEffect(() => {
+    console.log('Current inviteParams:', {
+      email: inviteParams.email,
+      userId: inviteParams.userId,
+      hasToken: !!inviteParams.token,
+      hasSignature: !!inviteParams.signature,
+      hasTimestamp: !!inviteParams.timestamp
+    });
+  }, [inviteParams]);
 
   // ✅ Registration success state
   if (registrationComplete) {

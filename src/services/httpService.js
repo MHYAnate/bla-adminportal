@@ -121,19 +121,30 @@ const httpService = {
   },
 
   // POST request with token
-  postData: async (data, endpoint) => {
-    if (typeof window !== 'undefined') {
-      console.log('postData called with endpoint:', endpoint);
-      if (getAuthToken) {
-        const token = getAuthToken();
-        console.log('Token check before POST request:', !!token);
-      }
-    }
+ postData: async (data, endpoint) => {
+  if (endpoint.includes('register')) {
+    const { email, userId, token, signature, timestamp, ...payload } = data;
     
-    const cleanEndpoint = endpoint.replace(/^\/+/, '');
-    const response = await axiosInstance.post(cleanEndpoint, data);
-    return logResponse(response, endpoint);
-  },
+    // Construct URL with query params
+    const queryParams = new URLSearchParams({
+      email,
+      userId: userId.toString(),
+      token,
+      signature,
+      timestamp: timestamp.toString(),
+      ...(data.expires && { expires: data.expires.toString() }),
+      noExpiry: data.noExpiry ? 'true' : 'false'
+    });
+    
+    const url = `${endpoint}?${queryParams.toString()}`;
+    const response = await axiosInstance.post(url, payload);
+    return response.data;
+  }
+  
+  // Normal POST handling for other endpoints
+  const cleanEndpoint = endpoint.replace(/^\/+/, '');
+  return axiosInstance.post(cleanEndpoint, data);
+},
 
   // PUT request with token
   putData: async (data, endpoint) => {
