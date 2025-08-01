@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import Orders from "./components";
 import { Card, CardContent } from "@/components/ui/card";
+import { OrdersErrorBoundary } from "@/components/error-boundary"; // Adjust path as needed
 
 // Loading component for the orders page
 const OrdersLoading = () => (
@@ -51,32 +52,14 @@ const OrdersLoading = () => (
   </section>
 );
 
-// Error boundary component
-const OrdersError = ({ error, retry }: { error: Error; retry: () => void }) => (
-  <section className="p-6">
-    <Card className="bg-white">
-      <CardContent className="p-6 text-center">
-        <div className="text-red-500 mb-4">
-          <h2 className="text-xl font-semibold mb-2">Something went wrong</h2>
-          <p className="text-sm">{error.message}</p>
-        </div>
-        <button
-          onClick={retry}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded"
-        >
-          Try Again
-        </button>
-      </CardContent>
-    </Card>
-  </section>
-);
-
 export default function OrdersPage() {
   return (
-    <Suspense fallback={<OrdersLoading />}>
-      <section>
-        <Orders />
-      </section>
-    </Suspense>
+    <OrdersErrorBoundary>
+      <Suspense fallback={<OrdersLoading />}>
+        <section>
+          <Orders />
+        </section>
+      </Suspense>
+    </OrdersErrorBoundary>
   );
 }

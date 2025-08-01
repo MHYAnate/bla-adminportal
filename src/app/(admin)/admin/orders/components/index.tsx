@@ -81,6 +81,17 @@ interface OrdersResponse {
 }
 
 export default function Orders() {
+  // Debug authentication state
+  useEffect(() => {
+    const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+    console.log('🔍 Auth Debug:', {
+      token: token ? 'exists' : 'missing',
+      tokenLength: token?.length,
+      tokenStart: token?.substring(0, 10) + '...',
+      currentURL: window.location.href,
+    });
+  }, []);
+
   // Hooks for data fetching with proper typing
   const {
     orderSummary,
@@ -148,15 +159,15 @@ export default function Orders() {
   const [endDateSales, setEndDateSales] = useState<string | null>(null);
   const [filterSales, setFilterSales] = useState<string>("");
 
-  // Filter options
+  // FIXED: Filter options with valid values (no empty strings)
   const customerList = useMemo(() => [
-    { text: "All Types", value: "" },
+    { text: "All Types", value: "all" }, // Changed from "" to "all"
     { text: "Individual", value: "individual" },
     { text: "Business", value: "business" },
   ], []);
 
   const statusList = useMemo(() => [
-    { text: "All Status", value: "" },
+    { text: "All Status", value: "all" }, // Changed from "" to "all"
     { text: "Pending", value: "pending" },
     { text: "Processing", value: "processing" },
     { text: "Shipped", value: "shipped" },
@@ -209,8 +220,8 @@ export default function Orders() {
     page: currentPage,
     limit: parseInt(pageSize),
     search: filter,
-    status: status || undefined,
-    customerType: customerType || undefined,
+    status: status === "all" ? undefined : status || undefined, // Handle "all" value
+    customerType: customerType === "all" ? undefined : customerType || undefined, // Handle "all" value
     dateFrom: startDate || undefined,
     dateTo: endDate || undefined,
   }), [currentPage, pageSize, filter, status, customerType, startDate, endDate]);
@@ -233,6 +244,17 @@ export default function Orders() {
     setCurrentPage(page);
   }, []);
 
+  // FIXED: Filter change handlers that handle "all" value properly
+  const handleCustomerTypeChange = useCallback((value: string) => {
+    console.log('🔍 Customer type changed:', value);
+    setCustomerType(value);
+  }, []);
+
+  const handleStatusChange = useCallback((value: string) => {
+    console.log('🔍 Status changed:', value);
+    setStatus(value);
+  }, []);
+
   // Handle export
   const handleExport = useCallback(async () => {
     try {
@@ -240,8 +262,8 @@ export default function Orders() {
         orders: data?.data || [],
         filters: {
           search: filter,
-          status,
-          customerType,
+          status: status === "all" ? "" : status,
+          customerType: customerType === "all" ? "" : customerType,
           dateFrom: startDate,
           dateTo: endDate,
         },
@@ -279,6 +301,7 @@ export default function Orders() {
   // Apply filters effect - using memoized filter object
   useEffect(() => {
     if (setOrdersFilter) {
+      console.log('🔍 Setting orders filter:', ordersFilter);
       setOrdersFilter(ordersFilter);
     }
   }, [ordersFilter, setOrdersFilter]);
@@ -300,27 +323,42 @@ export default function Orders() {
   // Show error messages - memoized to prevent unnecessary re-renders
   useEffect(() => {
     if (getOrdersError) {
+      console.error('🔍 Orders error:', getOrdersError);
       toast.error("Failed to load orders");
     }
   }, [getOrdersError]);
 
   useEffect(() => {
     if (getOrdersSummaryError) {
+      console.error('🔍 Orders summary error:', getOrdersSummaryError);
       toast.error("Failed to load order summary");
     }
   }, [getOrdersSummaryError]);
 
   useEffect(() => {
     if (orderSummaryError) {
+      console.error('🔍 Order summary chart error:', orderSummaryError);
       toast.error("Failed to load order chart data");
     }
   }, [orderSummaryError]);
 
   useEffect(() => {
     if (salesError) {
+      console.error('🔍 Sales error:', salesError);
       toast.error("Failed to load sales data");
     }
   }, [salesError]);
+
+  // Error boundary catch for component-level errors
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('🔍 Component error caught:', event.error);
+      // Don't redirect on component errors, just log them
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
 
   return (
     <section>
@@ -369,7 +407,7 @@ export default function Orders() {
                 Detailed Order Table
               </h6>
 
-              {/* Filters */}
+              {/* FIXED: Filters with proper error handling */}
               <div className="flex flex-wrap items-center gap-4 mb-6">
                 <div className="min-w-[200px]">
                   <InputFilter
@@ -379,14 +417,14 @@ export default function Orders() {
                 </div>
                 <div className="min-w-[150px]">
                   <SelectFilter
-                    setFilter={setCustomerType}
+                    setFilter={handleCustomerTypeChange}
                     placeholder="Customer Type"
                     list={customerList}
                   />
                 </div>
                 <div className="min-w-[150px]">
                   <SelectFilter
-                    setFilter={setStatus}
+                    setFilter={handleStatusChange}
                     placeholder="Order Status"
                     list={statusList}
                   />

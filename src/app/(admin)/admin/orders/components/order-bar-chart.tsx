@@ -47,6 +47,7 @@ const timeframeList = [
   { text: "3 Months", value: "3m" },
   { text: "6 Months", value: "6m" },
   { text: "12 Months", value: "12m" },
+  { text: "All Time", value: "all" }, // Added option instead of empty value
 ];
 
 interface OrderBarComponentProps {
@@ -90,7 +91,7 @@ export function OrderBarComponent({
   // Memoize the timeframe change handler
   const handleTimeframeChange = useCallback((timeframe: string) => {
     setFilter(timeframe);
-    if (setSalesFilter) {
+    if (setSalesFilter && timeframe !== "all") {
       setSalesFilter({ year: new Date().getFullYear(), timeframe });
     }
   }, [setFilter, setSalesFilter]);
