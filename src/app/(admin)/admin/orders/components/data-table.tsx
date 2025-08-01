@@ -16,7 +16,6 @@ import {
 import { ChevronDown, Eye, Edit, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useUpdateOrderStatus } from "@/services/orders";
 
 interface DataTableProps {
   data: any[];
@@ -40,9 +39,6 @@ const DataTable: React.FC<DataTableProps> = ({
   const router = useRouter();
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
-  // Hook for updating order status
-  const updateOrderStatusMutation = useUpdateOrderStatus();
-
   // Map backend status to frontend status
   const mapStatusToFrontend = useCallback((backendStatus: string): string => {
     switch (backendStatus?.toLowerCase()) {
@@ -62,39 +58,10 @@ const DataTable: React.FC<DataTableProps> = ({
     }
   }, []);
 
-  // Map frontend status to backend status
-  const mapStatusToBackend = useCallback((frontendStatus: string): string => {
-    switch (frontendStatus) {
-      case 'ongoing':
-        return 'processing';
-      case 'delivered':
-        return 'delivered';
-      case 'cancelled':
-        return 'cancelled';
-      default:
-        return 'processing';
-    }
-  }, []);
-
-  // Handle status change
+  // Handle status change - placeholder for now
   const handleStatusChange = useCallback(async (orderId: string, newStatus: string) => {
-    try {
-      setUpdatingOrderId(orderId);
-
-      await updateOrderStatusMutation.mutateAsync({
-        orderId,
-        status: mapStatusToBackend(newStatus),
-        notes: `Status updated to ${newStatus}`,
-      });
-
-      toast.success(`Order status updated to ${newStatus}`);
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      toast.error('Failed to update order status');
-    } finally {
-      setUpdatingOrderId(null);
-    }
-  }, [updateOrderStatusMutation, mapStatusToBackend]);
+    toast.info(`Status update feature coming soon! Order: ${orderId}, Status: ${newStatus}`);
+  }, []);
 
   // Handle view order details - navigate to separate page
   const handleViewOrder = useCallback((orderId: string) => {
@@ -272,8 +239,7 @@ const DataTable: React.FC<DataTableProps> = ({
           variant="ghost"
           size="sm"
           onClick={() => {
-            // Handle delete - you can implement this
-            toast.info("Delete functionality to be implemented");
+            toast.info("Delete functionality coming soon!");
           }}
           className="text-red-600 hover:text-red-700 hover:bg-red-50"
         >
