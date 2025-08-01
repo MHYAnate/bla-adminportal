@@ -2,6 +2,7 @@ import { IOrderCard } from "@/types";
 import { Card, CardContent } from "../ui/card";
 interface iProps {
   report: IOrderCard;
+  loading?: boolean;
 }
 
 const OrderCard: React.FC<iProps> = ({ report }) => {

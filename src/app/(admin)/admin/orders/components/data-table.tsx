@@ -1,28 +1,15 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
-import { DeleteIcon, ViewIcon } from "../../../../../../public/icons";
-import { TableComponent } from "@/components/custom-table";
-// import { OrderTableComponent } from "@/components/custom-table/orderIndex";
-
-import { OrdersData } from "@/types";
 import { Badge } from "@/components/ui/badge";
-import OrderDetails from "./order-details";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ChevronLeft } from "lucide-react";
-import Link from "next/link";
-import { ROUTES } from "@/constant/routes";
-import { capitalizeFirstLetter } from "@/lib/utils";
-interface iProps {
-  data?: any;
+import Image from "next/image";
+import { Card, CardContent } from "@/components/ui/card";
+import { TableComponent } from "@/components/custom-table";
+import { ProductTableComponent } from "@/components/custom-table/productIndex";
+import { formatMoney } from "@/lib/utils";
+
+interface DataTableProps {
+  data: any[];
   currentPage: number;
-  handleDelete: () => void;
   onPageChange: (value: number) => void;
   pageSize: number;
   totalPages: number;
@@ -30,142 +17,121 @@ interface iProps {
   loading: boolean;
 }
 
-const DataTable: React.FC<iProps> = ({
+const DataTable: React.FC<DataTableProps> = ({
   data,
   currentPage,
   onPageChange,
   pageSize,
   totalPages,
-  handleDelete,
   loading,
 }) => {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const tableData: OrdersData[] = [
-    {
-      id: 1,
-      name: "Jennifer Lawal",
-      customertype: "Individual",
-      amount: "68,000.00",
-      status: "Cancelled",
-      orderid: "#908765",
-      email: "jenny@gmail.com",
-    },
-    {
-      id: 2,
-      name: "Jennifer Lawal",
-      customertype: "Individual",
-      amount: "68,000.00",
-      status: "Pending",
-      orderid: "#908765",
-      email: "jenny@gmail.com",
-    },
-    {
-      id: 3,
-      name: "Jennifer Lawal",
-      customertype: "Individual",
-      amount: "68,000.00",
-      status: "Delivered",
-      orderid: "#908765",
-      email: "jenny@gmail.com",
-    },
-  ];
-
   const cellRenderers = {
-    name: (item: OrdersData) => (
-      <div className="font-normal flex items-center gap-3">
+    name: (item: any) => (
+      <div className="font-medium flex items-center gap-3">
+        <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-100">
+          <Image
+            src={item?.product?.image || "/images/placeholder-product.png"}
+            width={36}
+            height={36}
+            alt="Product image"
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = "/images/placeholder-product.png";
+            }}
+          />
+        </div>
         <div>
-          <p className="font-normal">{item?.user?.email || "----"}</p>
-          <p className="text-[0.75rem] text-[#A0AEC0]">
-            {item?.user?.id || "---"}
+          <p className="font-medium">{item?.product?.name || "Unknown Product"}</p>
+          <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
+            {item?.product?.category?.name || "No Category"}
           </p>
         </div>
       </div>
     ),
-    customertype: (item: OrdersData) => (
-      <div className="font-normal">
-        {capitalizeFirstLetter(item?.user?.type || "----")}
+    price: (item: any) => (
+      <div className="font-medium">
+        {formatMoney(Number(item?.price) || 0)}
       </div>
     ),
-    orderid: (item: OrdersData) => (
-      <div className="font-normal">{item?.id}</div>
+    quantity: (item: any) => (
+      <span className="font-medium">{item?.quantity || 0}</span>
     ),
-    amount: (item: OrdersData) => (
-      <span className="font-normal">NGN {item.amount}</span>
+    total: (item: any) => (
+      <div className="font-medium">
+        {formatMoney((Number(item?.price) || 0) * (Number(item?.quantity) || 0))}
+      </div>
     ),
-    status: (item: OrdersData) => (
-      <Badge
-        variant={
-          item.status.toLowerCase() === "delivered"
-            ? "success"
-            : item.status.toLowerCase() === "pending"
-            ? "tertiary"
-            : "warning"
+    status: (item: any) => {
+      const status = item?.status || "pending";
+      const getVariant = (status: string) => {
+        switch (status.toLowerCase()) {
+          case 'delivered':
+          case 'completed':
+            return 'success';
+          case 'processing':
+            return 'warning';
+          case 'pending':
+            return 'tertiary';
+          case 'cancelled':
+            return 'destructive';
+          default:
+            return 'secondary';
         }
-        className="py-1 px-[26px] font-bold"
-      >
-        {item.status.toUpperCase()}
-      </Badge>
-    ),
-    action: (item: OrdersData) => (
-      <div className="flex gap-2.5">
-        <Link href={`${ROUTES.ADMIN.SIDEBAR.ORDERS}/1`}>
-          <div className="bg-[#27A376] p-2.5 rounded-lg">
-            <ViewIcon />
-          </div>
-        </Link>
-        <div className="bg-[#E03137] p-2.5 rounded-lg" onClick={handleDelete}>
-          <DeleteIcon />
-        </div>
+      };
+
+      return (
+        <Badge variant={getVariant(status)} className="capitalize">
+          {status}
+        </Badge>
+      );
+    },
+    productid: (item: any) => (
+      <div className="font-medium text-gray-600">
+        #{item?.product?.id || item?.productId || 'N/A'}
       </div>
     ),
   };
 
-  const columnOrder: (keyof OrdersData)[] = [
+  const columnOrder: (keyof any)[] = [
     "name",
-    "customertype",
-    "amount",
-    "orderid",
+    "price",
+    "quantity",
+    "total",
     "status",
-    "action",
+    "productid",
   ];
 
   const columnLabels = {
-    name: "Name",
-    customertype: "Customer Type",
-    amount: "Amount",
-    action: "",
-    orderid: "Order ID",
-    status: "Order Status",
+    name: "Product Name",
+    price: "Unit Price",
+    quantity: "Quantity",
+    total: "Total",
+    status: "Status",
+    productid: "Product ID",
   };
 
   return (
-    <>
-      {/* <OrderTableComponent<OrdersData>
-        tableData={data}
-        currentPage={currentPage}
-        onPageChange={onPageChange}
-        totalPages={Math.ceil(totalPages / pageSize)}
-        cellRenderers={cellRenderers}
-        columnOrder={columnOrder}
-        columnLabels={columnLabels}
-        isLoading={loading}
-      /> */}
+    <Card className="bg-white">
+      <CardContent className="p-6">
+        <div className="mb-4">
+          <h6 className="font-semibold text-lg text-[#111827]">
+            Order Items ({data?.length || 0})
+          </h6>
+        </div>
 
-      <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
-        <DialogContent className="right-0 p-8 max-w-[47.56rem] h-screen overflow-scroll">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
-              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
-                <ChevronLeft size={24} />
-              </div>
-              Create new admin
-            </DialogTitle>
-          </DialogHeader>
-          <OrderDetails setClose={setIsOpen} />
-        </DialogContent>
-      </Dialog>
-    </>
+        <ProductTableComponent<any>
+          tableData={data || []}
+          currentPage={currentPage}
+          onPageChange={onPageChange}
+          totalPages={Math.ceil((data?.length || 0) / pageSize)}
+          cellRenderers={cellRenderers}
+          columnOrder={columnOrder}
+          columnLabels={columnLabels}
+          isLoading={loading}
+          showPagination={data?.length > pageSize}
+        />
+      </CardContent>
+    </Card>
   );
 };
 

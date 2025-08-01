@@ -273,6 +273,63 @@ export const routes = {
     return timeframe ? `${base}?timeframe=${timeframe}` : base;
   },
 
+
+
+  // Order Status Management
+  updateOrderStatus: (id) => `admin/orders/${id}/status`,
+  bulkUpdateOrderStatus: () => `admin/orders/bulk/status`,
+  
+  // Order Actions
+  cancelOrder: (id) => `admin/orders/${id}/cancel`,
+  shipOrder: (id) => `admin/orders/${id}/ship`,
+  processRefund: (id) => `admin/orders/${id}/refund`,
+  
+  // Order Items
+  updateOrderItemStatus: (orderId, itemId) => `admin/orders/${orderId}/items/${itemId}/status`,
+  
+  // Order Notes
+  addOrderNote: (orderId) => `admin/orders/${orderId}/notes`,
+  getOrderNotes: (orderId) => `admin/orders/${orderId}/notes`,
+  
+  // Order Progress & Analytics
+  getOrderProgress: (orderId) => `admin/orders/${orderId}/progress`,
+  getOrderStatusAnalytics: (params) => {
+    const base = `admin/orders/analytics/status`;
+    if (!params || Object.keys(params).length === 0) return base;
+    const query = new URLSearchParams(params);
+    return `${base}?${query}`;
+  },
+  
+  // Order Archive Management
+  archiveOrder: (orderId) => `admin/orders/${orderId}/archive`,
+  unarchiveOrder: (orderId) => `admin/orders/${orderId}/unarchive`,
+  getArchivedOrders: (params) => {
+    const base = `admin/orders/archived`;
+    if (!params || Object.keys(params).length === 0) return base;
+    const query = new URLSearchParams(params);
+    return `${base}?${query}`;
+  },
+  bulkArchiveOrders: () => `admin/orders/bulk-archive`,
+  
+  // Customer Interactions & Fulfillment
+  logCustomerInteraction: (orderId) => `admin/orders/${orderId}/interactions`,
+  getFulfillmentMetrics: (params) => {
+    const base = `admin/orders/metrics/fulfillment`;
+    if (!params || Object.keys(params).length === 0) return base;
+    const query = new URLSearchParams(params);
+    return `${base}?${query}`;
+  },
+  
+  // Issues & Diagnostics
+  checkAllOrdersForIssues: (params) => {
+    const base = `admin/orders/check-issues`;
+    if (!params || Object.keys(params).length === 0) return base;
+    const query = new URLSearchParams(params);
+    return `${base}?${query}`;
+  },
+
+
   // File upload
   upload: () => "upload"
 };
+

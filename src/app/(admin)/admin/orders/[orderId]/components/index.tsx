@@ -1,391 +1,414 @@
 "use client";
 
-import Header from "@/app/(admin)/components/header";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  DiscountIcon,
-  EstimatedOrderIcon,
-  QuantityIcon,
-  RefundIcon,
-  ShippingIcon,
-  SubTotalIcon,
-  TaxIcon,
-  TrackLocationIcon,
-} from "../../../../../../../public/icons";
 import Image from "next/image";
+import {
+  CallIcon,
+  LocationIcon,
+  MailIcon,
+} from "../../../../../../../public/icons";
 import { Badge } from "@/components/ui/badge";
-import DataTable from "./data-table";
+import OrderItemCard from "@/components/order-item";
+import { Button } from "@/components/ui/button";
 import { useGetOrderInfo } from "@/services/orders";
-import { useEffect, useState } from "react";
-import { capitalizeFirstLetter, formatDate, formatDateTime } from "@/lib/utils";
+import { formatDate, formatDateTime } from "@/lib/utils";
+import React from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Edit, RefreshCw, Truck } from "lucide-react";
+import { IOrderItem } from "@/types";
 
-export default function OrderDetails({ orderId }: { orderId: string }) {
+// Define interfaces for type safety
+interface Profile {
+  profileImage?: string;
+  fullName?: string;
+  businessName?: string;
+  phoneNumber?: string;
+  address?: string;
+}
+
+interface User {
+  email: string;
+  profile?: Profile;
+  businessProfile?: Profile;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  image?: string;
+  category?: { name: string };
+  manufacturer?: { name: string };
+  options?: Array<{ image?: string[] }>;
+}
+
+interface OrderItem {
+  product?: Product;
+  quantity: number;
+  price: number;
+  status?: string;
+}
+
+interface Breakdown {
+  itemsSubtotal: number;
+  shippingFee: number;
+  total: number;
+  formatted?: {
+    itemsSubtotal?: string;
+    shippingFee?: string;
+    total?: string;
+  };
+}
+
+interface OrderData {
+  id: string;
+  user: User;
+  items: OrderItem[];
+  status: string;
+  createdAt: string;
+  totalPrice: number;
+  paymentStatus: string;
+  breakdown?: Breakdown;
+}
+
+interface OrderDetailsProps {
+  orderId?: string;
+  setClose?: React.Dispatch<React.SetStateAction<boolean>>;
+  isModal?: boolean;
+}
+
+const OrderDetails: React.FC<OrderDetailsProps> = ({
+  orderId,
+  setClose,
+  isModal = false
+}) => {
+  const router = useRouter();
   const {
     getOrderInfoData: data,
-    getOrderInfoError,
     getOrderInfoIsLoading,
-    refetchOrderInfo,
+    getOrderInfoError,
     setOrderInfoFilter,
-  } = useGetOrderInfo();
-  const [pageSize, setPageSize] = useState<string>("10");
-  const [currentPage, setCurrentPage] = useState(1);
-  const onPageChange = (page: number) => {
-    setCurrentPage(page);
+  } = useGetOrderInfo() as {
+    getOrderInfoData: OrderData | null;
+    getOrderInfoIsLoading: boolean;
+    getOrderInfoError: any;
+    setOrderInfoFilter: (orderId: string) => void;
   };
 
-  useEffect(() => {
-    setOrderInfoFilter(orderId);
-  }, [orderId]);
+  React.useEffect(() => {
+    if (orderId) {
+      setOrderInfoFilter(orderId);
+    }
+  }, [orderId, setOrderInfoFilter]);
 
-  const status = "Active";
-  console.log(data);
+  if (getOrderInfoIsLoading) {
+    return (
+      <div className="p-6 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p>Loading order details...</p>
+      </div>
+    );
+  }
+
+  if (getOrderInfoError || !data) {
+    return (
+      <div className="p-6 text-center">
+        <p className="text-red-500 mb-4">
+          {getOrderInfoError || "Error loading order details"}
+        </p>
+        <div className="flex gap-2 justify-center">
+          <Button
+            variant="outline"
+            onClick={() => setClose ? setClose(false) : router.back()}
+          >
+            {isModal ? "Close" : "Go Back"}
+          </Button>
+          <Button
+            onClick={() => orderId && setOrderInfoFilter(orderId)}
+            className="bg-orange-500 hover:bg-orange-600"
+          >
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const customer = data.user;
+  const profile = customer?.profile || customer?.businessProfile;
+
+  const getStatusVariant = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'delivered':
+      case 'completed':
+        return 'success';
+      case 'pending':
+        return 'tertiary';
+      case 'processing':
+        return 'warning';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'secondary';
+    }
+  };
+
+  const transformedItems: IOrderItem[] = data.items?.map((item) => ({
+    productName: item.product?.name || "Unknown Product",
+    quantity: item.quantity,
+    price: item.price?.toLocaleString() || "0",
+    total: (item.price * item.quantity)?.toLocaleString() || "0",
+    status: item.status || data.status,
+    image: item.product?.image || item.product?.options?.[0]?.image?.[0],
+    productId: item.product?.id?.toString(),
+    category: item.product?.category?.name,
+    brand: item.product?.manufacturer?.name,
+  })) || [];
+
+  const handleClose = () => {
+    if (setClose) {
+      setClose(false);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleEditOrder = () => {
+    if (isModal && setClose) setClose(false);
+    router.push(`/admin/orders/${orderId}/edit`);
+  };
+
+  const handleTrackOrder = () => {
+    router.push(`/admin/orders/${orderId}/track`);
+  };
+
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <Header
-            title="Order Details"
-            subtext="Manage orders"
-            showBack={true}
-          />
-        </div>
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <Card className="mb-6">
-              <CardContent className="py-8 px-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h6 className="mb-2 font-dmsans font-semibold text-base text-[#0B0B0B]">
-                      Order#: {data?.id || "--"}
-                    </h6>
-                    <p className="text-[#A0AEC0] text-[10px] font-normal">
-                      {formatDateTime(data?.createdAt)}
-                    </p>
-                  </div>
-                  <Button
-                    variant={"outline"}
-                    className="font-bold text-base w-auto py-3 px-5 flex gap-2 items-center"
-                    size={"xl"}
-                  >
-                    <RefundIcon />
-                    Refund
-                  </Button>
-                </div>
-                <h6 className="mb-4 font-dmsans font-semibold text-base text-[#0B0B0B]">
-                  Order Progress
-                </h6>
-                <div className="flex gap-6 mb-6">
-                  <div className="w-full">
-                    <div
-                      className={`h-[11px] mb-2 bg-[#0CAF60] rounded-[50px]`}
-                    ></div>
-                    <p className="text-[#A0AEC0] text-xs font-normal font-dmsans">
-                      Order Confirming
-                    </p>
-                  </div>
-                  <div className="w-full">
-                    <div
-                      className={`h-[11px] mb-2 bg-[#0CAF60] rounded-[50px]`}
-                    ></div>
-                    <p className="text-[#A0AEC0] text-xs font-normal font-dmsans">
-                      Payment Pending
-                    </p>
-                  </div>
-                  <div className="w-full">
-                    <div
-                      className={`h-[11px] mb-2 bg-[#E6BB20] rounded-[50px]`}
-                    ></div>
-                    <p className="text-[#A0AEC0] text-xs font-normal font-dmsans">
-                      Processing
-                    </p>
-                  </div>
-                  <div className="w-full">
-                    <div
-                      className={`h-[11px] mb-2 bg-[#EEF2F7] rounded-[50px]`}
-                    ></div>
-                    <p className="text-[#A0AEC0] text-xs font-normal font-dmsans">
-                      Shipping
-                    </p>
-                  </div>
-                  <div className="w-full">
-                    <div
-                      className={`h-[11px] mb-2 bg-[#EEF2F7] rounded-[50px]`}
-                    ></div>
-                    <p className="text-[#A0AEC0] text-xs font-normal font-dmsans">
-                      Delivered
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="bg-[#F9F7F7] flex gap-1  py-2 px-2.5 rounded-lg">
-                    <EstimatedOrderIcon />
-                    <p className="text-[10px] font-bold text-[#656464]">
-                      Estimated shipping date: 7th Feb, 2025
-                    </p>
-                  </div>
-                  <Button
-                    variant={"warning"}
-                    className="font-bold text-base w-auto text-[#030C0A] py-4 px-6"
-                    size={"xl"}
-                  >
-                    Track order
-                    <TrackLocationIcon />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="mb-6">
-              <CardContent className="py-2 px-6">
-                <h6 className="font-bold text-2xl mb-4 text-[#0B0B0B]">
-                  Order Timeline
-                </h6>
-                <div className="flex gap-4 items-start">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="bg-[#EEF2F7] h-6 w-6 rounded-full"></div>
-                    <div className="bg-[#EEF2F7] w-[2px] h-[46px]"></div>
-                  </div>
-                  <div className="flex-1 flex justify-between items-center">
-                    <div>
-                      <h6 className="font-semibold text-xs text-[#111827]">
-                        The packing has been started
-                      </h6>
-                      <p className="text-[#A0AEC0] text-[10px] font-normal">
-                        Confirmed by BuyLocal Admin
-                      </p>
-                    </div>
-                    <h6 className="font-semibold font-dmsans text-sm text-[#111827]">
-                      7th, February 2024, 09:40 pm
-                    </h6>
-                  </div>
-                </div>
-                <div className="flex gap-4 items-start">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="bg-[#EEF2F7] h-6 w-6 rounded-full"></div>
-                    <div className="bg-[#EEF2F7] w-[2px] h-[46px]"></div>
-                  </div>{" "}
-                  <div className="flex-1 flex justify-between items-center">
-                    <div>
-                      <h6 className="font-semibold text-xs text-[#111827]">
-                        The Invoice has been sent to the customer
-                      </h6>
-                      <p className="text-[#A0AEC0] text-[10px] font-normal mb-1">
-                        Invoice email was sent to mirabelokoh@gmail.com
-                      </p>
-                      <Button
-                        variant={"outline"}
-                        className="font-bold text-[10px] text-[#718179] w-auto bg-[#EEF2F7] border-0 py-2 px-2.5 flex gap-2 items-center"
-                        size={"xl"}
-                      >
-                        Resend Invoice
-                      </Button>
-                    </div>
-                    <h6 className="font-semibold font-dmsans text-sm text-[#111827]">
-                      7th, February 2024, 09:40 pm
-                    </h6>
-                  </div>
-                </div>
-                <div className="flex gap-4 items-start">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="bg-[#EEF2F7] h-6 w-6 rounded-full"></div>
-                    <div className="bg-[#EEF2F7] w-[2px] h-[46px]"></div>
-                  </div>
-                  <div className="flex-1 flex justify-between items-center">
-                    <div>
-                      <h6 className="font-semibold text-xs text-[#111827]">
-                        The Invoice has been sent to the customer
-                      </h6>
-                      <p className="text-[#A0AEC0] text-[10px] font-normal mb-1">
-                        Invoice email was sent to mirabelokoh@gmail.com
-                      </p>
-                      <Button
-                        variant={"warning"}
-                        className="font-bold text-[10px] text-[#333333] w-auto border-0 py-2 px-2.5 flex gap-2 items-center"
-                        size={"xl"}
-                      >
-                        Download Invoice
-                      </Button>
-                    </div>
-                    <h6 className="font-semibold font-dmsans text-sm text-[#111827]">
-                      7th, February 2024, 09:40 pm
-                    </h6>
-                  </div>
-                </div>
-                <div className="flex gap-4 items-start">
-                  <div className="bg-[#EEF2F7] h-6 w-6 rounded-full"></div>
-                  <div className="flex-1 flex justify-between items-center">
-                    <div>
-                      <h6 className="font-semibold text-xs text-[#111827]">
-                        Order Payment Method
-                      </h6>
-                      <p className="text-[#A0AEC0] text-[10px] font-normal mb-1">
-                        Master Card
-                      </p>
-                    </div>
-                    <h6 className="font-semibold font-dmsans text-sm text-[#111827]">
-                      7th, February 2024, 09:40 pm
-                    </h6>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <DataTable
-              data={data?.items}
-              currentPage={currentPage}
-              onPageChange={onPageChange}
-              pageSize={Number(pageSize)}
-              totalPages={40}
-              setPageSize={setPageSize}
-              loading={getOrderInfoIsLoading}
-            />
+    <div className={`${isModal ? 'max-w-2xl mx-auto' : 'max-w-6xl mx-auto p-6'}`}>
+      {!isModal && (
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to Orders
+            </Button>
+            <h1 className="text-2xl font-bold text-gray-800">Order Details</h1>
           </div>
-          <div className="w-[22.5rem]">
-            <Card className="mb-4">
-              <CardContent className="p-4">
-                <div className="p-4 bg-[#FAFAFA]">
-                  <p className="font-medium text-base text-[#687588]">
-                    Order Summary
-                  </p>
-                </div>
-                <div className="px-4 py-5 flex gap-3.5 border-b border-[#EEF2F7] items-center">
-                  <QuantityIcon />
-                  <p className="font-medium text-sm text-[#111827] me-auto">
-                    Quantity:
-                  </p>
-                  <p className="font-medium text-sm text-[#111827]">1</p>
-                </div>
-                <div className="px-4 py-5 flex gap-3.5 border-b border-[#EEF2F7] items-center">
-                  <SubTotalIcon />
-                  <p className="font-medium text-sm text-[#111827] me-auto">
-                    Sub Total:
-                  </p>
-                  <p className="font-medium text-sm text-[#111827]">₦77,000</p>
-                </div>
-                <div className="px-4 py-5 flex gap-3.5 border-b border-[#EEF2F7] items-center">
-                  <TaxIcon />
-                  <p className="font-medium text-sm text-[#111827] me-auto">
-                    Tax:
-                  </p>
-                  <p className="font-medium text-sm text-[#111827]">5%</p>
-                </div>
-                <div className="px-4 py-5 flex gap-3.5 border-b border-[#EEF2F7] items-center">
-                  <ShippingIcon />
-                  <p className="font-medium text-sm text-[#111827] me-auto">
-                    Shipping Fee:
-                  </p>
-                  <p className="font-medium text-sm text-[#111827]">
-                    ₦{data?.totalPrice || 0}
-                  </p>
-                </div>
-                <div className="px-4 py-5 flex gap-3.5 border-b border-[#EEF2F7] items-center">
-                  <DiscountIcon />
-                  <p className="font-medium text-sm text-[#111827] me-auto">
-                    Discount:
-                  </p>
-                  <p className="font-medium text-sm text-[#111827]">-₦77,000</p>
-                </div>
-                <div className="px-4 py-5 flex gap-3.5 border-b border-[#EEF2F7] items-center">
-                  <p className="font-medium text-sm text-[#111827] me-auto">
-                    Total Amount:
-                  </p>
-                  <p className="font-medium text-sm text-[#111827]">
-                    ₦83,620.00{" "}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div>
-                  <div className="mb-6 pb-6 border-b border-[#F1F2F4] ">
-                    <div className="flex items-center justify-center mt-6">
-                      <Image
-                        height={100}
-                        width={100}
-                        alt="Customer avatar"
-                        src="/images/bladmin-login.jpg"
-                        className="w-[100px] h-[100px] rounded-full object-cover"
-                      />
-                    </div>
-                    <h6 className="text-center text-[#111827] text-xl mb-2.5"></h6>
-                    <p className="text-[#687588] text-sm mb-2.5 text-center">
-                      Customer type:{" "}
-                      {capitalizeFirstLetter(data?.user?.type || "---")}
-                    </p>
-                    <p className="text-[#687588] text-sm mb-6 text-center">
-                      Customer Id: {data?.user?.id}
-                    </p>
-                    <div className="flex justify-center">
-                      <Badge
-                        variant={
-                          status.toLowerCase() === "active"
-                            ? "success"
-                            : status.toLowerCase() === "pending"
-                              ? "tertiary"
-                              : "warning"
-                        }
-                        className="py-1 px-[26px] font-medium"
-                      >
-                        {status.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="mb-6 pb-6 border-b border-[#F1F2F4]">
-                    <div className="flex gap-10 justify-between items-center mb-4">
-                      <p className="text-[#687588] font-normal text-base">
-                        Email
-                      </p>
-                      <p className="font-semibold text-sm text-[#111827]">
-                        {data?.user?.email || "----"}
-                      </p>
-                    </div>
-                    <div className="flex gap-10 justify-between items-center mb-4">
-                      <p className="text-[#687588] font-normal text-base">
-                        Shopping address
-                      </p>
-                      <p className="font-semibold text-sm text-[#111827]">
-                        09012345678
-                      </p>
-                    </div>
-                    <div className="flex gap-10 justify-between items-center mb-4">
-                      <p className="text-[#687588] font-normal text-base">
-                        Phone number
-                      </p>
-                      <p className="font-semibold text-sm text-[#111827]">
-                        {data?.user?.phoneNumber || "----"}
-                      </p>
-                    </div>
-                    <div className="flex gap-10 justify-between items-center mb-4">
-                      <p className="text-[#687588] font-normal text-base">
-                        City
-                      </p>
-                      <p className="font-semibold text-sm text-[#111827]">
-                        Lagos, Nigeria.
-                      </p>
-                    </div>
-                    <div className="flex gap-10 justify-between items-center mb-4">
-                      <p className="text-[#687588] font-normal text-base">
-                        State/Province
-                      </p>
-                      <p className="font-semibold text-sm text-[#111827]">
-                        Lagos, Nigeria.
-                      </p>
-                    </div>
-                    <div className="flex justify-between gap-10 items-center mb-4">
-                      <p className="text-[#687588] font-normal text-base">
-                        Date joined
-                      </p>
-                      <p className="font-semibold text-sm text-[#111827]">
-                        {formatDate(data?.user?.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleTrackOrder}
+              className="flex items-center gap-2"
+            >
+              <Truck className="w-4 h-4" />
+              Track Order
+            </Button>
+            <Button
+              onClick={handleEditOrder}
+              className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2"
+            >
+              <Edit className="w-4 h-4" />
+              Edit Order
+            </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <div className="text-center mb-6">
+        <Image
+          width={100}
+          height={100}
+          alt="Customer avatar"
+          src={profile?.profileImage || "/images/bladmin-login.jpg"}
+          className="w-[100px] h-[100px] rounded-full object-cover mx-auto border-4 border-white shadow-lg"
+        />
+      </div>
+
+      <div className="space-y-6">
+        <div className="text-center">
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center mb-4">
+            <h5 className="text-2xl font-bold text-[#111827]">
+              {profile?.fullName || profile?.businessName || customer.email}
+            </h5>
+            <Badge
+              variant={getStatusVariant(data.status)}
+              className="py-2 px-6 font-bold text-sm"
+            >
+              {data.status.toUpperCase()}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+          <h6 className="font-semibold text-lg text-[#111827] mb-4">
+            Contact Information
+          </h6>
+
+          <div className="flex gap-3 items-center">
+            <MailIcon />
+            <div>
+              <p className="text-sm text-gray-500">Email</p>
+              <p className="font-semibold text-sm text-[#111827]">
+                {customer.email}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-center">
+            <CallIcon />
+            <div>
+              <p className="text-sm text-gray-500">Phone</p>
+              <p className="font-semibold text-sm text-[#111827]">
+                {profile?.phoneNumber || "Not provided"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-3 items-center">
+            <LocationIcon />
+            <div>
+              <p className="text-sm text-gray-500">Address</p>
+              <p className="font-semibold text-sm text-[#111827]">
+                {profile?.address || "Not provided"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+          <h6 className="font-semibold text-lg text-[#111827] mb-4">
+            Order Information
+          </h6>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-sm text-gray-500">Order ID</p>
+              <p className="font-semibold text-sm text-[#111827]">
+                #{data.id}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Order Date</p>
+              <p className="font-semibold text-sm text-[#111827]">
+                {formatDate(data.createdAt)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Order Time</p>
+              <p className="font-semibold text-sm text-[#111827]">
+                {formatDateTime(data.createdAt)}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Total Amount</p>
+              <p className="font-semibold text-lg text-[#111827]">
+                ₦{data.totalPrice?.toLocaleString()}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Payment Status</p>
+              <Badge
+                variant={data.paymentStatus === 'PAID' ? 'success' : 'warning'}
+                className="mt-1"
+              >
+                {data.paymentStatus}
+              </Badge>
+            </div>
+
+            <div>
+              <p className="text-sm text-gray-500">Items Count</p>
+              <p className="font-semibold text-sm text-[#111827]">
+                {data.items?.length || 0} items
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h5 className="text-lg font-semibold text-[#111827] mb-4">
+            Order Items ({transformedItems.length})
+          </h5>
+
+          {transformedItems.length > 0 ? (
+            <div className="space-y-4">
+              {transformedItems.map((item, index) => (
+                <OrderItemCard key={index} item={item} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              No items found in this order
+            </div>
+          )}
+        </div>
+
+        {data.breakdown && (
+          <div className="bg-gray-50 rounded-lg p-6">
+            <h6 className="font-semibold text-lg text-[#111827] mb-4">
+              Order Summary
+            </h6>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Subtotal:</span>
+                <span className="font-semibold">
+                  ₦{data.breakdown.itemsSubtotal?.toLocaleString()}
+                </span>
+              </div>
+              {data.breakdown.shippingFee > 0 && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Shipping:</span>
+                  <span className="font-semibold">
+                    ₦{data.breakdown.shippingFee?.toLocaleString()}
+                  </span>
+                </div>
+              )}
+              <div className="border-t pt-2 flex justify-between font-bold text-lg">
+                <span>Total:</span>
+                <span>₦{data.totalPrice?.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-4 pt-6">
+          {isModal ? (
+            <Button
+              variant="outline"
+              size="lg"
+              className="px-8"
+              onClick={handleClose}
+            >
+              Close
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleTrackOrder}
+                className="flex items-center gap-2"
+              >
+                <Truck className="w-4 h-4" />
+                Track Order
+              </Button>
+              <Button
+                onClick={handleEditOrder}
+                className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2"
+              >
+                <Edit className="w-4 h-4" />
+                Edit Order
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
-}
+};
+
+export default OrderDetails;

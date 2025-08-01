@@ -4,227 +4,232 @@ import httpService from "../httpService";
 import useFetchItem from "../useFetchItem";
 import useMutateItem from "../useMutateItem";
 
-export const useGetOrders = () => {
-  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
-    queryKey: ["fetchOrders"],
-    queryFn: (queryParams) => httpService.getData(routes.orders(queryParams)),
-    retry: 2,
-  });
-
-  console.log('🔍 useGetOrders - Raw data:', data);
-
-  // Process data with multiple fallbacks
-  let processedData = [];
-  let paginationData = null;
-
-  if (data) {
-    if (Array.isArray(data)) {
-      processedData = data;
-    } else if (data.data && Array.isArray(data.data)) {
-      processedData = data.data;
-      paginationData = data.pagination || data.meta;
-    } else if (data.result && Array.isArray(data.result)) {
-      processedData = data.result;
-      paginationData = data.pagination || data.meta;
-    } else if (data.orders && Array.isArray(data.orders)) {
-      processedData = data.orders;
-      paginationData = data.pagination || data.meta;
-    } else if (data.items && Array.isArray(data.items)) {
-      processedData = data.items;
-      paginationData = data.pagination || data.meta;
-    }
-  }
-
-  console.log('🔍 useGetOrders - Processed data:', processedData);
-
-  return {
-    getOrdersIsLoading: isLoading,
-    getOrdersData: {
-      data: processedData,
-      pagination: paginationData
-    },
-    getOrdersError: ErrorHandler(error),
-    refetchOrders: refetch,
-    setOrdersFilter: setFilter,
-  };
-};
-
-export const useGetOrderInfo = () => {
-  const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
-    queryKey: ["fetchOrderInfo"],
-    queryFn: (id) => httpService.getData(routes.getOrderInfo(id)),
-    retry: 2,
-  });
-
-  return {
-    getOrderInfoIsLoading: isLoading,
-    getOrderInfoData: data?.data?.data || {},
-    getOrderInfoError: ErrorHandler(error),
-    refetchOrderInfo: refetch,
-    setOrderInfoFilter: setFilter,
-  };
-};
-
-export const useGetOrdersSummary = () => {
-  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
-    queryKey: ["fetchOrdersSummary"],
-    queryFn: () => httpService.getData(routes.orderSummaryChart()),
-    retry: 2,
-  });
-
-  console.log('🔍 useGetOrdersSummary - Raw data:', data);
-
-  // Process data with multiple fallbacks
-  let processedData = [];
-  
-  if (data) {
-    if (Array.isArray(data)) {
-      processedData = data;
-    } else if (data.data && Array.isArray(data.data)) {
-      processedData = data.data;
-    } else if (data.result && Array.isArray(data.result)) {
-      processedData = data.result;
-    } else if (data.summary && Array.isArray(data.summary)) {
-      processedData = data.summary;
-    } else if (data.items && Array.isArray(data.items)) {
-      processedData = data.items;
-    } else {
-      // If it's summary data object, keep as is
-      processedData = data;
-    }
-  }
-
-  console.log('🔍 useGetOrdersSummary - Processed data:', processedData);
-
-  return {
-    getOrdersSummaryIsLoading: isLoading,
-    getOrdersSummaryData: processedData,
-    getOrdersSummaryError: ErrorHandler(error),
-    refetchOrdersSummary: refetch,
-    setOrdersSummaryFilter: setFilter,
-  };
-};
-
-export const useGetOrdersAnalytics = () => {
-  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
-    queryKey: ["fetchOrdersAnalytics"],
-    queryFn: (queryParams) =>
-      httpService.getData(routes.ordersAnalytics(queryParams)),
-    retry: 2,
-  });
-
-  console.log('🔍 useGetOrdersAnalytics - Raw data:', data);
-
-  // Process data with multiple fallbacks
-  let processedData = [];
-  let paginationData = null;
-
-  if (data) {
-    if (Array.isArray(data)) {
-      processedData = data;
-    } else if (data.data && Array.isArray(data.data)) {
-      processedData = data.data;
-      paginationData = data.pagination || data.meta;
-    } else if (data.result && Array.isArray(data.result)) {
-      processedData = data.result;
-      paginationData = data.pagination || data.meta;
-    } else if (data.analytics && Array.isArray(data.analytics)) {
-      processedData = data.analytics;
-      paginationData = data.pagination || data.meta;
-    } else if (data.items && Array.isArray(data.items)) {
-      processedData = data.items;
-      paginationData = data.pagination || data.meta;
-    } else {
-      // If it's an object with analytics data, keep as is
-      processedData = data;
-    }
-  }
-
-  console.log('🔍 useGetOrdersAnalytics - Processed data:', processedData);
-
-  return {
-    getOrdersAnalyticsIsLoading: isLoading,
-    getOrdersAnalyticsData: {
-      data: processedData,
-      pagination: paginationData
-    },
-    getOrdersAnalyticsError: ErrorHandler(error),
-    refetchOrdersAnalytics: refetch,
-    setOrdersAnalyticsFilter: setFilter,
-  };
-};
-
-export const useGetSalesData = ({ year, enabled = true } = {}) => {
+export const useGetOrders = ({
+  enabled = true,
+  filter = {},
+  page = 1,
+  pageSize = 10,
+} = {}) => {
   const {
+    isFetched,
     isLoading,
-    isFetching,
-    data,
     error,
+    data,
     refetch,
+    isFetching,
+    setFilter,
+    pageNumber,
+    setPageNumber,
+    setPageSize: setPageSizeHook,
   } = useFetchItem({
-    queryKey: ["sales-data", year],
-    queryFn: () => httpService.getData(routes.salesData(year)),
+    queryKey: ['orders'],
+    queryFn: (params) => httpService.getData(routes.orders(params)),
     enabled,
     retry: 2,
+    initialFilter: filter,
+    isPaginated: true,
+    initialPage: page,
+    initialPageSize: pageSize,
+    staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  console.log('🔍 useGetSalesData - Raw data:', data);
+  return {
+    getOrdersData: data,
+    getOrdersError: ErrorHandler(error),
+    getOrdersIsLoading: isLoading,
+    isFetchingOrders: isFetching,
+    refetchOrders: refetch,
+    setOrdersFilter: setFilter,
+    // Pagination
+    currentPage: pageNumber,
+    setCurrentPage: setPageNumber,
+    pageSize: pageSize,
+    setPageSize: setPageSizeHook,
+    // Additional utilities
+    totalPages: data?.pagination?.totalPages || 0,
+    totalItems: data?.pagination?.totalItems || 0,
+    hasNextPage: data?.pagination?.hasNext || false,
+    hasPrevPage: data?.pagination?.hasPrev || false,
+  };
+};
 
-  // Process data with multiple fallbacks
-  let processedData = [];
-  let salesYear = year;
-  
-  if (data) {
-    if (Array.isArray(data)) {
-      processedData = data;
-    } else if (data.data && Array.isArray(data.data)) {
-      processedData = data.data;
-      salesYear = data.year || year;
-    } else if (data.result && Array.isArray(data.result)) {
-      processedData = data.result;
-      salesYear = data.year || year;
-    } else if (data.sales && Array.isArray(data.sales)) {
-      processedData = data.sales;
-      salesYear = data.year || year;
-    } else {
-      // If it's sales data object, extract appropriately
-      processedData = data.salesData || data.data || [];
-      salesYear = data.year || year;
-    }
-  }
 
-  console.log('🔍 useGetSalesData - Processed data:', processedData);
+export const useGetOrderInfo = ({
+  enabled = true,
+  orderId,
+} = {}) => {
+  const {
+    isLoading,
+    error,
+    data,
+    refetch,
+    isFetching,
+    setFilter,
+  } = useFetchItem({
+    queryKey: ["orderInfo"],
+    queryFn: (params) => {
+      const id = params?.orderId || orderId;
+      return httpService.getData(routes.getOrderInfo(id));
+    },
+    enabled: enabled && !!orderId,
+    retry: 2,
+    initialFilter: { orderId },
+    staleTime: 30 * 1000, // 30 seconds for individual order
+  });
+
+  return {
+    getOrderInfoData: data,
+    getOrderInfoIsLoading: isLoading,
+    getOrderInfoError: ErrorHandler(error),
+    refetchOrderInfo: refetch,
+    setOrderInfoFilter: setFilter, // For setting orderId
+    isFetchingOrderInfo: isFetching,
+  };
+};
+
+export const useGetOrdersSummary = ({
+  enabled = true,
+  filter = {},
+} = {}) => {
+  const {
+    isFetched,
+    isLoading,
+    error,
+    data,
+    refetch,
+    isFetching,
+    setFilter,
+  } = useFetchItem({
+    queryKey: ["ordersSummary"],
+    queryFn: (params) => httpService.getData(routes.ordersSummary(), { params }),
+    enabled,
+    retry: 2,
+    initialFilter: filter,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  return {
+    getOrdersSummaryData: data,
+    getOrdersSummaryIsLoading: isLoading,
+    getOrdersSummaryError: ErrorHandler(error),
+    refetchOrdersSummary: refetch,
+    setOrdersSummaryFilter: setFilter, // Ensure this is available
+    isFetchingOrdersSummary: isFetching,
+  };
+};
+
+
+export const useGetOrderSummaryChart = ({
+  enabled = true,
+  timeframe = '5m',
+  filter = {},
+} = {}) => {
+  const {
+    isLoading,
+    error,
+    data,
+    refetch,
+    isFetching,
+    setFilter,
+  } = useFetchItem({
+    queryKey: ["orderSummaryChart"],
+    queryFn: (params) => httpService.getData(routes.orderSummaryChart(params?.timeframe)),
+    enabled,
+    retry: 2,
+    initialFilter: { timeframe, ...filter },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Process the data to ensure consistent structure
+  const processedData = data ? {
+    data: data.data || [],
+    summary: data.summary || {},
+    debug: data.debug || {}
+  } : null;
+
+  return {
+    orderSummary: processedData,
+    orderSummarySummary: processedData?.summary,
+    isOrderSummaryLoading: isLoading,
+    orderSummaryError: ErrorHandler(error),
+    refetchOrderSummary: refetch,
+    setOrderSummaryFilter: setFilter, // Ensure this is available
+    isFetchingOrderSummary: isFetching,
+    currentTimeframe: timeframe,
+  };
+};
+
+export const useGetOrdersAnalytics = ({
+  enabled = true,
+  filter = {},
+} = {}) => {
+  const {
+    isLoading,
+    error,
+    data,
+    refetch,
+    isFetching,
+    setFilter,
+  } = useFetchItem({
+    queryKey: ["ordersAnalytics"],
+    queryFn: (params) => httpService.getData(routes.ordersAnalytics(params)),
+    enabled,
+    retry: 2,
+    initialFilter: filter,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  return {
+    getOrdersAnalyticsData: data,
+    getOrdersAnalyticsIsLoading: isLoading,
+    getOrdersAnalyticsError: ErrorHandler(error),
+    refetchOrdersAnalytics: refetch,
+    setOrdersAnalyticsFilter: setFilter, // Ensure this is available
+    isFetchingOrdersAnalytics: isFetching,
+  };
+};
+
+
+export const useGetSalesData = ({
+  enabled = true,
+  year,
+  initialFilter = {},
+} = {}) => {
+  const {
+    isFetched,
+    isLoading,
+    error,
+    data,
+    refetch,
+    isFetching,
+    setFilter, // This comes from useFetchItem
+    pageNumber,
+    setPageNumber,
+    setPageSize,
+  } = useFetchItem({
+    queryKey: ['salesData'],
+    queryFn: (params) => {
+      // Construct the route with the year parameter
+      const routeWithParams = routes.salesData(params?.year || year);
+      return httpService.getData(routeWithParams);
+    },
+    enabled,
+    retry: 2,
+    initialFilter: { year: year || new Date().getFullYear(), ...initialFilter },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   return {
     isSalesLoading: isLoading,
     isFetchingSales: isFetching,
-    salesData: processedData,
-    salesYear: salesYear,
+    salesData: data,
+    salesYear: year || new Date().getFullYear(),
     salesError: ErrorHandler(error),
     refetchSales: refetch,
+    setSalesFilter: setFilter, // Now properly mapped from useFetchItem
+    // Additional utilities
+    currentFilters: initialFilter,
+    hasData: Boolean(data?.data),
   };
 };
 
-export const useGetOrderSummaryChart = ({ timeframe = '5m', enabled = true } = {}) => {
-  const {
-    data,
-    isLoading,
-    isFetching,
-    error,
-    refetch
-  } = useFetchItem({
-    queryKey: ['order-summary-chart', timeframe],
-    queryFn: () => httpService.getData(routes.orderSummaryChart(timeframe)),
-    enabled,
-    retry: 2,
-  });
-
-  return {
-    isOrderSummaryLoading: isLoading,
-    isFetchingOrderSummary: isFetching,
-    orderSummary: data?.data || [],
-    orderSummarySummary: data?.summary || {},
-    orderSummaryError: ErrorHandler(error),
-    refetchOrderSummary: refetch,
-  };
-};
