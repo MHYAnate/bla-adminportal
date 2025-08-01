@@ -8,16 +8,15 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
-  Legend,
   Line,
 } from "recharts"
 import html2canvas from "html2canvas"
 import { useState, useEffect, useRef } from "react"
-import { Calendar, Download } from "lucide-react"
+import { Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useGetSalesData } from "@/services/orders"
+import { useGetSalesData } from "@/services/orders" // Your existing JS hook
 
-// Define types for the data
+// Define types for the hook's return value
 interface SalesDataItem {
   month: string;
   individual: number;
@@ -27,13 +26,17 @@ interface SalesDataItem {
 
 interface SalesDataResponse {
   data?: SalesDataItem[];
+  success?: boolean;
+  summary?: any;
+  debug?: any;
 }
 
-interface SalesChartHookReturn {
+interface UseSalesDataReturn {
   salesData?: SalesDataResponse;
   isSalesLoading: boolean;
   salesError?: Error;
   salesYear?: (params: { timeframe: string }) => void;
+  setSalesFilter?: (params: { timeframe: string }) => void;
 }
 
 const CustomLegend = () => (
@@ -52,49 +55,38 @@ const CustomLegend = () => (
 export default function SalesChart() {
   const chartRef = useRef<HTMLDivElement>(null)
   const [timeframe, setTimeframe] = useState<"3m" | "6m" | "12m">("6m")
-  const [compareMode, setCompareMode] = useState(false)
 
+  // Type the hook response
   const {
     salesData,
     isSalesLoading,
     salesError,
     salesYear,
-  } = useGetSalesData() as SalesChartHookReturn
+  } = useGetSalesData() as UseSalesDataReturn
 
-  const {
-    salesData: compareData,
-    salesYear: setCompareFilter,
-  } = useGetSalesData({ enabled: compareMode }) as SalesChartHookReturn
-
-  // Fetch main data
+  // Fetch data when timeframe changes
   useEffect(() => {
     if (salesYear) {
       salesYear({ timeframe })
     }
   }, [timeframe, salesYear])
 
-  // Fetch comparison data for 3m if compare mode is on
-  useEffect(() => {
-    if (compareMode && setCompareFilter) {
-      setCompareFilter({ timeframe: "3m" })
-    }
-  }, [compareMode, setCompareFilter])
-
-  const transform = (data: SalesDataItem[] = []) =>
-    data.map((item) => ({
+  // Transform data with proper typing
+  const transform = (data: SalesDataItem[] = []) => {
+    return data.map((item) => ({
       month: item.month,
       Individual: item.individual,
       "Business Owner": item.businessOwner,
-      Total: item.individual + item.businessOwner,
+      Total: (item.individual + item.businessOwner) || 0,
     }))
+  }
 
-  const mainData = transform(salesData?.data)
-  const comparison = compareMode ? transform(compareData?.data || []) : []
+  const mainData = salesData?.data ? transform(salesData.data) : []
 
+  // Calculate average line if data exists
   const avgLine = () => {
     if (!mainData.length) return null
-    const totalAvg =
-      mainData.reduce((sum, d) => sum + d.Total, 0) / mainData.length
+    const totalAvg = mainData.reduce((sum, d) => sum + (d.Total || 0), 0) / mainData.length
     return (
       <Line
         type="monotone"
@@ -109,11 +101,15 @@ export default function SalesChart() {
 
   const exportChart = async () => {
     if (!chartRef.current) return
-    const canvas = await html2canvas(chartRef.current)
-    const link = document.createElement("a")
-    link.download = `sales-chart-${Date.now()}.png`
-    link.href = canvas.toDataURL("image/png")
-    link.click()
+    try {
+      const canvas = await html2canvas(chartRef.current)
+      const link = document.createElement("a")
+      link.download = `sales-chart-${Date.now()}.png`
+      link.href = canvas.toDataURL("image/png")
+      link.click()
+    } catch (error) {
+      console.error("Error exporting chart:", error)
+    }
   }
 
   return (
@@ -123,7 +119,12 @@ export default function SalesChart() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-light text-gray-800">Sales</h1>
           <div className="flex items-center gap-2">
-            <Button onClick={exportChart} variant="ghost" size="icon">
+            <Button
+              onClick={exportChart}
+              variant="ghost"
+              size="icon"
+              disabled={isSalesLoading || !mainData.length}
+            >
               <Download className="w-5 h-5" />
             </Button>
           </div>
@@ -133,11 +134,15 @@ export default function SalesChart() {
         <div className="h-80" ref={chartRef}>
           {isSalesLoading ? (
             <div className="flex justify-center items-center h-full text-gray-500">
-              Loading...
+              Loading sales data...
             </div>
           ) : salesError ? (
             <div className="text-red-500 text-center">
               Failed to load sales data.
+            </div>
+          ) : !mainData.length ? (
+            <div className="flex justify-center items-center h-full text-gray-500">
+              No sales data available
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -163,9 +168,7 @@ export default function SalesChart() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "#9ca3af", fontSize: 14 }}
-                  tickFormatter={(value) =>
-                    `${(value / 1000).toFixed(0)},000`
-                  }
+                  tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                   domain={[0, "auto"]}
                 />
                 <Tooltip />
