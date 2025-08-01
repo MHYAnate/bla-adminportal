@@ -559,13 +559,13 @@ export const useGetAdmins = ({ enabled = true, filter = {} }) => {
   return {
     isFetchingAdmins: isFetching,
     isAdminsLoading: isLoading,
-    adminsData: data?.data?.data || [],
-    totalAdmins: data?.data?.pagination?.total || 0,
-    totalPages: data?.data?.pagination?.totalPages || 0,
-    currentPage: data?.data?.pagination?.currentPage || 1,
-    itemsPerPage: data?.data?.pagination?.itemsPerPage || 10,
-    hasNextPage: data?.data?.pagination?.hasNextPage || false,
-    hasPreviousPage: data?.data?.pagination?.hasPreviousPage || false,
+    adminsData: data?.data || [], // ✅ Fixed: removed extra .data
+    totalAdmins: data?.pagination?.total || 0, // ✅ Fixed: direct access to pagination
+    totalPages: data?.pagination?.totalPages || 0,
+    currentPage: data?.pagination?.currentPage || 1,
+    itemsPerPage: data?.pagination?.itemsPerPage || 10,
+    hasNextPage: data?.pagination?.hasNextPage || false,
+    hasPreviousPage: data?.pagination?.hasPreviousPage || false,
     adminsError: ErrorHandler(error),
     refetchAdmins: refetch,
     pageNumber,
