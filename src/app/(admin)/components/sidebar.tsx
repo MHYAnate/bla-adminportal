@@ -63,8 +63,8 @@ const AdminSidebar: React.FC = () => {
               <SidebarMenu className="mb-6">
                 <SidebarMenuItem
                   className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.DASHBOARD)
-                      ? "rounded-lg bg-warning text-[#FFEDEC]"
-                      : "text-[#111827]"
+                    ? "rounded-lg bg-warning text-[#FFEDEC]"
+                    : "text-[#111827]"
                     }`}
                 >
                   <SidebarMenuButton asChild className="p-0">
@@ -75,8 +75,8 @@ const AdminSidebar: React.FC = () => {
                       <h5 className="text-sm font-bold">Dashboard</h5>
                       <span
                         className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.DASHBOARD)
-                            ? "text-[#FFEDEC]"
-                            : "text-[#D0D0D0]"
+                          ? "text-[#FFEDEC]"
+                          : "text-[#D0D0D0]"
                           }`}
                       >
                         <DashboardIcon />
@@ -96,8 +96,8 @@ const AdminSidebar: React.FC = () => {
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
                         className={`flex w-full items-center gap-2 py-[17px] ${isOrdersActive
-                            ? "rounded-lg bg-warning text-[#FFEDEC]"
-                            : "text-[#111827]"
+                          ? "rounded-lg bg-warning text-[#FFEDEC]"
+                          : "text-[#111827]"
                           }`}
                         onDoubleClick={handleOrdersDoubleClick}
                       >
@@ -115,9 +115,9 @@ const AdminSidebar: React.FC = () => {
                           <Link
                             href={`${ROUTES.ADMIN.SIDEBAR.ORDERS}?status=delivered`}
                             className={`flex w-full items-center gap-2 rounded-lg py-[16px] px-[14px] text-base font-semibold ${path.startsWith(ROUTES.ADMIN.SIDEBAR.ORDERS) &&
-                                (new URLSearchParams(window?.location?.search || '').get('status') === 'delivered')
-                                ? "bg-warning text-[#FFEDEC]"
-                                : "text-[#111827]"
+                              (new URLSearchParams(window?.location?.search || '').get('status') === 'delivered')
+                              ? "bg-warning text-[#FFEDEC]"
+                              : "text-[#111827]"
                               }`}
                           >
                             Delivered
@@ -127,9 +127,9 @@ const AdminSidebar: React.FC = () => {
                           <Link
                             href={`${ROUTES.ADMIN.SIDEBAR.ORDERS}?status=ongoing`}
                             className={`flex w-full items-center gap-2 rounded-lg py-[16px] px-[14px] text-base font-semibold ${path.startsWith(ROUTES.ADMIN.SIDEBAR.ORDERS) &&
-                                (new URLSearchParams(window?.location?.search || '').get('status') === 'ongoing')
-                                ? "bg-warning text-[#FFEDEC]"
-                                : "text-[#111827]"
+                              (new URLSearchParams(window?.location?.search || '').get('status') === 'ongoing')
+                              ? "bg-warning text-[#FFEDEC]"
+                              : "text-[#111827]"
                               }`}
                           >
                             Ongoing
@@ -139,9 +139,9 @@ const AdminSidebar: React.FC = () => {
                           <Link
                             href={`${ROUTES.ADMIN.SIDEBAR.ORDERS}?status=cancelled`}
                             className={`flex w-full items-center gap-2 rounded-lg py-[16px] px-[14px] text-base font-semibold ${path.startsWith(ROUTES.ADMIN.SIDEBAR.ORDERS) &&
-                                (new URLSearchParams(window?.location?.search || '').get('status') === 'cancelled')
-                                ? "bg-warning text-[#FFEDEC]"
-                                : "text-[#111827]"
+                              (new URLSearchParams(window?.location?.search || '').get('status') === 'cancelled')
+                              ? "bg-warning text-[#FFEDEC]"
+                              : "text-[#111827]"
                               }`}
                           >
                             Cancelled
@@ -153,7 +153,6 @@ const AdminSidebar: React.FC = () => {
                 </Collapsible>
               </SidebarMenu>
 
-              {/* Other Sidebar Items */}
               {adminSidebarList.filter(item => item.sidebar !== "Orders").map((item) =>
                 item.child ? (
                   <SidebarMenu key={item.id} className="flex flex-col">
@@ -178,8 +177,8 @@ const AdminSidebar: React.FC = () => {
                                 <Link
                                   href={subItem.href}
                                   className={`flex w-full items-center gap-2 rounded-lg py-[16px] px-[14px] text-base font-semibold ${path.startsWith(subItem.href)
-                                      ? "bg-warning text-[#FFEDEC]"
-                                      : "text-[#111827]"
+                                    ? "bg-warning text-[#FFEDEC]"
+                                    : "text-[#111827]"
                                     }`}
                                 >
                                   {subItem.sidebar}
@@ -195,8 +194,8 @@ const AdminSidebar: React.FC = () => {
                   <SidebarMenu key={item.id}>
                     <SidebarMenuItem
                       className={`mb-0 ${path.startsWith(item.href)
-                          ? "rounded-lg bg-warning text-[#FFEDEC]"
-                          : "text-[#111827]"
+                        ? "rounded-lg bg-warning text-[#FFEDEC]"
+                        : "text-[#111827]"
                         }`}
                     >
                       <SidebarMenuButton asChild className="p-0">
@@ -206,8 +205,8 @@ const AdminSidebar: React.FC = () => {
                         >
                           <span
                             className={`${path.startsWith(item?.href)
-                                ? "text-[#FFEDEC] ps-2"
-                                : "text-[#D0D0D0]"
+                              ? "text-[#FFEDEC] ps-2"
+                              : "text-[#D0D0D0]"
                               }`}
                           >
                             {item.icon}
@@ -223,8 +222,8 @@ const AdminSidebar: React.FC = () => {
               <SidebarMenu className="mt-10">
                 <SidebarMenuItem
                   className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS)
-                      ? "rounded-lg bg-warning text-[#FFEDEC]"
-                      : "text-[#111827]"
+                    ? "rounded-lg bg-warning text-[#FFEDEC]"
+                    : "text-[#111827]"
                     }`}
                 >
                   <SidebarMenuButton asChild className="p-0">
@@ -234,8 +233,8 @@ const AdminSidebar: React.FC = () => {
                     >
                       <span
                         className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS)
-                            ? "text-[#FFEDEC]"
-                            : "text-[#D0D0D0]"
+                          ? "text-[#FFEDEC]"
+                          : "text-[#D0D0D0]"
                           }`}
                       >
                         <NotificationIcon />
@@ -248,8 +247,8 @@ const AdminSidebar: React.FC = () => {
               <SidebarMenu>
                 <SidebarMenuItem
                   className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.SETTINGS)
-                      ? "rounded-lg bg-warning text-[#FFEDEC]"
-                      : "text-[#111827]"
+                    ? "rounded-lg bg-warning text-[#FFEDEC]"
+                    : "text-[#111827]"
                     }`}
                 >
                   <SidebarMenuButton asChild className="p-0">
@@ -259,8 +258,8 @@ const AdminSidebar: React.FC = () => {
                     >
                       <span
                         className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.SETTINGS)
-                            ? "text-[#FFEDEC]"
-                            : "text-[#D0D0D0]"
+                          ? "text-[#FFEDEC]"
+                          : "text-[#D0D0D0]"
                           }`}
                       >
                         <SettingsIcon />
