@@ -66,7 +66,7 @@ const DataTable: React.FC<DataTableProps> = ({
   );
 
   // ✅ Updated to use the new hook API without callback parameter
-  const { deleteAdmin, isLoading: deleteAdminIsLoading } = useDeleteAdmin();
+  const { deleteAdminPayload: deleteAdmin, deleteAdminIsLoading } = useDeleteAdmin();
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
