@@ -50,7 +50,6 @@ const DataTable: React.FC<DataTableProps> = ({
     try {
       setUpdatingOrderId(orderId);
 
-      // Map frontend status to single backend enum value for updates
       const mapStatusForUpdate = (status: string): string => {
         switch (status.toLowerCase()) {
           case 'ongoing':
@@ -66,21 +65,20 @@ const DataTable: React.FC<DataTableProps> = ({
 
       const backendStatus = mapStatusForUpdate(newStatus);
 
-      console.log(`Updating order ${orderId} status from UI to:`, {
+      console.log(`Updating order ${orderId} status to:`, {
         frontendStatus: newStatus,
         backendStatus: backendStatus
       });
 
-      // FIXED: Use correct API call
-      const response = await httpService.putData({
-        status: backendStatus
-      }, routes.updateOrderStatus(orderId));
+      // ✅ FIXED: Use patchData instead of putData
+      const response = await httpService.patchData(
+        { status: backendStatus },
+        routes.updateOrderStatus(orderId)
+      );
 
       console.log('Status update response:', response);
-
       toast.success(`Order status updated to ${newStatus}`);
 
-      // Refresh the orders data
       if (onRefreshData) {
         onRefreshData();
       }
