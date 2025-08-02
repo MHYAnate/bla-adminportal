@@ -1,5 +1,3 @@
-// If you can't modify the hook, use this workaround in your page component:
-
 "use client";
 
 import { useEffect } from "react";
@@ -20,9 +18,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const router = useRouter();
   const { orderId } = params;
 
-  console.log('OrderDetailsPage rendered with orderId:', orderId);
+  console.log('🎯 OrderDetailsPage rendered with orderId:', orderId);
 
-  // ✅ Use the existing hook pattern without orderId parameter
+  // Use the existing hook pattern
   const {
     getOrderInfoData,
     getOrderInfoIsLoading,
@@ -31,20 +29,19 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     setOrderInfoFilter,
   } = useGetOrderInfo({
     enabled: !!orderId
-    // Don't pass orderId here since the hook doesn't accept it
   });
 
-  // ✅ Set the filter when component mounts or orderId changes
+  // Set the filter when component mounts or orderId changes
   useEffect(() => {
     if (orderId && setOrderInfoFilter) {
-      console.log('Setting order filter for orderId:', orderId);
+      console.log('📡 Setting order filter for orderId:', orderId);
       setOrderInfoFilter({ orderId });
     }
   }, [orderId, setOrderInfoFilter]);
 
   // Debug data changes
   useEffect(() => {
-    console.log('Order details page data state:', {
+    console.log('📊 Order details page data state:', {
       orderId,
       loading: getOrderInfoIsLoading,
       hasData: !!getOrderInfoData,
@@ -55,9 +52,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
   // Handle retry
   const handleRetry = () => {
-    console.log('Retrying order info fetch for orderId:', orderId);
+    console.log('🔄 Retrying order info fetch for orderId:', orderId);
     if (setOrderInfoFilter) {
-      setOrderInfoFilter({ orderId }); // Reset filter to trigger refetch
+      setOrderInfoFilter({ orderId });
     }
     if (refetchOrderInfo) {
       refetchOrderInfo();
@@ -85,10 +82,19 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   // Redirect if no orderId
   useEffect(() => {
     if (!orderId) {
-      console.error('No orderId provided, redirecting...');
+      console.error('❌ No orderId provided, redirecting...');
       router.push('/admin/orders');
     }
   }, [orderId, router]);
+
+  // Debug: Log when this page component is mounted
+  useEffect(() => {
+    console.log('🔧 OrderDetailsPage mounted:', {
+      orderId,
+      pathname: window.location.pathname,
+      href: window.location.href
+    });
+  }, [orderId]);
 
   // Show loading state
   if (getOrderInfoIsLoading) {
@@ -232,7 +238,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   }
 
   // Successfully loaded - render the order details component
-  console.log('Rendering OrderDetails component with data:', getOrderInfoData);
+  console.log('✅ Rendering OrderDetails component with data:', getOrderInfoData);
 
   return (
     <section>

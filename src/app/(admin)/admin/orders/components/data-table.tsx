@@ -92,20 +92,42 @@ const DataTable: React.FC<DataTableProps> = ({
   }, [onRefreshData]);
 
   // FIXED: Handle view order details with proper ID extraction
-  const handleViewOrder = useCallback((orderId: string) => {
+  const handleViewOrder = useCallback((orderId: string | number) => {
     if (!orderId) {
+      console.error("Invalid order ID for navigation:", orderId);
       toast.error("Invalid order ID");
       return;
     }
 
-    console.log('Navigating to order details with ID:', orderId);
-    console.log('Full navigation path:', `/admin/orders/${orderId}`);
+    // Convert to string and clean the ID
+    const cleanOrderId = String(orderId).replace('#', '').replace(/^0+/, '') || orderId;
 
-    // Test the navigation
-    router.push(`/admin/orders/${orderId}`);
+    console.log('🚀 Navigation Debug:', {
+      originalId: orderId,
+      cleanId: cleanOrderId,
+      targetPath: `/admin/orders/${cleanOrderId}`
+    });
 
-    // Add this to verify the navigation attempt
-    console.log('Navigation command executed');
+    try {
+      // Use window.location for debugging first
+      const targetUrl = `/admin/orders/${cleanOrderId}`;
+      console.log('Attempting navigation to:', targetUrl);
+
+      // Try router.push first
+      router.push(targetUrl);
+
+      // Backup navigation method if router fails
+      setTimeout(() => {
+        if (window.location.pathname === '/admin/orders') {
+          console.warn('Router.push failed, using window.location');
+          window.location.href = targetUrl;
+        }
+      }, 100);
+
+    } catch (error) {
+      console.error('Navigation error:', error);
+      toast.error('Failed to navigate to order details');
+    }
   }, [router]);
 
   // Memoize cell renderers to prevent unnecessary re-renders
@@ -308,20 +330,43 @@ const DataTable: React.FC<DataTableProps> = ({
 
     // FIXED: Only show View button with proper ID handling
     actions: (item: any) => {
-      // FIXED: Get the correct order ID
+      // FIXED: Get the correct order ID and ensure it's valid
       const orderId = item?.id || item?.orderId;
+
+      // Debug the ID extraction
+      console.log('Actions cell - Order ID extraction:', {
+        itemId: item?.id,
+        itemOrderId: item?.orderId,
+        finalId: orderId,
+        itemKeys: Object.keys(item || {})
+      });
+
+      if (!orderId) {
+        console.warn('No valid order ID found for item:', item);
+        return (
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 text-sm">No ID</span>
+          </div>
+        );
+      }
 
       return (
         <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              console.log('View button clicked for order:', orderId, 'Full item:', item);
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔥 View button clicked!', {
+                orderId,
+                event: 'click',
+                timestamp: new Date().toISOString()
+              });
               handleViewOrder(orderId);
             }}
             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1"
-            title="View Order Details"
+            title={`View Order Details for #${orderId}`}
           >
             <Eye className="w-4 h-4" />
             <span className="hidden sm:inline">View</span>
