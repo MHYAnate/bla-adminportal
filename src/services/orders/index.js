@@ -63,21 +63,21 @@ export const useGetOrderInfo = ({
   console.log('useGetOrderInfo called with:', { enabled, orderId });
 
   const {
-    isLoading,
-    error,
-    data,
-    refetch,
-    isFetching,
-    setFilter,
-  } = useFetchItem({
-    queryKey: ["orderInfo", orderId],
-    queryFn: async () => {
+  isLoading,
+  error,
+  data,
+  refetch,
+  isFetching,
+  setFilter,
+} = useFetchItem({
+  queryKey: ["orderInfo", orderId], // ✅ This is good
+  queryFn: async () => { // ✅ Remove params, use orderId directly
       console.log('useGetOrderInfo queryFn called with ID:', orderId);
       
-      // Return null if no orderId instead of throwing error
       if (!orderId) {
-        console.warn('No orderId provided to queryFn');
-        return null;
+        const error = new Error("Order ID is required");
+        console.error('useGetOrderInfo error:', error.message);
+        return Promise.reject(error);
       }
       
       try {
@@ -97,33 +97,18 @@ export const useGetOrderInfo = ({
         }
         
         console.error('❌ Unexpected API response structure:', response);
-        return null; // Return null instead of throwing
+        throw new Error('Invalid order data received from server');
         
       } catch (error) {
         console.error('❌ API call failed:', error);
-        throw error; // Still throw for actual network errors
+        throw error;
       }
     },
-    enabled: enabled && Boolean(orderId), // Only run when both enabled and orderId exist
-    retry: (failureCount, error) => {
-      // Don't retry if orderId is missing
-      if (!orderId) {
-        console.log('Not retrying because orderId is missing');
-        return false;
-      }
-      // Retry up to 2 times for network errors
-      if (failureCount < 2) {
-        console.log(`Retrying API call, attempt ${failureCount + 1}`);
-        return true;
-      }
-      return false;
-    },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
-    staleTime: 30 * 1000,
-    refetchOnMount: true,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: true,
-  });
+  enabled: Boolean(orderId), // ✅ Simplified condition
+  retry: 2,
+  initialFilter: { orderId },
+  staleTime: 30 * 1000,
+});
 
   // Memoize the processed data to prevent unnecessary re-renders
   const processedData = useMemo(() => {
@@ -159,13 +144,12 @@ export const useGetOrderInfo = ({
   useEffect(() => {
     console.log('useGetOrderInfo state changed:', {
       orderId,
-      enabled,
       loading: isLoading,
       hasData: !!processedData,
       error: error?.message || error,
       dataKeys: processedData ? Object.keys(processedData) : []
     });
-  }, [orderId, enabled, isLoading, processedData, error]);
+  }, [orderId, isLoading, processedData, error]);
 
   return {
     getOrderInfoData: processedData,
