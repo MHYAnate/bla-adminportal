@@ -2,7 +2,7 @@ import { routes } from "../api-routes"; // Import your existing routes
 import { ErrorHandler } from "../errorHandler";
 import httpService from "../httpService";
 import useFetchItem from "../useFetchItem";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 
 export const useGetOrders = ({
   enabled = true,
@@ -63,57 +63,44 @@ export const useGetOrderInfo = ({
   console.log('useGetOrderInfo called with:', { enabled, orderId });
 
   const {
-    isLoading,
-    error,
-    data,
-    refetch,
-    isFetching,
-    setFilter,
-  } = useFetchItem({
-    queryKey: ["orderInfo", orderId], // ✅ Include orderId in query key
-    queryFn: async (params) => {
-      // ✅ Use orderId from hook parameter, not from params
-      const id = orderId || params?.orderId;
+  isLoading,
+  error,
+  data,
+  refetch,
+  isFetching,
+  setFilter,
+} = useFetchItem({
+  queryKey: ["orderInfo", orderId], // ✅ This is good
+  queryFn: async (params) => {
+    const id = orderId || params?.orderId;
+    
+    if (!id) {
+      throw new Error("Order ID is required");
+    }
+    
+    try {
+      const response = await httpService.getData(routes.getOrderInfo(id));
       
-      console.log('useGetOrderInfo queryFn called with ID:', id);
-      
-      if (!id) {
-        const error = new Error("Order ID is required");
-        console.error('useGetOrderInfo error:', error.message);
-        return Promise.reject(error);
+      // Handle response structure properly
+      if (response?.success && response?.data) {
+        return response.data;
       }
       
-      try {
-        console.log('Fetching order details for ID:', id);
-        const response = await httpService.getData(routes.getOrderInfo(id));
-        
-        console.log('Raw API response for order details:', response);
-        
-        // FIXED: Handle the wrapped response structure
-        if (response && response.success && response.data) {
-          console.log('✅ Extracted order data from wrapped response');
-          return response.data; // Return just the order data
-        }
-        
-        // Fallback for direct data (if API structure changes)
-        if (response && response.id) {
-          console.log('✅ Using direct response data');
-          return response;
-        }
-        
-        console.error('❌ Unexpected API response structure:', response);
-        throw new Error('Invalid order data received from server');
-        
-      } catch (error) {
-        console.error('❌ API call failed:', error);
-        throw error;
+      if (response?.id) {
+        return response;
       }
-    },
-    enabled: enabled && !!orderId, // ✅ Only run when enabled and orderId exists
-    retry: 2,
-    initialFilter: { orderId }, // ✅ Set initial filter
-    staleTime: 30 * 1000, // 30 seconds for individual order
-  });
+      
+      throw new Error('Invalid response structure');
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  },
+  enabled: Boolean(orderId), // ✅ Simplified condition
+  retry: 2,
+  initialFilter: { orderId },
+  staleTime: 30 * 1000,
+});
 
   // Memoize the processed data to prevent unnecessary re-renders
   const processedData = useMemo(() => {

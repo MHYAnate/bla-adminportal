@@ -424,16 +424,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   useEffect(() => {
     console.log('🔧 OrderDetails: Setting up data fetch for orderId:', orderId);
 
-    if (orderId && setOrderInfoFilter) {
+    if (orderId) {
       console.log('📡 OrderDetails: Triggering data fetch with filter:', { orderId });
-      setOrderInfoFilter({ orderId });
-    } else {
-      console.warn('⚠️ OrderDetails: Missing orderId or setOrderInfoFilter:', {
-        orderId,
-        hasSetFilter: !!setOrderInfoFilter
-      });
+      // Don't call setOrderInfoFilter here if it's causing re-renders
     }
-  }, [orderId, setOrderInfoFilter]);
+  }, [orderId]);
 
 
   useEffect(() => {
