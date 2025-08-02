@@ -71,35 +71,42 @@ export const useGetOrderInfo = ({
   setFilter,
 } = useFetchItem({
   queryKey: ["orderInfo", orderId], // ✅ This is good
-  queryFn: async (params) => {
-    const id = orderId || params?.orderId;
-    
-    if (!id) {
-      throw new Error("Order ID is required");
-    }
-    
-    try {
-      const response = await httpService.getData(routes.getOrderInfo(id));
+  queryFn: async () => { // ✅ Remove params, use orderId directly
+      console.log('useGetOrderInfo queryFn called with ID:', orderId);
       
-      // Handle response structure properly
-      if (response?.success && response?.data) {
-        return response.data;
+      if (!orderId) {
+        const error = new Error("Order ID is required");
+        console.error('useGetOrderInfo error:', error.message);
+        return Promise.reject(error);
       }
       
-      if (response?.id) {
-        return response;
+      try {
+        console.log('Fetching order details for ID:', orderId);
+        const response = await httpService.getData(routes.getOrderInfo(orderId));
+        
+        console.log('Raw API response for order details:', response);
+        
+        if (response && response.success && response.data) {
+          console.log('✅ Extracted order data from wrapped response');
+          return response.data;
+        }
+        
+        if (response && response.id) {
+          console.log('✅ Using direct response data');
+          return response;
+        }
+        
+        console.error('❌ Unexpected API response structure:', response);
+        throw new Error('Invalid order data received from server');
+        
+      } catch (error) {
+        console.error('❌ API call failed:', error);
+        throw error;
       }
-      
-      throw new Error('Invalid response structure');
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
-    }
-  },
-  enabled: Boolean(orderId), // ✅ Simplified condition
-  retry: 2,
-  initialFilter: { orderId },
-  staleTime: 30 * 1000,
+    },
+ enabled: enabled && Boolean(orderId), // ✅ This should work now
+    retry: 2,
+    staleTime: 30 * 1000,
 });
 
   // Memoize the processed data to prevent unnecessary re-renders

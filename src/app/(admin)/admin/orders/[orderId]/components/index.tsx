@@ -353,8 +353,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     setOrderInfoFilter,
     refetchOrderInfo,
   } = useGetOrderInfo({
-    enabled: false // Start disabled, enable manually
-  });
+    enabled: Boolean(orderId),
+    orderId: orderId // ✅ Pass orderId directly
+  } as any);
 
   // Map backend status to frontend status
   const mapStatusToFrontend = useCallback((backendStatus: string): string => {
