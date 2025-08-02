@@ -1,3 +1,5 @@
+// If you can't modify the hook, use this workaround in your page component:
+
 "use client";
 
 import { useEffect } from "react";
@@ -20,25 +22,65 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
 
   console.log('OrderDetailsPage rendered with orderId:', orderId);
 
-  // FIXED: Remove orderId from the hook parameters since your service doesn't accept it
+  // ✅ Use the existing hook pattern without orderId parameter
   const {
     getOrderInfoData,
     getOrderInfoIsLoading,
     getOrderInfoError,
-    setOrderInfoFilter,
     refetchOrderInfo,
+    setOrderInfoFilter,
   } = useGetOrderInfo({
     enabled: !!orderId
-    // Removed orderId parameter since it's not in your service interface
+    // Don't pass orderId here since the hook doesn't accept it
   });
 
-  // Set the order filter when component mounts or orderId changes
+  // ✅ Set the filter when component mounts or orderId changes
   useEffect(() => {
     if (orderId && setOrderInfoFilter) {
       console.log('Setting order filter for orderId:', orderId);
       setOrderInfoFilter({ orderId });
     }
   }, [orderId, setOrderInfoFilter]);
+
+  // Debug data changes
+  useEffect(() => {
+    console.log('Order details page data state:', {
+      orderId,
+      loading: getOrderInfoIsLoading,
+      hasData: !!getOrderInfoData,
+      error: getOrderInfoError,
+      data: getOrderInfoData
+    });
+  }, [orderId, getOrderInfoData, getOrderInfoIsLoading, getOrderInfoError]);
+
+  // Handle retry
+  const handleRetry = () => {
+    console.log('Retrying order info fetch for orderId:', orderId);
+    if (setOrderInfoFilter) {
+      setOrderInfoFilter({ orderId }); // Reset filter to trigger refetch
+    }
+    if (refetchOrderInfo) {
+      refetchOrderInfo();
+    }
+  };
+
+  // Handle error message
+  const getErrorMessage = () => {
+    if (!getOrderInfoError) return "Failed to load order details";
+
+    if (typeof getOrderInfoError === 'string') {
+      return getOrderInfoError;
+    }
+
+    if (getOrderInfoError && typeof getOrderInfoError === 'object') {
+      const errorObj = getOrderInfoError as any;
+      if (errorObj.message) {
+        return String(errorObj.message);
+      }
+    }
+
+    return String(getOrderInfoError) || "Failed to load order details";
+  };
 
   // Redirect if no orderId
   useEffect(() => {
@@ -48,46 +90,7 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     }
   }, [orderId, router]);
 
-  // Debug data changes
-  useEffect(() => {
-    console.log('Order details page data state:', {
-      loading: getOrderInfoIsLoading,
-      hasData: !!getOrderInfoData,
-      error: getOrderInfoError,
-      data: getOrderInfoData
-    });
-  }, [getOrderInfoData, getOrderInfoIsLoading, getOrderInfoError]);
-
-  // Handle retry
-  const handleRetry = () => {
-    console.log('Retrying order info fetch...');
-    if (refetchOrderInfo) {
-      refetchOrderInfo();
-    }
-  };
-
-  // FIXED: Handle error message properly with proper type checking
-  const getErrorMessage = () => {
-    if (!getOrderInfoError) return "Failed to load order details";
-
-    // Handle different error types safely
-    if (typeof getOrderInfoError === 'string') {
-      return getOrderInfoError;
-    }
-
-    // Check if it's an object with message property
-    if (getOrderInfoError && typeof getOrderInfoError === 'object') {
-      const errorObj = getOrderInfoError as any; // Type assertion to avoid 'never' type
-      if (errorObj.message) {
-        return String(errorObj.message);
-      }
-    }
-
-    // Fallback - convert to string
-    return String(getOrderInfoError) || "Failed to load order details";
-  };
-
-  // Show loading state while fetching data
+  // Show loading state
   if (getOrderInfoIsLoading) {
     return (
       <section className="p-6">
@@ -103,7 +106,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                   <ArrowLeft className="w-4 h-4" />
                   Back to Orders
                 </Button>
-                <h1 className="text-2xl font-bold text-gray-800">Order Details</h1>
+                <h1 className="text-2xl font-bold text-gray-800">
+                  Loading Order #{orderId}
+                </h1>
               </div>
             </div>
             <div className="text-center py-12">
@@ -132,7 +137,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                   <ArrowLeft className="w-4 h-4" />
                   Back to Orders
                 </Button>
-                <h1 className="text-2xl font-bold text-gray-800">Order Details</h1>
+                <h1 className="text-2xl font-bold text-gray-800">
+                  Order #{orderId} - Error
+                </h1>
               </div>
             </div>
             <div className="text-center py-12">
@@ -169,33 +176,6 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     );
   }
 
-  // Show invalid ID state
-  if (!orderId) {
-    return (
-      <section className="p-6">
-        <Card className="bg-white">
-          <CardContent className="p-6 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-yellow-100 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5l-6.928-12c-.77-.833-2.694-.833-3.464 0l-6.928 12c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Invalid Order ID</h3>
-            <p className="text-gray-500 mb-4">The order ID provided is not valid.</p>
-            <Button
-              variant="outline"
-              onClick={() => router.push('/admin/orders')}
-              className="flex items-center gap-2 mx-auto"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to Orders
-            </Button>
-          </CardContent>
-        </Card>
-      </section>
-    );
-  }
-
   // Show empty data state
   if (!getOrderInfoData) {
     return (
@@ -212,7 +192,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
                   <ArrowLeft className="w-4 h-4" />
                   Back to Orders
                 </Button>
-                <h1 className="text-2xl font-bold text-gray-800">Order Details</h1>
+                <h1 className="text-2xl font-bold text-gray-800">
+                  Order #{orderId}
+                </h1>
               </div>
             </div>
             <div className="text-center py-12">
@@ -249,7 +231,9 @@ export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
     );
   }
 
-  // Render the order details component
+  // Successfully loaded - render the order details component
+  console.log('Rendering OrderDetails component with data:', getOrderInfoData);
+
   return (
     <section>
       <OrderDetails

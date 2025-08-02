@@ -60,6 +60,8 @@ export const useGetOrderInfo = ({
   enabled = true,
   orderId,
 } = {}) => {
+  console.log('useGetOrderInfo called with:', { enabled, orderId });
+
   const {
     isLoading,
     error,
@@ -68,31 +70,91 @@ export const useGetOrderInfo = ({
     isFetching,
     setFilter,
   } = useFetchItem({
-    queryKey: ["orderInfo", orderId],
-    queryFn: (params) => {
-      const id = params?.orderId || orderId;
-      if (!id) return Promise.reject(new Error("Order ID is required"));
-      return httpService.getData(routes.getOrderInfo(id));
+    queryKey: ["orderInfo", orderId], // ✅ Include orderId in query key
+    queryFn: async (params) => {
+      // ✅ Use orderId from hook parameter, not from params
+      const id = orderId || params?.orderId;
+      
+      console.log('useGetOrderInfo queryFn called with ID:', id);
+      
+      if (!id) {
+        const error = new Error("Order ID is required");
+        console.error('useGetOrderInfo error:', error.message);
+        return Promise.reject(error);
+      }
+      
+      try {
+        console.log('Fetching order details for ID:', id);
+        const response = await httpService.getData(routes.getOrderInfo(id));
+        
+        console.log('Raw API response for order details:', response);
+        
+        // FIXED: Handle the wrapped response structure
+        if (response && response.success && response.data) {
+          console.log('✅ Extracted order data from wrapped response');
+          return response.data; // Return just the order data
+        }
+        
+        // Fallback for direct data (if API structure changes)
+        if (response && response.id) {
+          console.log('✅ Using direct response data');
+          return response;
+        }
+        
+        console.error('❌ Unexpected API response structure:', response);
+        throw new Error('Invalid order data received from server');
+        
+      } catch (error) {
+        console.error('❌ API call failed:', error);
+        throw error;
+      }
     },
-    enabled: enabled && !!orderId,
+    enabled: enabled && !!orderId, // ✅ Only run when enabled and orderId exists
     retry: 2,
-    initialFilter: { orderId },
+    initialFilter: { orderId }, // ✅ Set initial filter
     staleTime: 30 * 1000, // 30 seconds for individual order
   });
 
   // Memoize the processed data to prevent unnecessary re-renders
   const processedData = useMemo(() => {
-    if (!data) return null;
+    if (!data) {
+      console.log('No order data to process');
+      return null;
+    }
     
-    return {
+    console.log('Processing order data:', data);
+    
+    const processed = {
       ...data,
       // Ensure arrays are properly initialized
       items: Array.isArray(data.items) ? data.items : [],
+      timeline: Array.isArray(data.timeline) ? data.timeline : [],
       // Ensure nested objects exist
       user: data.user || {},
       breakdown: data.breakdown || {},
+      shipping: data.shipping || null,
+      summary: data.summary || {},
+      // Ensure we have the basic order info
+      id: data.id || orderId,
+      orderId: data.orderId || `#${String(data.id || orderId).padStart(6, '0')}`,
+      status: data.status || 'PENDING',
+      totalPrice: data.totalPrice || 0,
     };
-  }, [data]);
+    
+    console.log('✅ Processed order data:', processed);
+    return processed;
+  }, [data, orderId]);
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('useGetOrderInfo state changed:', {
+      orderId,
+      loading: isLoading,
+      hasData: !!processedData,
+      error: error?.message || error,
+      dataKeys: processedData ? Object.keys(processedData) : []
+    });
+  }, [orderId, isLoading, processedData, error]);
 
   return {
     getOrderInfoData: processedData,
@@ -101,6 +163,9 @@ export const useGetOrderInfo = ({
     refetchOrderInfo: refetch,
     setOrderInfoFilter: setFilter,
     isFetchingOrderInfo: isFetching,
+    // Additional debugging info
+    rawData: data,
+    hasOrderId: !!orderId,
   };
 };
 
