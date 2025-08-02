@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { useGetOrderInfo } from "@/services/orders";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+// @ts-ignore - Import your services (adjust paths as needed)
+import httpService from "@/services/httpService";
+// @ts-ignore - Import your routes (adjust paths as needed) 
+import { routes } from "@/services/api-routes";
 import {
   ArrowLeft,
   Edit,
@@ -307,45 +311,24 @@ const OrderTrackingModal = ({
   );
 };
 
-// Type definitions
+// Type definitions with more flexible typing
 interface OrderStatus {
   variant: 'default' | 'secondary' | 'destructive' | 'outline';
   text: string;
 }
 
-interface TimelineEvent {
-  id: number;
-  orderId: number;
-  action: string;
-  status: string;
-  details?: any;
-  createdAt: string;
+interface StatusTransition {
+  value: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
 }
 
-interface OrderItem {
-  id: number;
-  productId: number;
-  quantity: number;
-  price: number;
-  selectedOption: string;
-  status: string;
-  product?: {
-    id: number;
-    name: string;
-    shortDescription?: string;
-    description?: string;
-    processingTimeDays?: number;
-    acceptsReturns?: boolean;
-    category?: { id: number; name: string };
-    manufacturer?: { id: number; name: string };
-  };
-}
-
-// Updated interface to match your actual data structure
+// Flexible order data type to handle your backend structure
 interface OrderData {
   id: any;
   orderId?: any;
-  status: any;
+  status: string;
   totalPrice: any;
   createdAt?: string;
   updatedAt?: string;
@@ -361,12 +344,12 @@ interface OrderData {
     profile?: any;
     businessProfile?: any;
   };
-  items: any[];
-  timeline: any[];
+  items?: any[];
+  timeline?: any[];
   shipping?: any;
   breakdown?: any;
   summary?: any;
-  [key: string]: any; // Allow additional properties
+  [key: string]: any;
 }
 
 // Main Order Details Component
@@ -385,7 +368,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const {
     getOrderInfoData: rawData,
@@ -396,6 +378,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     enabled: Boolean(orderId),
     orderId: orderId
   } as any);
+
+  // State for updating status
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   // Handle product view
   const handleViewProduct = useCallback((product: any) => {
@@ -417,27 +402,42 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     }
   }, [setClose, router]);
 
-  // Handle status update
+  // Handle status update using your existing httpService
   const handleStatusUpdate = useCallback(async (newStatus: string) => {
+    if (!orderId) {
+      console.error('No order ID available');
+      return;
+    }
+
     setIsUpdatingStatus(true);
+
     try {
-      // Here you would call your API to update the order status
-      // Example: await updateOrderStatus(orderId, newStatus);
       console.log(`Updating order ${orderId} to status: ${newStatus}`);
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Use your existing httpService and routes
+      const response = await (httpService as any).patchData(
+        {
+          status: newStatus,
+          notes: `Status updated to ${newStatus} via admin panel`
+        },
+        (routes as any).updateOrderStatus(orderId)
+      );
+
+      console.log('✅ Order status update response:', response);
 
       // Refresh the order data
       if (refetchOrderInfo) {
-        refetchOrderInfo();
+        await refetchOrderInfo();
       }
 
-      // You could also show a success toast here
-      alert(`Order status updated to ${newStatus}`);
-    } catch (error) {
-      console.error('Failed to update order status:', error);
-      alert('Failed to update order status');
+      console.log(`✅ Order ${orderId} successfully updated to ${newStatus}`);
+
+      // Show success message
+      alert(`Order status successfully updated to ${newStatus}`);
+
+    } catch (error: any) {
+      console.error('❌ Failed to update order status:', error);
+      alert(`Failed to update order status: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsUpdatingStatus(false);
     }
@@ -503,8 +503,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   };
 
   // Get available status transitions based on current status
-  const getAvailableStatusTransitions = (currentStatus: string) => {
-    const statusTransitions: Record<string, Array<{ value: string, label: string, icon: any, color: string }>> = {
+  const getAvailableStatusTransitions = (currentStatus: string): StatusTransition[] => {
+    const statusTransitions: Record<string, StatusTransition[]> = {
       'PENDING': [
         { value: 'PROCESSING', label: 'Start Processing', icon: Package, color: 'text-blue-600' },
         { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
@@ -593,7 +593,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                     No status changes available
                   </div>
                 ) : (
-                  availableTransitions.map((transition) => {
+                  availableTransitions.map((transition: StatusTransition) => {
                     const IconComponent = transition.icon;
                     return (
                       <DropdownMenuItem
@@ -688,20 +688,20 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {order.timeline?.map((event: TimelineEvent, index: number) => (
+                  {order.timeline?.map((event: any, index: number) => (
                     <div key={index} className="flex gap-3">
                       <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
                         <Package className="w-4 h-4 text-white" />
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
-                          <h4 className="font-medium">{(event as any).action?.replace?.(/_/g, ' ') || 'Order Update'}</h4>
+                          <h4 className="font-medium">{event?.action?.replace?.(/_/g, ' ') || 'Order Update'}</h4>
                           <span className="text-sm text-gray-500">
-                            {formatDateTime((event as any).createdAt || orderCreatedAt)}
+                            {formatDateTime(event?.createdAt || orderCreatedAt)}
                           </span>
                         </div>
                         <p className="text-sm text-gray-600">
-                          {(event as any).details?.description || "Order status updated"}
+                          {event?.details?.description || "Order status updated"}
                         </p>
                       </div>
                     </div>
