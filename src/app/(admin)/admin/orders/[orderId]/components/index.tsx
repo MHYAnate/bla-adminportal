@@ -218,10 +218,10 @@ const OrderTrackingModal = ({
                   {/* Step icon */}
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 border-white shadow-sm ${step.status === "completed"
-                      ? "bg-green-500 text-white"
-                      : step.status === "current"
-                        ? "bg-yellow-500 text-white"
-                        : "bg-gray-200 text-gray-400"
+                        ? "bg-green-500 text-white"
+                        : step.status === "current"
+                          ? "bg-yellow-500 text-white"
+                          : "bg-gray-200 text-gray-400"
                       }`}
                   >
                     {step.icon}
@@ -230,8 +230,8 @@ const OrderTrackingModal = ({
                   {/* Step label */}
                   <span
                     className={`text-xs text-center font-medium max-w-20 ${step.status === "completed" || step.status === "current"
-                      ? "text-gray-800"
-                      : "text-gray-400"
+                        ? "text-gray-800"
+                        : "text-gray-400"
                       }`}
                   >
                     {step.name}
@@ -375,23 +375,22 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     getOrderInfoError,
     refetchOrderInfo,
   } = useGetOrderInfo({
-    enabled: true, // Always enable, let the hook handle the orderId check internally
+    enabled: Boolean(orderId),
     orderId: orderId
   } as any);
 
   // State for updating status
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [hasInitialLoad, setHasInitialLoad] = useState(false);
 
-  // Add useEffect to debug and ensure orderId is available
+  // Track initial load completion
   useEffect(() => {
-    console.log('🔍 OrderDetails Debug:', {
-      orderId,
-      hasOrderId: Boolean(orderId),
-      loading: getOrderInfoIsLoading,
-      hasData: Boolean(rawData),
-      error: getOrderInfoError
-    });
-  }, [orderId, getOrderInfoIsLoading, rawData, getOrderInfoError]);
+    if (!getOrderInfoIsLoading && (rawData || getOrderInfoError)) {
+      setHasInitialLoad(true);
+    }
+  }, [getOrderInfoIsLoading, rawData, getOrderInfoError]);
+
+  // Handle product view
   const handleViewProduct = useCallback((product: any) => {
     setSelectedProduct(product);
     setProductModalOpen(true);
@@ -458,35 +457,39 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   }, [isModal, setClose, router, orderId]);
 
   const handleRetry = useCallback(() => {
+    console.log('🔄 Retrying order data fetch...');
+    setHasInitialLoad(false);
     if (refetchOrderInfo) {
       refetchOrderInfo();
     }
   }, [refetchOrderInfo]);
 
-  // Enhanced loading and error handling
-  if (getOrderInfoIsLoading && !rawData) {
+  // Don't show error immediately - give it time to load on first render
+  if (getOrderInfoIsLoading && !hasInitialLoad) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-lg font-medium">Loading order details...</p>
-          <p className="text-sm text-gray-500">Order #{orderId}</p>
+          <p className="text-sm text-gray-500 mt-2">Order #{orderId}</p>
         </div>
       </div>
     );
   }
 
-  // Show error state only if there's actually an error AND no data
-  if ((getOrderInfoError || !rawData) && !getOrderInfoIsLoading) {
+  // Only show error after initial load attempt or if we have tried before
+  if ((getOrderInfoError && hasInitialLoad) || (getOrderInfoError && !getOrderInfoIsLoading && !rawData)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="w-8 h-8 text-red-500" />
+            <AlertCircle className="w-8 h-8 text-red-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Order</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Error Loading Order
+          </h2>
           <p className="text-gray-600 mb-6">
-            {getOrderInfoError || "We couldn't load the order details. This might be a temporary issue."}
+            {getOrderInfoError || "Unable to load order details. Please try again."}
           </p>
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={handleClose}>
@@ -497,19 +500,47 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               Try Again
             </Button>
           </div>
-          <p className="text-sm text-gray-500 mt-4">Order ID: {orderId}</p>
         </div>
       </div>
     );
   }
 
-  // If we have data, proceed with rendering even if there might be a minor error
-  if (!rawData && !getOrderInfoIsLoading) {
+  // Show loading if still loading and no data
+  if (getOrderInfoIsLoading && !rawData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p>Initializing...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-lg font-medium">Loading order details...</p>
+          <p className="text-sm text-gray-500 mt-2">Order #{orderId}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no data after loading, show empty state
+  if (!rawData && hasInitialLoad) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Package className="w-8 h-8 text-gray-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Order Not Found
+          </h2>
+          <p className="text-gray-600 mb-6">
+            The order #{orderId} could not be found or you don't have permission to view it.
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="outline" onClick={handleClose}>
+              {isModal ? "Close" : "Go Back"}
+            </Button>
+            <Button onClick={handleRetry} className="bg-orange-500 hover:bg-orange-600">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -733,8 +764,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                     ].map((step, index) => (
                       <div key={index} className="flex flex-col items-center">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${step.status === "completed" ? "bg-green-500 text-white" :
-                          step.status === "current" ? "bg-yellow-500 text-white" :
-                            "bg-gray-200 text-gray-500"
+                            step.status === "current" ? "bg-yellow-500 text-white" :
+                              "bg-gray-200 text-gray-500"
                           }`}>
                           {step.status === "completed" ? <CheckCircle className="w-4 h-4" /> :
                             step.status === "current" ? <Clock className="w-4 h-4" /> :
