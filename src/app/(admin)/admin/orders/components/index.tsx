@@ -418,6 +418,18 @@ export default function Orders() {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (data?.data && Array.isArray(data.data) && data.data.length > 0) {
+      const uniqueStatuses = [...new Set(data.data.map(order => order?.status).filter(Boolean))];
+      console.log('🔍 Actual backend status values:', uniqueStatuses);
+
+      // Test each status mapping
+      uniqueStatuses.forEach(status => {
+        console.log(`Status "${status}" maps to frontend: "${mapStatusToFrontend(status)}"`);
+      });
+    }
+  }, [data, mapStatusToFrontend]);
+
   // Debug filter changes
   useEffect(() => {
     console.log('Status filter changed:', {

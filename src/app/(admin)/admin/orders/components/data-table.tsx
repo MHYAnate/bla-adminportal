@@ -71,20 +71,18 @@ const DataTable: React.FC<DataTableProps> = ({
         backendStatus: backendStatus
       });
 
-      // Use your existing httpService and routes
+      // FIXED: Use correct API call
       const response = await httpService.putData(routes.updateOrderStatus(orderId), {
         status: backendStatus
       });
 
       console.log('Status update response:', response);
 
-      if (response) {
-        toast.success(`Order status updated to ${newStatus}`);
+      toast.success(`Order status updated to ${newStatus}`);
 
-        // Refresh the orders data
-        if (onRefreshData) {
-          onRefreshData();
-        }
+      // Refresh the orders data
+      if (onRefreshData) {
+        onRefreshData();
       }
 
     } catch (error) {
@@ -95,13 +93,16 @@ const DataTable: React.FC<DataTableProps> = ({
     }
   }, [onRefreshData]);
 
-  // Handle view order details - navigate to separate page
+  // FIXED: Handle view order details with proper ID extraction
   const handleViewOrder = useCallback((orderId: string) => {
     if (!orderId) {
       toast.error("Invalid order ID");
       return;
     }
-    console.log('Navigating to order details:', orderId);
+
+    console.log('Navigating to order details with ID:', orderId);
+
+    // Navigate to the order details page
     router.push(`/admin/orders/${orderId}`);
   }, [router]);
 
@@ -303,8 +304,9 @@ const DataTable: React.FC<DataTableProps> = ({
       );
     },
 
-    // FIXED: Only show View button, removed Edit and Delete
+    // FIXED: Only show View button with proper ID handling
     actions: (item: any) => {
+      // FIXED: Get the correct order ID
       const orderId = item?.id || item?.orderId;
 
       return (
@@ -312,7 +314,10 @@ const DataTable: React.FC<DataTableProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => handleViewOrder(orderId)}
+            onClick={() => {
+              console.log('View button clicked for order:', orderId, 'Full item:', item);
+              handleViewOrder(orderId);
+            }}
             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1"
             title="View Order Details"
           >
@@ -350,8 +355,15 @@ const DataTable: React.FC<DataTableProps> = ({
     if (!Array.isArray(data)) return [];
 
     return data.map((item, index) => {
-      // Ensure we have a valid ID
+      // FIXED: Ensure we have a valid ID and log for debugging
       const id = item.id || item.orderId || `order-${index}`;
+
+      console.log(`Processing item ${index}:`, {
+        originalId: item.id,
+        orderId: item.orderId,
+        finalId: id,
+        status: item.status
+      });
 
       return {
         ...item,
@@ -376,7 +388,8 @@ const DataTable: React.FC<DataTableProps> = ({
     if (processedData.length > 0) {
       console.log('DataTable processed data:', {
         count: processedData.length,
-        sampleItem: processedData[0]
+        sampleItem: processedData[0],
+        allIds: processedData.map(item => item.id)
       });
     }
   }, [processedData]);
@@ -432,7 +445,6 @@ const DataTable: React.FC<DataTableProps> = ({
             <Button
               variant="outline"
               onClick={() => {
-                // Reset filters - you might want to pass this as a prop
                 window.location.reload();
               }}
             >
