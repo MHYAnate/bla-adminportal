@@ -25,7 +25,10 @@ import {
   Circle,
   Clock,
   AlertCircle,
-  X
+  X,
+  ChevronDown,
+  AlertTriangle,
+  ShoppingCart
 } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +38,14 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 // Product Details Modal Component
 const ProductDetailsModal = ({
@@ -374,6 +385,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const {
     getOrderInfoData: rawData,
@@ -404,6 +416,32 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       router.back();
     }
   }, [setClose, router]);
+
+  // Handle status update
+  const handleStatusUpdate = useCallback(async (newStatus: string) => {
+    setIsUpdatingStatus(true);
+    try {
+      // Here you would call your API to update the order status
+      // Example: await updateOrderStatus(orderId, newStatus);
+      console.log(`Updating order ${orderId} to status: ${newStatus}`);
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Refresh the order data
+      if (refetchOrderInfo) {
+        refetchOrderInfo();
+      }
+
+      // You could also show a success toast here
+      alert(`Order status updated to ${newStatus}`);
+    } catch (error) {
+      console.error('Failed to update order status:', error);
+      alert('Failed to update order status');
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  }, [orderId, refetchOrderInfo]);
 
   const handleEditOrder = useCallback(() => {
     if (isModal && setClose) setClose(false);
@@ -464,6 +502,31 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     return statusMap[status] || { variant: 'secondary' as const, text: status };
   };
 
+  // Get available status transitions based on current status
+  const getAvailableStatusTransitions = (currentStatus: string) => {
+    const statusTransitions: Record<string, Array<{ value: string, label: string, icon: any, color: string }>> = {
+      'PENDING': [
+        { value: 'PROCESSING', label: 'Start Processing', icon: Package, color: 'text-blue-600' },
+        { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
+      ],
+      'PROCESSING': [
+        { value: 'SHIPPED', label: 'Mark as Shipped', icon: Truck, color: 'text-purple-600' },
+        { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
+      ],
+      'SHIPPED': [
+        { value: 'DELIVERED', label: 'Mark as Delivered', icon: CheckCircle, color: 'text-green-600' }
+      ],
+      'DELIVERED': [
+        { value: 'COMPLETED', label: 'Complete Order', icon: CheckCircle, color: 'text-green-600' }
+      ],
+      'CANCELLED': [],
+      'COMPLETED': []
+    };
+
+    return statusTransitions[currentStatus] || [];
+  };
+
+  const availableTransitions = getAvailableStatusTransitions(order.status);
   const statusInfo = getStatusBadge(order.status);
 
   return (
@@ -491,13 +554,70 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               <Truck className="w-4 h-4" />
               Track order
             </Button>
-            <Button
-              onClick={handleEditOrder}
-              className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2"
-            >
-              <Edit className="w-4 h-4" />
-              Edit order
-            </Button>
+
+            {/* Status Update Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2"
+                  disabled={isUpdatingStatus || availableTransitions.length === 0}
+                >
+                  {isUpdatingStatus ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Edit className="w-4 h-4" />
+                      Update Progress
+                      <ChevronDown className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4" />
+                  Update Order Status
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                <div className="px-2 py-1.5 text-xs text-gray-500">
+                  Current: <span className="font-medium text-gray-700">{statusInfo.text}</span>
+                </div>
+                <DropdownMenuSeparator />
+
+                {availableTransitions.length === 0 ? (
+                  <div className="px-2 py-2 text-sm text-gray-500 italic">
+                    No status changes available
+                  </div>
+                ) : (
+                  availableTransitions.map((transition) => {
+                    const IconComponent = transition.icon;
+                    return (
+                      <DropdownMenuItem
+                        key={transition.value}
+                        onClick={() => handleStatusUpdate(transition.value)}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <IconComponent className={`w-4 h-4 ${transition.color}`} />
+                        <span>{transition.label}</span>
+                      </DropdownMenuItem>
+                    );
+                  })
+                )}
+
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => alert('Advanced edit options would go here')}
+                  className="flex items-center gap-2 cursor-pointer"
+                >
+                  <Edit className="w-4 h-4 text-gray-600" />
+                  <span>Advanced Edit...</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 
