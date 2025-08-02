@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useEffect, useMemo, useCallback, useState } from "react";
 import Image from "next/image";
 import {
   CallIcon,
@@ -9,7 +12,6 @@ import OrderItemCard from "@/components/order-item";
 import { Button } from "@/components/ui/button";
 import { useGetOrderInfo } from "@/services/orders";
 import { formatDate, formatDateTime } from "@/lib/utils";
-import React, { useEffect, useMemo, useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Edit, RefreshCw, Truck, Calendar, Eye } from "lucide-react";
 import { IOrderItem } from "@/types";
@@ -351,7 +353,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     setOrderInfoFilter,
     refetchOrderInfo,
   } = useGetOrderInfo({
-    enabled: !!orderId // ✅ Enable only when orderId exists
+    enabled: false // Start disabled, enable manually
   });
 
   // Map backend status to frontend status
@@ -375,6 +377,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 
   // Type the data properly and provide defaults
   const data: OrderData | null = useMemo(() => {
+    console.log('🔄 Processing rawData:', rawData);
+
     if (!rawData) return null;
 
     const hasFullOrderData = (obj: any): obj is OrderData => {
@@ -421,15 +425,15 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     console.log('🔧 OrderDetails: Setting up data fetch for orderId:', orderId);
 
     if (orderId && setOrderInfoFilter) {
-      console.log('📡 OrderDetails: Triggering data fetch with filter:', orderFilter);
-      setOrderInfoFilter(orderFilter);
+      console.log('📡 OrderDetails: Triggering data fetch with filter:', { orderId });
+      setOrderInfoFilter({ orderId });
     } else {
       console.warn('⚠️ OrderDetails: Missing orderId or setOrderInfoFilter:', {
         orderId,
         hasSetFilter: !!setOrderInfoFilter
       });
     }
-  }, [orderId, setOrderInfoFilter, orderFilter]);
+  }, [orderId, setOrderInfoFilter]);
 
 
   useEffect(() => {
@@ -462,7 +466,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       productId: item.product?.id?.toString() || `item-${index}`,
       category: item.product?.category?.name || "No Category",
       brand: item.product?.manufacturer?.name || "No Brand",
-      onView: handleOpenTrackingModal, // Add view handler for tracking modal
+      onView: handleOpenTrackingModal,
     }));
   }, [data?.items, data?.status, mapStatusToFrontend, handleOpenTrackingModal]);
 
@@ -516,18 +520,18 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const handleRetry = useCallback(() => {
     console.log('🔄 OrderDetails: Retrying data fetch for orderId:', orderId);
     if (orderId && setOrderInfoFilter) {
-      setOrderInfoFilter(orderFilter);
+      setOrderInfoFilter({ orderId });
     }
     if (refetchOrderInfo) {
       refetchOrderInfo();
     }
-  }, [orderId, setOrderInfoFilter, orderFilter, refetchOrderInfo]);
+  }, [orderId, setOrderInfoFilter, refetchOrderInfo]);
 
   if (getOrderInfoIsLoading) {
     return (
       <div className="p-6 text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
-        <p>Loading order details...</p>
+        <p>Loading order details for #{orderId}...</p>
       </div>
     );
   }
@@ -555,6 +559,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       </div>
     );
   }
+
+  console.log('✅ OrderDetails rendering with data:', data);
 
   const customer = data.user;
   const profile = customer?.profile || customer?.businessProfile;
