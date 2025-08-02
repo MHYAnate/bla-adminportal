@@ -489,6 +489,47 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const orderCreatedAt = order.createdAt || (rawData as any)?.createdAt || new Date().toISOString();
   const orderPaymentStatus = order.paymentStatus || (rawData as any)?.paymentStatus || 'PENDING';
 
+  // Find shipping address from multiple possible sources
+  const getShippingAddress = useCallback(() => {
+    // First try to find in timeline - look for ORDER_CREATED event specifically
+    const orderCreatedEvent = order.timeline?.find((event: any) =>
+      event?.action === 'ORDER_CREATED' && event?.details?.shippingAddress
+    );
+
+    if (orderCreatedEvent?.details?.shippingAddress) {
+      return orderCreatedEvent.details.shippingAddress;
+    }
+
+    // Fallback: try first timeline entry with shipping address
+    const timelineWithAddress = order.timeline?.find((event: any) =>
+      event?.details?.shippingAddress
+    );
+
+    if (timelineWithAddress?.details?.shippingAddress) {
+      return timelineWithAddress.details.shippingAddress;
+    }
+
+    // Fallback: try direct shipping address on order
+    if ((rawData as any)?.shippingAddress) {
+      return (rawData as any).shippingAddress;
+    }
+
+    // Fallback: try user profile address
+    if (order.user?.profile?.address || order.user?.businessProfile?.businessAddress) {
+      return {
+        fullAddress: order.user?.profile?.address || order.user?.businessProfile?.businessAddress,
+        city: 'N/A',
+        stateProvince: 'N/A',
+        country: 'N/A',
+        postalCode: 'N/A'
+      };
+    }
+
+    return null;
+  }, [order.timeline, rawData, order.user]);
+
+  const shippingAddress = getShippingAddress();
+
   // Get status color and text
   const getStatusBadge = (status: string): OrderStatus => {
     const statusMap: Record<string, OrderStatus> = {
@@ -788,39 +829,25 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   <div>
                     <p className="text-sm text-gray-500">Primary address</p>
                     <p className="font-medium">
-                      {order.timeline?.[0]?.details?.shippingAddress?.fullAddress ||
-                        (rawData as any)?.shippingAddress?.fullAddress ||
-                        "Address not available"}
+                      {shippingAddress?.fullAddress || "Address not available"}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-gray-500">City</p>
-                      <p className="font-medium">
-                        {order.timeline?.[0]?.details?.shippingAddress?.city ||
-                          (rawData as any)?.shippingAddress?.city || "N/A"}
-                      </p>
+                      <p className="font-medium">{shippingAddress?.city || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">State/Province</p>
-                      <p className="font-medium">
-                        {order.timeline?.[0]?.details?.shippingAddress?.stateProvince ||
-                          (rawData as any)?.shippingAddress?.stateProvince || "N/A"}
-                      </p>
+                      <p className="font-medium">{shippingAddress?.stateProvince || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Country</p>
-                      <p className="font-medium">
-                        {order.timeline?.[0]?.details?.shippingAddress?.country ||
-                          (rawData as any)?.shippingAddress?.country || "N/A"}
-                      </p>
+                      <p className="font-medium">{shippingAddress?.country || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Post Code</p>
-                      <p className="font-medium">
-                        {order.timeline?.[0]?.details?.shippingAddress?.postalCode ||
-                          (rawData as any)?.shippingAddress?.postalCode || "N/A"}
-                      </p>
+                      <p className="font-medium">{shippingAddress?.postalCode || "N/A"}</p>
                     </div>
                   </div>
                 </div>
