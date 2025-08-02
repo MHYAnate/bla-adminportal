@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProductTableComponent } from "@/components/custom-table/productIndex";
 import { formatMoney } from "@/lib/utils";
-import { useMemo, useCallback, useState } from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,9 +13,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Eye, Edit, Trash2 } from "lucide-react";
+import { ChevronDown, Eye } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import httpService from "@/services/httpService";
+import { routes } from "@/services/api-routes";
 
 interface DataTableProps {
   data: any[];
@@ -26,6 +28,7 @@ interface DataTableProps {
   setPageSize: React.Dispatch<React.SetStateAction<string>>;
   loading: boolean;
   mapStatusToFrontend: (status: string) => string;
+  onRefreshData: () => void;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -37,25 +40,52 @@ const DataTable: React.FC<DataTableProps> = ({
   setPageSize,
   loading,
   mapStatusToFrontend,
+  onRefreshData,
 }) => {
   const router = useRouter();
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
-  // Handle status change - placeholder for now
+  // FIXED: Handle status change with proper API call
   const handleStatusChange = useCallback(async (orderId: string, newStatus: string) => {
     try {
       setUpdatingOrderId(orderId);
 
-      // Here you would make the API call to update the status
-      // const response = await updateOrderStatus({ orderId, status: newStatus });
+      // Map frontend status to single backend enum value for updates
+      const mapStatusForUpdate = (status: string): string => {
+        switch (status.toLowerCase()) {
+          case 'ongoing':
+            return 'PROCESSING';
+          case 'delivered':
+            return 'DELIVERED';
+          case 'cancelled':
+            return 'CANCELLED';
+          default:
+            return 'PROCESSING';
+        }
+      };
 
-      // For now, just simulate the call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const backendStatus = mapStatusForUpdate(newStatus);
 
-      toast.success(`Order status updated to ${newStatus}`);
+      console.log(`Updating order ${orderId} status from UI to:`, {
+        frontendStatus: newStatus,
+        backendStatus: backendStatus
+      });
 
-      // Refresh the data or update locally
-      // refetch();
+      // Use your existing httpService and routes
+      const response = await httpService.putData(routes.updateOrderStatus(orderId), {
+        status: backendStatus
+      });
+
+      console.log('Status update response:', response);
+
+      if (response) {
+        toast.success(`Order status updated to ${newStatus}`);
+
+        // Refresh the orders data
+        if (onRefreshData) {
+          onRefreshData();
+        }
+      }
 
     } catch (error) {
       console.error('Error updating order status:', error);
@@ -63,7 +93,7 @@ const DataTable: React.FC<DataTableProps> = ({
     } finally {
       setUpdatingOrderId(null);
     }
-  }, []);
+  }, [onRefreshData]);
 
   // Handle view order details - navigate to separate page
   const handleViewOrder = useCallback((orderId: string) => {
@@ -71,27 +101,9 @@ const DataTable: React.FC<DataTableProps> = ({
       toast.error("Invalid order ID");
       return;
     }
+    console.log('Navigating to order details:', orderId);
     router.push(`/admin/orders/${orderId}`);
   }, [router]);
-
-  // Handle edit order
-  const handleEditOrder = useCallback((orderId: string) => {
-    if (!orderId) {
-      toast.error("Invalid order ID");
-      return;
-    }
-    router.push(`/admin/orders/${orderId}/edit`);
-  }, [router]);
-
-  // Handle delete order
-  const handleDeleteOrder = useCallback((orderId: string) => {
-    if (!orderId) {
-      toast.error("Invalid order ID");
-      return;
-    }
-    // For now, just show a message
-    toast.info("Delete functionality will be implemented soon");
-  }, []);
 
   // Memoize cell renderers to prevent unnecessary re-renders
   const cellRenderers = useMemo(() => ({
@@ -216,9 +228,9 @@ const DataTable: React.FC<DataTableProps> = ({
       const getVariant = (status: string) => {
         switch (status) {
           case 'delivered':
-            return 'default' as const; // Using 'default' instead of 'success'
+            return 'default' as const;
           case 'ongoing':
-            return 'secondary' as const; // Using 'secondary' instead of 'warning'
+            return 'secondary' as const;
           case 'cancelled':
             return 'destructive' as const;
           default:
@@ -291,6 +303,7 @@ const DataTable: React.FC<DataTableProps> = ({
       );
     },
 
+    // FIXED: Only show View button, removed Edit and Delete
     actions: (item: any) => {
       const orderId = item?.id || item?.orderId;
 
@@ -300,33 +313,16 @@ const DataTable: React.FC<DataTableProps> = ({
             variant="ghost"
             size="sm"
             onClick={() => handleViewOrder(orderId)}
-            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-            title="View Order"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1"
+            title="View Order Details"
           >
             <Eye className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleEditOrder(orderId)}
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-            title="Edit Order"
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleDeleteOrder(orderId)}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            title="Delete Order"
-          >
-            <Trash2 className="w-4 h-4" />
+            <span className="hidden sm:inline">View</span>
           </Button>
         </div>
       );
     },
-  }), [mapStatusToFrontend, updatingOrderId, handleStatusChange, handleViewOrder, handleEditOrder, handleDeleteOrder]);
+  }), [mapStatusToFrontend, updatingOrderId, handleStatusChange, handleViewOrder]);
 
   // Memoize column configuration
   const columnOrder: (keyof any)[] = useMemo(() => [
@@ -374,6 +370,16 @@ const DataTable: React.FC<DataTableProps> = ({
       };
     });
   }, [data]);
+
+  // Debug processed data
+  useEffect(() => {
+    if (processedData.length > 0) {
+      console.log('DataTable processed data:', {
+        count: processedData.length,
+        sampleItem: processedData[0]
+      });
+    }
+  }, [processedData]);
 
   // Loading state
   if (loading) {

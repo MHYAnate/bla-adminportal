@@ -41,7 +41,7 @@ import OrderSummary from "./orderSummarySide";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 
-// Type definitions
+// FIXED: Complete type definitions
 interface OrderSummaryData {
   paymentRefund?: number;
   orderCancel?: number;
@@ -70,6 +70,23 @@ interface OrdersResponse {
   total?: number;
   page?: number;
   limit?: number;
+  pagination?: {
+    totalPages?: number;
+    totalItems?: number;
+    hasNext?: boolean;
+    hasPrev?: boolean;
+  };
+}
+
+// FIXED: Define filter object type
+interface OrdersFilter {
+  pageNumber: number;
+  pageSize: number;
+  search?: string;
+  status?: string;
+  customerType?: string;
+  dateFrom?: string;
+  dateTo?: string;
 }
 
 export default function Orders() {
@@ -90,11 +107,17 @@ export default function Orders() {
     getOrdersError,
     getOrdersIsLoading,
     setOrdersFilter,
+    refetchOrders,
+    totalPages,
+    totalItems,
   } = useGetOrders() as {
     getOrdersData: OrdersResponse;
     getOrdersError: any;
     getOrdersIsLoading: boolean;
     setOrdersFilter: (filter: any) => void;
+    refetchOrders: () => void;
+    totalPages: number;
+    totalItems: number;
   };
 
   const {
@@ -140,7 +163,7 @@ export default function Orders() {
   const [filterSales, setFilterSales] = useState<string>("");
 
   // Map backend status to frontend status
-  const mapStatusToFrontend = (backendStatus: string): string => {
+  const mapStatusToFrontend = useCallback((backendStatus: string): string => {
     switch (backendStatus?.toLowerCase()) {
       case 'pending':
       case 'processing':
@@ -156,21 +179,21 @@ export default function Orders() {
       default:
         return 'ongoing';
     }
-  };
+  }, []);
 
-  // THE ONLY FIX NEEDED: Map frontend status to backend enum values
-  const mapStatusToBackend = (frontendStatus: string): string[] => {
+  // FIXED: Map frontend status to backend enum values (comma-separated string)
+  const mapStatusToBackend = useCallback((frontendStatus: string): string => {
     switch (frontendStatus?.toLowerCase()) {
       case 'ongoing':
-        return ['PENDING', 'PROCESSING', 'SHIPPED', 'CONFIRMED'];
+        return 'PENDING,PROCESSING,SHIPPED,CONFIRMED';
       case 'delivered':
-        return ['DELIVERED', 'COMPLETED'];
+        return 'DELIVERED,COMPLETED';
       case 'cancelled':
-        return ['CANCELLED', 'REFUNDED'];
+        return 'CANCELLED,REFUNDED';
       default:
-        return [];
+        return '';
     }
-  };
+  }, []);
 
   // Filter options with valid values
   const customerList = useMemo(() => [
@@ -231,16 +254,38 @@ export default function Orders() {
     },
   ], [getOrdersSummaryData?.data]);
 
-  // ONLY CHANGE: Fix the status filter to use backend enum values
-  const ordersFilter = useMemo(() => ({
-    page: currentPage,
-    limit: parseInt(pageSize),
-    search: filter,
-    status: status === "all" ? undefined : (status ? mapStatusToBackend(status) : undefined),
-    customerType: customerType === "all" ? undefined : customerType || undefined,
-    dateFrom: startDate || undefined,
-    dateTo: endDate || undefined,
-  }), [currentPage, pageSize, filter, status, customerType, startDate, endDate]);
+  // FIXED: Create properly typed filter object for the API
+  const ordersFilter = useMemo((): OrdersFilter => {
+    const filterObj: OrdersFilter = {
+      pageNumber: currentPage,
+      pageSize: parseInt(pageSize),
+    };
+
+    // Add other filters only if they have values
+    if (filter && filter.trim()) {
+      filterObj.search = filter.trim();
+    }
+
+    if (status && status !== "all") {
+      filterObj.status = mapStatusToBackend(status);
+      console.log('Setting status filter:', status, '→', filterObj.status);
+    }
+
+    if (customerType && customerType !== "all") {
+      filterObj.customerType = customerType;
+    }
+
+    if (startDate) {
+      filterObj.dateFrom = startDate;
+    }
+
+    if (endDate) {
+      filterObj.dateTo = endDate;
+    }
+
+    console.log('Complete orders filter:', filterObj);
+    return filterObj;
+  }, [currentPage, pageSize, filter, status, customerType, startDate, endDate, mapStatusToBackend]);
 
   const analyticsFilter = useMemo(() => ({
     period: filterSales,
@@ -276,6 +321,18 @@ export default function Orders() {
     }
     router.push(`/admin/orders?${params.toString()}`);
   }, [router, searchParams]);
+
+  // ADDED: Refresh handler for DataTable
+  const handleRefreshOrders = useCallback(() => {
+    console.log('Refreshing orders data...');
+    if (refetchOrders) {
+      refetchOrders();
+    }
+    // Also refresh summary data
+    if (refetchOrdersSummary) {
+      refetchOrdersSummary();
+    }
+  }, [refetchOrders, refetchOrdersSummary]);
 
   // Handle export
   const handleExport = useCallback(async () => {
@@ -313,15 +370,16 @@ export default function Orders() {
     try {
       setIsDeleteOpen(false);
       toast.success("Order deleted successfully");
-      refetchOrdersSummary();
+      handleRefreshOrders();
     } catch (error) {
       console.error('Delete error:', error);
       toast.error("Failed to delete order");
     }
-  }, [refetchOrdersSummary]);
+  }, [handleRefreshOrders]);
 
   // Apply filters effect
   useEffect(() => {
+    console.log('Applying filter to orders:', ordersFilter);
     if (setOrdersFilter) {
       setOrdersFilter(ordersFilter);
     }
@@ -346,6 +404,27 @@ export default function Orders() {
       setStatus(statusFilter);
     }
   }, [statusFilter]);
+
+  // Debug data when it changes
+  useEffect(() => {
+    if (data) {
+      console.log('Orders data received:', {
+        total: data?.total,
+        count: data?.data?.length,
+        firstItem: data?.data?.[0],
+        // FIXED: Safe access to pagination
+        pagination: data?.pagination || 'No pagination data'
+      });
+    }
+  }, [data]);
+
+  // Debug filter changes
+  useEffect(() => {
+    console.log('Status filter changed:', {
+      status,
+      mappedStatus: status !== "all" ? mapStatusToBackend(status) : 'none'
+    });
+  }, [status, mapStatusToBackend]);
 
   // Show error messages
   useEffect(() => {
@@ -459,10 +538,11 @@ export default function Orders() {
                 currentPage={currentPage}
                 onPageChange={onPageChange}
                 pageSize={parseInt(pageSize)}
-                totalPages={Math.ceil((data?.total || 0) / parseInt(pageSize))}
+                totalPages={totalPages || Math.ceil((data?.total || 0) / parseInt(pageSize))}
                 setPageSize={setPageSize}
                 loading={getOrdersIsLoading}
                 mapStatusToFrontend={mapStatusToFrontend}
+                onRefreshData={handleRefreshOrders}
               />
             </div>
           </div>
