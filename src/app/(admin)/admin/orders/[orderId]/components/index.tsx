@@ -349,7 +349,10 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     getOrderInfoIsLoading,
     getOrderInfoError,
     setOrderInfoFilter,
-  } = useGetOrderInfo();
+    refetchOrderInfo,
+  } = useGetOrderInfo({
+    enabled: !!orderId // ✅ Enable only when orderId exists
+  });
 
   // Map backend status to frontend status
   const mapStatusToFrontend = useCallback((backendStatus: string): string => {
@@ -410,13 +413,35 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   }, [rawData, orderId, mapStatusToFrontend]);
 
   // Memoize the filter to prevent unnecessary re-renders
-  const orderFilter = useMemo(() => ({ orderId }), [orderId]);
+  const orderFilter = useMemo(() => ({
+    orderId: orderId || ''
+  }), [orderId]);
 
   useEffect(() => {
+    console.log('🔧 OrderDetails: Setting up data fetch for orderId:', orderId);
+
     if (orderId && setOrderInfoFilter) {
+      console.log('📡 OrderDetails: Triggering data fetch with filter:', orderFilter);
       setOrderInfoFilter(orderFilter);
+    } else {
+      console.warn('⚠️ OrderDetails: Missing orderId or setOrderInfoFilter:', {
+        orderId,
+        hasSetFilter: !!setOrderInfoFilter
+      });
     }
   }, [orderId, setOrderInfoFilter, orderFilter]);
+
+
+  useEffect(() => {
+    console.log('📊 OrderDetails data state:', {
+      orderId,
+      loading: getOrderInfoIsLoading,
+      hasData: !!rawData,
+      error: getOrderInfoError,
+      dataKeys: rawData ? Object.keys(rawData) : []
+    });
+  }, [orderId, getOrderInfoIsLoading, rawData, getOrderInfoError]);
+
 
   // Handle opening tracking modal
   const handleOpenTrackingModal = useCallback(() => {
@@ -489,10 +514,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   }, [router, orderId]);
 
   const handleRetry = useCallback(() => {
+    console.log('🔄 OrderDetails: Retrying data fetch for orderId:', orderId);
     if (orderId && setOrderInfoFilter) {
       setOrderInfoFilter(orderFilter);
     }
-  }, [orderId, setOrderInfoFilter, orderFilter]);
+    if (refetchOrderInfo) {
+      refetchOrderInfo();
+    }
+  }, [orderId, setOrderInfoFilter, orderFilter, refetchOrderInfo]);
 
   if (getOrderInfoIsLoading) {
     return (
