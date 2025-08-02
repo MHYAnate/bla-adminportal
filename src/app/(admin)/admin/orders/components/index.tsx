@@ -181,15 +181,14 @@ export default function Orders() {
     }
   }, []);
 
-  // FIXED: Map frontend status to backend enum values (comma-separated string)
   const mapStatusToBackend = useCallback((frontendStatus: string): string => {
     switch (frontendStatus?.toLowerCase()) {
       case 'ongoing':
-        return 'PENDING,PROCESSING,SHIPPED,CONFIRMED';
+        return 'PENDING,PROCESSING,SHIPPED,ONGOING'; // ✅ Use ONGOING instead of CONFIRMED
       case 'delivered':
-        return 'DELIVERED,COMPLETED';
+        return 'DELIVERED,COMPLETED'; // ✅ Both exist in your enum
       case 'cancelled':
-        return 'CANCELLED,REFUNDED';
+        return 'CANCELLED'; // ✅ Remove REFUNDED since it's not in enum
       default:
         return '';
     }
