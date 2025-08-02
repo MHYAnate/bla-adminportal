@@ -375,14 +375,23 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     getOrderInfoError,
     refetchOrderInfo,
   } = useGetOrderInfo({
-    enabled: Boolean(orderId),
+    enabled: true, // Always enable, let the hook handle the orderId check internally
     orderId: orderId
   } as any);
 
   // State for updating status
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  // Handle product view
+  // Add useEffect to debug and ensure orderId is available
+  useEffect(() => {
+    console.log('🔍 OrderDetails Debug:', {
+      orderId,
+      hasOrderId: Boolean(orderId),
+      loading: getOrderInfoIsLoading,
+      hasData: Boolean(rawData),
+      error: getOrderInfoError
+    });
+  }, [orderId, getOrderInfoIsLoading, rawData, getOrderInfoError]);
   const handleViewProduct = useCallback((product: any) => {
     setSelectedProduct(product);
     setProductModalOpen(true);
@@ -454,28 +463,53 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     }
   }, [refetchOrderInfo]);
 
-  if (getOrderInfoIsLoading) {
+  // Enhanced loading and error handling
+  if (getOrderInfoIsLoading && !rawData) {
     return (
-      <div className="p-6 text-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
-        <p>Loading order details...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-lg font-medium">Loading order details...</p>
+          <p className="text-sm text-gray-500">Order #{orderId}</p>
+        </div>
       </div>
     );
   }
 
-  if (getOrderInfoError || !rawData) {
+  // Show error state only if there's actually an error AND no data
+  if ((getOrderInfoError || !rawData) && !getOrderInfoIsLoading) {
     return (
-      <div className="p-6 text-center">
-        <p className="text-red-500 mb-4">
-          {getOrderInfoError || "Error loading order details"}
-        </p>
-        <div className="flex gap-2 justify-center">
-          <Button variant="outline" onClick={handleClose}>
-            {isModal ? "Close" : "Go Back"}
-          </Button>
-          <Button onClick={handleRetry} className="bg-orange-500 hover:bg-orange-600">
-            Retry
-          </Button>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Order</h2>
+          <p className="text-gray-600 mb-6">
+            {getOrderInfoError || "We couldn't load the order details. This might be a temporary issue."}
+          </p>
+          <div className="flex gap-3 justify-center">
+            <Button variant="outline" onClick={handleClose}>
+              {isModal ? "Close" : "Go Back"}
+            </Button>
+            <Button onClick={handleRetry} className="bg-orange-500 hover:bg-orange-600">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Try Again
+            </Button>
+          </div>
+          <p className="text-sm text-gray-500 mt-4">Order ID: {orderId}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If we have data, proceed with rendering even if there might be a minor error
+  if (!rawData && !getOrderInfoIsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p>Initializing...</p>
         </div>
       </div>
     );
