@@ -368,6 +368,15 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Wait for orderId to be available (important for Next.js SSR/routing)
+  useEffect(() => {
+    if (orderId) {
+      setIsInitialized(true);
+      console.log('✅ OrderDetails initialized with orderId:', orderId);
+    }
+  }, [orderId]);
 
   const {
     getOrderInfoData: rawData,
@@ -375,7 +384,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     getOrderInfoError,
     refetchOrderInfo,
   } = useGetOrderInfo({
-    enabled: true, // Always enable, let the hook handle the orderId check internally
+    enabled: isInitialized && Boolean(orderId), // Only enable after orderId is available
     orderId: orderId
   } as any);
 
@@ -463,7 +472,22 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     }
   }, [refetchOrderInfo]);
 
-  // Enhanced loading and error handling
+  // Enhanced loading and error handling with orderId checks
+
+  // Show loading if orderId is not yet available (Next.js routing)
+  if (!orderId || !isInitialized) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-lg font-medium">Initializing...</p>
+          <p className="text-sm text-gray-500">Loading order details</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading if data is being fetched
   if (getOrderInfoIsLoading && !rawData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -476,8 +500,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
-  // Show error state only if there's actually an error AND no data
-  if ((getOrderInfoError || !rawData) && !getOrderInfoIsLoading) {
+  // Show error state only if there's an error AND no data AND not loading
+  if (getOrderInfoError && !rawData && !getOrderInfoIsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
@@ -486,7 +510,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">Unable to Load Order</h2>
           <p className="text-gray-600 mb-6">
-            {getOrderInfoError || "We couldn't load the order details. This might be a temporary issue."}
+            {typeof getOrderInfoError === 'string' ? getOrderInfoError : "We couldn't load the order details. This might be a temporary issue."}
           </p>
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={handleClose}>
@@ -503,13 +527,13 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
-  // If we have data, proceed with rendering even if there might be a minor error
-  if (!rawData && !getOrderInfoIsLoading) {
+  // Show loading if we're still waiting for data (shouldn't happen but safety check)
+  if (!rawData && !getOrderInfoError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p>Initializing...</p>
+          <p>Loading order data...</p>
         </div>
       </div>
     );
