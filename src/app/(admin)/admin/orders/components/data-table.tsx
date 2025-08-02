@@ -72,9 +72,9 @@ const DataTable: React.FC<DataTableProps> = ({
       });
 
       // FIXED: Use correct API call
-      const response = await httpService.putData(routes.updateOrderStatus(orderId), {
+      const response = await httpService.putData({
         status: backendStatus
-      });
+      }, routes.updateOrderStatus(orderId));
 
       console.log('Status update response:', response);
 
@@ -101,9 +101,13 @@ const DataTable: React.FC<DataTableProps> = ({
     }
 
     console.log('Navigating to order details with ID:', orderId);
+    console.log('Full navigation path:', `/admin/orders/${orderId}`);
 
-    // Navigate to the order details page
+    // Test the navigation
     router.push(`/admin/orders/${orderId}`);
+
+    // Add this to verify the navigation attempt
+    console.log('Navigation command executed');
   }, [router]);
 
   // Memoize cell renderers to prevent unnecessary re-renders
