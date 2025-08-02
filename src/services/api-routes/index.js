@@ -57,22 +57,36 @@ export const routes = {
   deleteUser: (email) => `admin/users/${email}`,
 
   // Order routes with improved query handling
-  orders: (data) => {
-    if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
-      return 'admin/orders';
+  // Replace the existing orders function in services/api-routes/index.js
+orders: (data) => {
+  if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+    return 'admin/orders';
+  }
+  
+  const cleanData = Object.fromEntries(
+    Object.entries(data).filter(([_, value]) => value != null && value !== '')
+  );
+  
+  if (Object.keys(cleanData).length === 0) {
+    return 'admin/orders';
+  }
+  
+  // Custom query string builder to avoid encoding commas in status parameter
+  const queryParts = [];
+  
+  Object.entries(cleanData).forEach(([key, value]) => {
+    if (key === 'status' && typeof value === 'string') {
+      // Don't encode commas for status parameter - backend expects comma-separated values
+      queryParts.push(`${key}=${value}`);
+    } else {
+      // Encode other parameters normally
+      queryParts.push(`${key}=${encodeURIComponent(value)}`);
     }
-    
-    const cleanData = Object.fromEntries(
-      Object.entries(data).filter(([_, value]) => value != null && value !== '')
-    );
-    
-    if (Object.keys(cleanData).length === 0) {
-      return 'admin/orders';
-    }
-    
-    const params = new URLSearchParams(cleanData);
-    return `admin/orders?${params}`;
-  },
+  });
+  
+  const queryString = queryParts.join('&');
+  return `admin/orders?${queryString}`;
+},
 
   ordersAnalytics: (data) => {
     if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
