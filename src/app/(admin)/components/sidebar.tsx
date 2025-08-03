@@ -31,7 +31,6 @@ import {
 } from "../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
 import LogoutButton from "./logout";
-import { useEffect } from "react";
 
 const AdminSidebar: React.FC = () => {
   const path = usePathname();
@@ -44,17 +43,6 @@ const AdminSidebar: React.FC = () => {
 
   // Check if current path is any orders-related page
   const isOrdersActive = path.startsWith(ROUTES.ADMIN.SIDEBAR.ORDERS);
-
-  useEffect(() => {
-    // Disable automatic prefetching that's causing issues
-    const links = document.querySelectorAll<HTMLAnchorElement>('a[href*="/admin/notifications"]');
-    links.forEach(link => {
-      if (link instanceof HTMLAnchorElement) {
-        link.removeAttribute('href');
-        link.style.cursor = 'pointer';
-      }
-    });
-  }, []);
 
   return (
     (path === "/admin/register" ? <></> :
@@ -115,7 +103,7 @@ const AdminSidebar: React.FC = () => {
               {/* All Menu Items Including Orders */}
               {adminSidebarList.map((item) =>
                 item.child ? (
-                  // Menu items with children (collapsible)
+                  // Menu items with children (collapsible) - DON'T navigate on parent click
                   <SidebarMenu key={item.id} className="flex flex-col">
                     <Collapsible
                       defaultOpen={false}
@@ -145,7 +133,7 @@ const AdminSidebar: React.FC = () => {
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    console.log('Navigating to sub-item:', subItem.href);
+                                    console.log('🔥 Sub-item clicked! Navigating to:', subItem.href);
 
                                     try {
                                       router.push(subItem.href);
@@ -165,7 +153,7 @@ const AdminSidebar: React.FC = () => {
                     </Collapsible>
                   </SidebarMenu>
                 ) : (
-                  // Single menu items (including Orders)
+                  // Single menu items (including Orders) - NAVIGATE on click
                   <SidebarMenu key={item.id} className="mb-1">
                     <SidebarMenuItem
                       className={`${path.startsWith(item.href)
@@ -179,16 +167,16 @@ const AdminSidebar: React.FC = () => {
                           className="flex w-full items-center gap-2 py-[17px] px-5"
                           prefetch={false}
                           onClick={(e) => {
-                            // Ensure navigation works properly
                             e.preventDefault();
                             e.stopPropagation();
-                            console.log('Navigating to:', item.href);
+                            console.log('🔥 Single item clicked! Navigating to:', item.href, '(' + item.sidebar + ')');
 
-                            // Force navigation with fallback
                             try {
                               router.push(item.href);
+                              console.log('✅ Router.push successful');
                             } catch (error) {
-                              console.error('Router push failed:', error);
+                              console.error('❌ Router push failed:', error);
+                              console.log('🔄 Falling back to window.location');
                               window.location.href = item.href;
                             }
                           }}
@@ -211,7 +199,7 @@ const AdminSidebar: React.FC = () => {
               )}
 
               {/* Notifications Menu Item */}
-              {/* <SidebarMenu className="mt-10">
+              <SidebarMenu className="mt-10">
                 <SidebarMenuItem
                   className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS)
                     ? "rounded-lg bg-warning text-[#FFEDEC]"
@@ -252,7 +240,7 @@ const AdminSidebar: React.FC = () => {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              </SidebarMenu> */}
+              </SidebarMenu>
 
               {/* Settings Menu Item */}
               <SidebarMenu>

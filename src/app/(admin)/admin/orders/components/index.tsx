@@ -461,6 +461,23 @@ export default function Orders() {
   }, [getOrdersError]);
 
   useEffect(() => {
+    const handleAllClicks = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[data-sidebar]')) {
+        console.log('🎯 Sidebar click detected:', {
+          tag: target.tagName,
+          classes: target.className,
+          text: target.textContent?.trim(),
+          dataset: target.dataset
+        });
+      }
+    };
+
+    document.addEventListener('click', handleAllClicks, true);
+    return () => document.removeEventListener('click', handleAllClicks, true);
+  }, []);
+
+  useEffect(() => {
     if (getOrdersSummaryError) {
       console.error('Orders summary error:', getOrdersSummaryError);
       toast.error("Failed to load order summary");
