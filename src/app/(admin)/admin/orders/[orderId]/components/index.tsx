@@ -133,7 +133,7 @@ const ProductDetailsModal = ({
 };
 
 // Order Tracking Modal Component
-const OrderTrackingModal = ({
+const OrderTrackingModal = React.memo(({
   order,
   onClose,
   isOpen
@@ -144,7 +144,7 @@ const OrderTrackingModal = ({
 }) => {
   if (!order) return null;
 
-  const getTrackingSteps = (status: string, paymentStatus: string) => {
+  const getTrackingSteps = useMemo(() => (status: string, paymentStatus: string) => {
     const steps = [
       {
         id: 1,
@@ -187,9 +187,12 @@ const OrderTrackingModal = ({
       },
     ];
     return steps;
-  };
+  }, []);
 
-  const trackingSteps = getTrackingSteps(order.status, order.paymentStatus);
+  const trackingSteps = useMemo(() =>
+    getTrackingSteps(order.status, order.paymentStatus),
+    [order.status, order.paymentStatus, getTrackingSteps]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -321,7 +324,9 @@ const OrderTrackingModal = ({
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+OrderTrackingModal.displayName = 'OrderTrackingModal';
 
 // Type definitions
 interface OrderStatus {
@@ -360,6 +365,41 @@ interface OrderData {
   shipping?: any;
   breakdown?: any;
   summary?: any;
+  [key: string]: any;
+}
+
+// Processed order data type - ensures all required fields are present
+interface ProcessedOrderData {
+  // Core required fields
+  id: any;
+  orderId: string;
+  status: string;
+  totalPrice: number;
+  createdAt: string;
+  paymentStatus: string;
+
+  // Arrays (always present, may be empty)
+  items: any[];
+  timeline: any[];
+
+  // Objects (always present, may be empty)
+  user: any;
+  summary: any;
+  breakdown: any;
+
+  // Optional/nullable fields
+  shipping: any;
+
+  // Payment fields (always numbers, may be 0)
+  amountPaid: number;
+  amountDue: number;
+
+  // Additional optional fields
+  updatedAt?: string;
+  orderType?: string;
+  userId?: number;
+
+  // Allow additional properties from raw data
   [key: string]: any;
 }
 
@@ -414,18 +454,16 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     orderId: orderId
   } as any);
 
-  // Handle product view
+  // ✅ FIXED: Memoize all callbacks with stable dependencies
   const handleViewProduct = useCallback((product: any) => {
     setSelectedProduct(product);
     setProductModalOpen(true);
   }, []);
 
-  // Handle opening tracking modal
   const handleOpenTrackingModal = useCallback(() => {
     setTrackingModalOpen(true);
   }, []);
 
-  // Handle close
   const handleClose = useCallback(() => {
     if (setClose) {
       setClose(false);
@@ -434,7 +472,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     }
   }, [setClose, router]);
 
-  // Handle status update
   const handleStatusUpdate = useCallback(async (newStatus: string) => {
     if (!orderId) {
       console.error('No order ID available');
@@ -477,7 +514,121 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     }
   }, [refetchOrderInfo]);
 
-  // Improved loading state - show loading immediately
+  // ✅ Helper functions for safe property access
+  const getAmountPaid = useCallback((orderData: any): number => {
+    return typeof orderData?.amountPaid === 'number' ? orderData.amountPaid : 0;
+  }, []);
+
+  const getAmountDue = useCallback((orderData: any): number => {
+    return typeof orderData?.amountDue === 'number' ? orderData.amountDue : 0;
+  }, []);
+
+  // ✅ FIXED: Memoize processed data to prevent re-renders
+  const processedOrderData = useMemo(() => {
+    if (!rawData) return null;
+
+    // Create a properly typed processed order data object with explicit typing
+    const processed = {
+      // Spread all existing properties first
+      ...rawData,
+      // Then override/ensure required properties
+      id: rawData.id,
+      orderId: rawData.orderId || `#${String(rawData.id || '').padStart(6, '0')}`,
+      status: rawData.status || 'PENDING',
+      totalPrice: Number(rawData.totalPrice) || 0,
+      createdAt: rawData.createdAt || new Date().toISOString(),
+      paymentStatus: rawData.paymentStatus || 'PENDING',
+      items: Array.isArray(rawData.items) ? rawData.items : [],
+      timeline: Array.isArray(rawData.timeline) ? rawData.timeline : [],
+      user: rawData.user || {},
+      summary: rawData.summary || {},
+      breakdown: rawData.breakdown || {},
+      shipping: rawData.shipping || null,
+      // Payment properties with explicit handling
+      amountPaid: (rawData as any).amountPaid || 0,
+      amountDue: (rawData as any).amountDue || 0,
+    };
+
+    return processed;
+  }, [rawData]);
+
+  // ✅ FIXED: Memoize shipping address calculation
+  const shippingAddress = useMemo(() => {
+    if (!processedOrderData) return null;
+
+    // First try to find in timeline - look for ORDER_CREATED event specifically
+    const orderCreatedEvent = processedOrderData.timeline?.find((event: any) =>
+      event?.action === 'ORDER_CREATED' && event?.details?.shippingAddress
+    );
+
+    if (orderCreatedEvent?.details?.shippingAddress) {
+      return orderCreatedEvent.details.shippingAddress;
+    }
+
+    // Fallback: try first timeline entry with shipping address
+    const timelineWithAddress = processedOrderData.timeline?.find((event: any) =>
+      event?.details?.shippingAddress
+    );
+
+    if (timelineWithAddress?.details?.shippingAddress) {
+      return timelineWithAddress.details.shippingAddress;
+    }
+
+    // Fallback: try user profile address
+    if (processedOrderData.user?.profile?.address || processedOrderData.user?.businessProfile?.businessAddress) {
+      return {
+        fullAddress: processedOrderData.user?.profile?.address || processedOrderData.user?.businessProfile?.businessAddress,
+        city: 'N/A',
+        stateProvince: 'N/A',
+        country: 'N/A',
+        postalCode: 'N/A'
+      };
+    }
+
+    return null;
+  }, [processedOrderData]);
+
+  // ✅ FIXED: Memoize status badge and transitions
+  const statusInfo = useMemo(() => {
+    if (!processedOrderData) return { variant: 'secondary' as const, text: 'Unknown' };
+
+    const statusMap: Record<string, OrderStatus> = {
+      'PENDING': { variant: 'secondary' as const, text: 'Pending' },
+      'PROCESSING': { variant: 'default' as const, text: 'In Progress' },
+      'SHIPPED': { variant: 'default' as const, text: 'Shipped' },
+      'DELIVERED': { variant: 'default' as const, text: 'Delivered' },
+      'COMPLETED': { variant: 'default' as const, text: 'Completed' },
+      'CANCELLED': { variant: 'destructive' as const, text: 'Cancelled' }
+    };
+    return statusMap[processedOrderData.status] || { variant: 'secondary' as const, text: processedOrderData.status };
+  }, [processedOrderData]);
+
+  const availableTransitions = useMemo(() => {
+    if (!processedOrderData) return [];
+
+    const statusTransitions: Record<string, StatusTransition[]> = {
+      'PENDING': [
+        { value: 'PROCESSING', label: 'Start Processing', icon: Package, color: 'text-blue-600' },
+        { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
+      ],
+      'PROCESSING': [
+        { value: 'SHIPPED', label: 'Mark as Shipped', icon: Truck, color: 'text-purple-600' },
+        { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
+      ],
+      'SHIPPED': [
+        { value: 'DELIVERED', label: 'Mark as Delivered', icon: CheckCircle, color: 'text-green-600' }
+      ],
+      'DELIVERED': [
+        { value: 'COMPLETED', label: 'Complete Order', icon: CheckCircle, color: 'text-green-600' }
+      ],
+      'CANCELLED': [],
+      'COMPLETED': []
+    };
+
+    return statusTransitions[processedOrderData.status] || [];
+  }, [processedOrderData]);
+
+  // Loading state
   if (getOrderInfoIsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -490,7 +641,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
-  // Handle errors immediately after loading
+  // Handle errors
   if (getOrderInfoError) {
     const errorMessage = getOrderInfoError.includes('not found')
       ? `Order #${orderId} was not found or you don't have permission to view it.`
@@ -522,8 +673,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
-  // Handle empty data state
-  if (!rawData) {
+  // Handle empty data
+  if (!processedOrderData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
@@ -551,94 +702,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   }
 
   // At this point, we have valid data
-  const order = rawData as OrderData;
+  const order = processedOrderData;
   const customer = order.user;
   const profile = customer?.profile || customer?.businessProfile;
-
-  // Safe property access with fallbacks
-  const orderCreatedAt = order.createdAt || new Date().toISOString();
-  const orderPaymentStatus = order.paymentStatus || 'PENDING';
-
-  // Find shipping address from multiple possible sources
-  const getShippingAddress = useCallback(() => {
-    // First try to find in timeline - look for ORDER_CREATED event specifically
-    const orderCreatedEvent = order.timeline?.find((event: any) =>
-      event?.action === 'ORDER_CREATED' && event?.details?.shippingAddress
-    );
-
-    if (orderCreatedEvent?.details?.shippingAddress) {
-      return orderCreatedEvent.details.shippingAddress;
-    }
-
-    // Fallback: try first timeline entry with shipping address
-    const timelineWithAddress = order.timeline?.find((event: any) =>
-      event?.details?.shippingAddress
-    );
-
-    if (timelineWithAddress?.details?.shippingAddress) {
-      return timelineWithAddress.details.shippingAddress;
-    }
-
-    // Fallback: try direct shipping address on order
-    if ((rawData as any)?.shippingAddress) {
-      return (rawData as any).shippingAddress;
-    }
-
-    // Fallback: try user profile address
-    if (order.user?.profile?.address || order.user?.businessProfile?.businessAddress) {
-      return {
-        fullAddress: order.user?.profile?.address || order.user?.businessProfile?.businessAddress,
-        city: 'N/A',
-        stateProvince: 'N/A',
-        country: 'N/A',
-        postalCode: 'N/A'
-      };
-    }
-
-    return null;
-  }, [order.timeline, rawData, order.user]);
-
-  const shippingAddress = getShippingAddress();
-
-  // Get status color and text
-  const getStatusBadge = (status: string): OrderStatus => {
-    const statusMap: Record<string, OrderStatus> = {
-      'PENDING': { variant: 'secondary' as const, text: 'Pending' },
-      'PROCESSING': { variant: 'default' as const, text: 'In Progress' },
-      'SHIPPED': { variant: 'default' as const, text: 'Shipped' },
-      'DELIVERED': { variant: 'default' as const, text: 'Delivered' },
-      'COMPLETED': { variant: 'default' as const, text: 'Completed' },
-      'CANCELLED': { variant: 'destructive' as const, text: 'Cancelled' }
-    };
-    return statusMap[status] || { variant: 'secondary' as const, text: status };
-  };
-
-  // Get available status transitions based on current status
-  const getAvailableStatusTransitions = (currentStatus: string): StatusTransition[] => {
-    const statusTransitions: Record<string, StatusTransition[]> = {
-      'PENDING': [
-        { value: 'PROCESSING', label: 'Start Processing', icon: Package, color: 'text-blue-600' },
-        { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
-      ],
-      'PROCESSING': [
-        { value: 'SHIPPED', label: 'Mark as Shipped', icon: Truck, color: 'text-purple-600' },
-        { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
-      ],
-      'SHIPPED': [
-        { value: 'DELIVERED', label: 'Mark as Delivered', icon: CheckCircle, color: 'text-green-600' }
-      ],
-      'DELIVERED': [
-        { value: 'COMPLETED', label: 'Complete Order', icon: CheckCircle, color: 'text-green-600' }
-      ],
-      'CANCELLED': [],
-      'COMPLETED': []
-    };
-
-    return statusTransitions[currentStatus] || [];
-  };
-
-  const availableTransitions = getAvailableStatusTransitions(order.status);
-  const statusInfo = getStatusBadge(order.status);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -742,7 +808,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   <div>
                     <h2 className="text-xl font-semibold">Order# {order.id}</h2>
                     <p className="text-gray-500 text-sm">
-                      Order Date: {formatDate(orderCreatedAt)} | Order Time: {formatDateTime(orderCreatedAt)}
+                      Order Date: {formatDate(order.createdAt)} | Order Time: {formatDateTime(order.createdAt)}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -762,7 +828,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   <div className="flex items-center justify-between">
                     {[
                       { label: "Order Confirming", status: "completed" },
-                      { label: "Payment Pending", status: orderPaymentStatus === "PAID" ? "completed" : "current" },
+                      { label: "Payment Pending", status: order.paymentStatus === "PAID" ? "completed" : "current" },
                       { label: "Processing", status: order.status === "PROCESSING" ? "current" : order.status === "SHIPPED" || order.status === "DELIVERED" ? "completed" : "pending" },
                       { label: "Shipping", status: order.status === "SHIPPED" ? "current" : order.status === "DELIVERED" ? "completed" : "pending" },
                       { label: "Delivered", status: order.status === "DELIVERED" ? "completed" : "pending" }
@@ -783,7 +849,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   <div className="text-sm text-gray-500 mt-4 flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     Estimated shipping date: {(() => {
-                      const date = new Date(orderCreatedAt);
+                      const date = new Date(order.createdAt);
                       date.setDate(date.getDate() + 7);
                       return formatDate(date.toISOString());
                     })()}
@@ -809,7 +875,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                           <div className="flex items-center justify-between">
                             <h4 className="font-medium">{event?.action?.replace?.(/_/g, ' ') || 'Order Update'}</h4>
                             <span className="text-sm text-gray-500">
-                              {formatDateTime(event?.createdAt || orderCreatedAt)}
+                              {formatDateTime(event?.createdAt || order.createdAt)}
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">
@@ -1016,20 +1082,20 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600">Payment Status:</span>
-                      <Badge variant={orderPaymentStatus === 'PAID' ? 'default' : 'secondary'}>
-                        {orderPaymentStatus}
+                      <Badge variant={order.paymentStatus === 'PAID' ? 'default' : 'secondary'}>
+                        {order.paymentStatus}
                       </Badge>
                     </div>
-                    {order.amountPaid && (
+                    {getAmountPaid(order) > 0 && (
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-sm text-gray-600">Amount Paid:</span>
-                        <span className="text-sm font-medium">₦{order.amountPaid.toLocaleString()}</span>
+                        <span className="text-sm font-medium">₦{getAmountPaid(order).toLocaleString()}</span>
                       </div>
                     )}
-                    {order.amountDue && order.amountDue > 0 && (
+                    {getAmountDue(order) > 0 && (
                       <div className="flex justify-between items-center mt-2">
                         <span className="text-sm text-gray-600">Amount Due:</span>
-                        <span className="text-sm font-medium text-red-600">₦{order.amountDue.toLocaleString()}</span>
+                        <span className="text-sm font-medium text-red-600">₦{getAmountDue(order).toLocaleString()}</span>
                       </div>
                     )}
                   </div>
@@ -1042,11 +1108,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 
       {/* Modals */}
       <OrderTrackingModal
-        order={{
-          ...order,
-          createdAt: orderCreatedAt,
-          paymentStatus: orderPaymentStatus
-        }}
+        order={order}
         isOpen={trackingModalOpen}
         onClose={() => setTrackingModalOpen(false)}
       />
@@ -1063,4 +1125,4 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   );
 };
 
-export default OrderDetails;
+export default React.memo(OrderDetails);
