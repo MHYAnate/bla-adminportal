@@ -65,6 +65,24 @@ export const adminSidebarList = [
     sidebar: "Orders",
     icon: <OrderIcon />,
     href: ROUTES.ADMIN.SIDEBAR.ORDERS,
+    isCollapsible: true,
+    subItems: [
+      {
+        id: 5.1,
+        sidebar: "Delivered",
+        href: `${ROUTES.ADMIN.SIDEBAR.ORDERS}?status=delivered`,
+      },
+      {
+        id: 5.2,
+        sidebar: "Ongoing",
+        href: `${ROUTES.ADMIN.SIDEBAR.ORDERS}?status=ongoing`,
+      },
+      {
+        id: 5.3,
+        sidebar: "Cancelled",
+        href: `${ROUTES.ADMIN.SIDEBAR.ORDERS}?status=cancelled`,
+      }
+    ]
   },
   {
     id: 6,
