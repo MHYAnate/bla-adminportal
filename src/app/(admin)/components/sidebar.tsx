@@ -27,9 +27,11 @@ import {
   DashboardIcon,
   NotificationIcon,
   SettingsIcon,
+  OrderIcon,
 } from "../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
 import LogoutButton from "./logout";
+import { useEffect } from "react";
 
 const AdminSidebar: React.FC = () => {
   const path = usePathname();
@@ -42,6 +44,17 @@ const AdminSidebar: React.FC = () => {
 
   // Check if current path is any orders-related page
   const isOrdersActive = path.startsWith(ROUTES.ADMIN.SIDEBAR.ORDERS);
+
+  useEffect(() => {
+    // Disable automatic prefetching that's causing issues
+    const links = document.querySelectorAll<HTMLAnchorElement>('a[href*="/admin/notifications"]');
+    links.forEach(link => {
+      if (link instanceof HTMLAnchorElement) {
+        link.removeAttribute('href');
+        link.style.cursor = 'pointer';
+      }
+    });
+  }, []);
 
   return (
     (path === "/admin/register" ? <></> :
@@ -71,11 +84,18 @@ const AdminSidebar: React.FC = () => {
                     <Link
                       href={ROUTES.ADMIN.SIDEBAR.DASHBOARD}
                       className="flex w-full items-center justify-between gap-2 py-[17px] px-5"
+                      prefetch={false}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         console.log('Navigating to Dashboard:', ROUTES.ADMIN.SIDEBAR.DASHBOARD);
-                        router.push(ROUTES.ADMIN.SIDEBAR.DASHBOARD);
+
+                        try {
+                          router.push(ROUTES.ADMIN.SIDEBAR.DASHBOARD);
+                        } catch (error) {
+                          console.error('Router push failed:', error);
+                          window.location.href = ROUTES.ADMIN.SIDEBAR.DASHBOARD;
+                        }
                       }}
                     >
                       <h5 className="text-sm font-bold">Dashboard</h5>
@@ -121,11 +141,18 @@ const AdminSidebar: React.FC = () => {
                                     ? "bg-warning text-[#FFEDEC]"
                                     : "text-[#111827]"
                                     }`}
+                                  prefetch={false}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
                                     console.log('Navigating to sub-item:', subItem.href);
-                                    router.push(subItem.href);
+
+                                    try {
+                                      router.push(subItem.href);
+                                    } catch (error) {
+                                      console.error('Router push failed:', error);
+                                      window.location.href = subItem.href;
+                                    }
                                   }}
                                 >
                                   {subItem.sidebar}
@@ -150,12 +177,20 @@ const AdminSidebar: React.FC = () => {
                         <Link
                           href={item.href}
                           className="flex w-full items-center gap-2 py-[17px] px-5"
+                          prefetch={false}
                           onClick={(e) => {
                             // Ensure navigation works properly
                             e.preventDefault();
                             e.stopPropagation();
                             console.log('Navigating to:', item.href);
-                            router.push(item.href);
+
+                            // Force navigation with fallback
+                            try {
+                              router.push(item.href);
+                            } catch (error) {
+                              console.error('Router push failed:', error);
+                              window.location.href = item.href;
+                            }
                           }}
                           onDoubleClick={item.sidebar === "Orders" ? handleOrdersDoubleClick : undefined}
                         >
@@ -176,7 +211,7 @@ const AdminSidebar: React.FC = () => {
               )}
 
               {/* Notifications Menu Item */}
-              <SidebarMenu className="mt-10">
+              {/* <SidebarMenu className="mt-10">
                 <SidebarMenuItem
                   className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS)
                     ? "rounded-lg bg-warning text-[#FFEDEC]"
@@ -187,12 +222,21 @@ const AdminSidebar: React.FC = () => {
                     <Link
                       href={ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || "#"}
                       className="flex w-full items-center gap-2 py-[17px] px-5"
+                      prefetch={false}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         if (ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS) {
                           console.log('Navigating to Notifications:', ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS);
-                          router.push(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS);
+
+                          try {
+                            router.push(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS);
+                          } catch (error) {
+                            console.error('Router push failed:', error);
+                            window.location.href = ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS;
+                          }
+                        } else {
+                          console.log('Notifications route not defined');
                         }
                       }}
                     >
@@ -208,7 +252,7 @@ const AdminSidebar: React.FC = () => {
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              </SidebarMenu>
+              </SidebarMenu> */}
 
               {/* Settings Menu Item */}
               <SidebarMenu>
@@ -222,12 +266,19 @@ const AdminSidebar: React.FC = () => {
                     <Link
                       href={`${ROUTES.ADMIN.SIDEBAR.SETTINGS}?tab=general`}
                       className="flex w-full items-center gap-2 py-[17px] px-5"
+                      prefetch={false}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                         const settingsUrl = `${ROUTES.ADMIN.SIDEBAR.SETTINGS}?tab=general`;
                         console.log('Navigating to Settings:', settingsUrl);
-                        router.push(settingsUrl);
+
+                        try {
+                          router.push(settingsUrl);
+                        } catch (error) {
+                          console.error('Router push failed:', error);
+                          window.location.href = settingsUrl;
+                        }
                       }}
                     >
                       <span
@@ -253,6 +304,3 @@ const AdminSidebar: React.FC = () => {
 };
 
 export default AdminSidebar;
-
-
-
