@@ -11,11 +11,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-// import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { AlertTriangle, CreditCard, DollarSign, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
-import { useProcessRefund } from "@/services/orders"; // Import the service hook
-
+import httpService from "@/services/httpService";
+import { routes } from "@/services/api-routes";
 
 interface RefundModalProps {
     order: any;
@@ -30,11 +29,10 @@ export const RefundModal: React.FC<RefundModalProps> = ({
     onClose,
     onRefundSuccess,
 }) => {
+    const [isProcessing, setIsProcessing] = useState(false);
     const [refundType, setRefundType] = useState<'full' | 'partial'>('full');
     const [refundAmount, setRefundAmount] = useState(order?.totalPrice || 0);
     const [reason, setReason] = useState('');
-
-    const processRefundMutation = useProcessRefund();
 
     const maxRefundAmount = order?.totalPrice || 0;
     const amountPaid = order?.amountPaid || order?.totalPrice || 0;
@@ -50,22 +48,20 @@ export const RefundModal: React.FC<RefundModalProps> = ({
             return;
         }
 
+        setIsProcessing(true);
+
         try {
-            // ✅ Use the mutation hook
-            await processRefundMutation.mutateAsync({
-                orderId: order.id,
-                amount: refundType === 'full' ? amountPaid : refundAmount,
-                reason: reason.trim(),
-                refundType,
-            });
+            const response = await httpService.postData(
+                routes.processRefund(order.id),
+                {
+                    amount: refundType === 'full' ? amountPaid : refundAmount,
+                    reason: reason.trim(),
+                    refundType,
+                }
+            );
 
             toast.success('Refund processed successfully');
-
-            // Call custom success callback if provided
-            if (onRefundSuccess) {
-                onRefundSuccess();
-            }
-
+            onRefundSuccess();
             onClose();
 
             // Reset form
@@ -76,6 +72,8 @@ export const RefundModal: React.FC<RefundModalProps> = ({
         } catch (error: any) {
             console.error('Refund error:', error);
             toast.error(`Failed to process refund: ${error?.message || 'Unknown error'}`);
+        } finally {
+            setIsProcessing(false);
         }
     };
 
@@ -243,16 +241,16 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                     <Button
                         onClick={onClose}
                         variant="outline"
-                        disabled={processRefundMutation.isPending}
+                        disabled={isProcessing}
                     >
                         Cancel
                     </Button>
                     <Button
                         onClick={handleRefund}
-                        disabled={processRefundMutation.isPending || !reason.trim()}
+                        disabled={isProcessing || !reason.trim()}
                         className="bg-red-500 hover:bg-red-600"
                     >
-                        {processRefundMutation.isPending ? (
+                        {isProcessing ? (
                             <>
                                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                                 Processing...
@@ -311,6 +309,7 @@ export const PaymentInfoDisplay: React.FC<{ order: any }> = ({ order }) => {
             'BANK_TRANSFER': 'Bank Transfer',
             'CASH_ON_DELIVERY': 'Cash on Delivery',
             'PAY_ON_DELIVERY': 'Pay on Delivery',
+            'WALLET': 'Digital Wallet'
         };
         return methodMap[method] || method.replace('_', ' ');
     };
@@ -420,3 +419,9 @@ export const PaymentInfoDisplay: React.FC<{ order: any }> = ({ order }) => {
         </div>
     );
 };
+
+
+
+
+
+

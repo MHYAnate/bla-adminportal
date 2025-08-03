@@ -5,6 +5,7 @@ import useFetchItem from "../useFetchItem";
 import { useMemo, useEffect } from "react";
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 
+
 export const useGetOrders = ({
   enabled = true,
   filter = {},
@@ -432,37 +433,16 @@ export const useProcessRefund = () => {
   
   return useMutation({
     mutationFn: async ({ orderId, amount, reason, refundType }) => {
-      console.log('Processing refund:', { orderId, amount, reason, refundType });
-      
       const response = await httpService.postData(
         routes.processRefund(orderId),
-        {
-          amount,
-          reason,
-          refundType
-        }
+        { amount, reason, refundType }
       );
-      
-      console.log('Refund response:', response);
       return response;
     },
     onSuccess: (data, variables) => {
-      console.log('✅ Refund processed successfully:', data);
-      
-      // Invalidate and refetch related queries
-      queryClient.invalidateQueries({ 
-        queryKey: ['orderInfo', variables.orderId] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['orders'] 
-      });
-      queryClient.invalidateQueries({ 
-        queryKey: ['ordersSummary'] 
-      });
-    },
-    onError: (error, variables) => {
-      console.error('❌ Refund failed:', error);
-      console.error('Variables:', variables);
+      queryClient.invalidateQueries(['orderInfo', variables.orderId]);
+      queryClient.invalidateQueries(['orders']);
+      queryClient.invalidateQueries(['ordersSummary']);
     }
   });
 };
