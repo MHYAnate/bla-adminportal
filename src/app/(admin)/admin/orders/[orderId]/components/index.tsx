@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useCallback, useState } from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useGetOrderInfo } from "@/services/orders";
+import { useGetOrderInfo, useProcessRefund } from "@/services/orders";
+import { RefundModal, PaymentInfoDisplay } from './refund';
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import httpService from "@/services/httpService";
@@ -354,6 +355,12 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+
+
+  const processRefundMutation = useProcessRefund();
+
+
 
   // Validate orderId before proceeding
   if (!orderId) {
@@ -469,6 +476,19 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       setIsUpdatingStatus(false);
     }
   }, [orderId, refetchOrderInfo]);
+
+  const handleRefundSuccess = useCallback(() => {
+    // Custom logic after successful refund
+    console.log('Refund completed successfully');
+
+    // Refresh order data
+    if (refetchOrderInfo) {
+      refetchOrderInfo();
+    }
+
+    // Optional: Show additional success message or redirect
+    toast.success('Order refunded and data refreshed');
+  }, [refetchOrderInfo]);
 
   const handleRetry = useCallback(() => {
     if (refetchOrderInfo) {
@@ -760,9 +780,18 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                     <Badge variant={statusInfo.variant} className="px-3 py-1">
                       {statusInfo.text}
                     </Badge>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setRefundModalOpen(true)}
+                      disabled={
+                        processRefundMutation.isPending ||
+                        order.paymentStatus !== 'PAID' ||
+                        ['REFUNDED', 'CANCELLED'].includes(order.status)
+                      }
+                    >
                       <Download className="w-4 h-4 mr-2" />
-                      Refund
+                      {processRefundMutation.isPending ? 'Processing...' : 'Refund'}
                     </Button>
                   </div>
                 </div>
@@ -1098,24 +1127,24 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Items:</span>
-                    <span className="font-medium">{order.summary?.totalItems || order.items?.length || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-gray-600">Quantity:</span>
-                    <span className="font-medium">{order.summary?.totalQuantity || order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0}</span>
+                    <span className="font-medium">{order.summary?.totalQuantity || order.items?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Sub Total:</span>
-                    <span className="font-medium">₦{(order.summary?.itemsSubtotal || order.breakdown?.itemsSubtotal || 0).toLocaleString()}</span>
+                    <span className="font-medium">₦{(order.summary?.itemsSubtotal || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax:</span>
+                    <span className="font-medium">6%</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping Fee:</span>
-                    <span className="font-medium">₦{(order.summary?.shippingFee || order.breakdown?.shippingFee || order.shipping?.totalShippingFee || 0).toLocaleString()}</span>
+                    <span className="font-medium">₦{(order.summary?.shippingFee || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Discount:</span>
-                    <span className="font-medium text-red-500">-₦{(order.summary?.discount || order.breakdown?.discount || 0).toLocaleString()}</span>
+                    <span className="font-medium text-red-500">-₦{(order.summary?.discount || 0).toLocaleString()}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-lg font-bold">
@@ -1123,83 +1152,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                     <span>₦{(order.totalPrice || 0).toLocaleString()}</span>
                   </div>
 
-                  {/* Enhanced Payment Information */}
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-gray-600">Payment Status:</span>
-                      <Badge variant={order.paymentStatus === 'PAID' ? 'default' : 'secondary'}>
-                        {order.paymentStatus}
-                      </Badge>
-                    </div>
-
-                    {getAmountPaid(order) > 0 && (
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-600">Amount Paid:</span>
-                        <span className="text-sm font-medium text-green-600">
-                          ₦{getAmountPaid(order).toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-
-                    {getAmountDue(order) > 0 && (
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-600">Amount Due:</span>
-                        <span className="text-sm font-medium text-red-600">
-                          ₦{getAmountDue(order).toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-
-                    {paymentInfo.isPayOnDelivery && getAmountDue(order) === 0 && (
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-600">Collect on Delivery:</span>
-                        <span className="text-sm font-medium text-blue-600">
-                          ₦{order.totalPrice.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Action Buttons based on Payment Type */}
-                    <div className="mt-3 space-y-2">
-                      {paymentInfo.requiresImmediatePayment && (
-                        <Button size="sm" className="w-full bg-red-500 hover:bg-red-600 text-white">
-                          Send Payment Reminder
-                        </Button>
-                      )}
-
-                      {paymentInfo.isPayOnDelivery && (
-                        <Button size="sm" variant="outline" className="w-full border-blue-500 text-blue-600">
-                          Prepare for Collection
-                        </Button>
-                      )}
-
-                      {order.paymentStatus === 'PAID' && paymentInfo.isScheduled && (
-                        <Button size="sm" className="w-full bg-green-500 hover:bg-green-600 text-white">
-                          Schedule Delivery
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Transaction History */}
-                  {order.transactions && order.transactions.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">Transaction History</h4>
-                      <div className="space-y-2">
-                        {order.transactions.map((transaction: any, index: number) => (
-                          <div key={index} className="text-xs p-2 bg-white rounded border">
-                            <div className="flex justify-between">
-                              <span>{transaction.type || 'Payment'}</span>
-                              <span className="font-medium">₦{(transaction.amount || 0).toLocaleString()}</span>
-                            </div>
-                            <div className="text-gray-500 mt-1">
-                              {formatDate(transaction.createdAt)} - {transaction.status}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  {/* Enhanced Payment & Delivery Information */}
+                  <PaymentInfoDisplay order={order} />
                 </div>
               </CardContent>
             </Card>
@@ -1222,7 +1176,16 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
           setSelectedProduct(null);
         }}
       />
+
+      <RefundModal
+        order={order}
+        isOpen={refundModalOpen}
+        onClose={() => setRefundModalOpen(false)}
+        onRefundSuccess={handleRefundSuccess} // Optional custom success handler
+      />
+
     </div>
+
   );
 };
 

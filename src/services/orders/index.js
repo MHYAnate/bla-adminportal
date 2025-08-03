@@ -425,3 +425,43 @@ export const useUpdateOrderStatus = () => {
     error: null,
   };
 };
+
+export const useProcessRefund = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, amount, reason, refundType }) => {
+      console.log('Processing refund:', { orderId, amount, reason, refundType });
+      
+      const response = await httpService.postData(
+        routes.processRefund(orderId),
+        {
+          amount,
+          reason,
+          refundType
+        }
+      );
+      
+      console.log('Refund response:', response);
+      return response;
+    },
+    onSuccess: (data, variables) => {
+      console.log('✅ Refund processed successfully:', data);
+      
+      // Invalidate and refetch related queries
+      queryClient.invalidateQueries({ 
+        queryKey: ['orderInfo', variables.orderId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['orders'] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['ordersSummary'] 
+      });
+    },
+    onError: (error, variables) => {
+      console.error('❌ Refund failed:', error);
+      console.error('Variables:', variables);
+    }
+  });
+};
