@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Orders from "./components";
 import { Card, CardContent } from "@/components/ui/card";
-import { OrdersErrorBoundary } from "@/components/error-boundary"; // Adjust path as needed
+// import { OrdersErrorBoundary } from "@/components/error-boundary"; // Adjust path as needed
 
 // Loading component for the orders page
 const OrdersLoading = () => (
@@ -54,12 +54,12 @@ const OrdersLoading = () => (
 
 export default function OrdersPage() {
   return (
-    <OrdersErrorBoundary>
-      <Suspense fallback={<OrdersLoading />}>
-        <section>
-          <Orders />
-        </section>
-      </Suspense>
-    </OrdersErrorBoundary>
+    // <OrdersErrorBoundary>
+    <Suspense fallback={<OrdersLoading />}>
+      <section>
+        <Orders />
+      </section>
+    </Suspense>
+    // </OrdersErrorBoundary>
   );
 }
