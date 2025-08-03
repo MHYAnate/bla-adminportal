@@ -62,38 +62,60 @@ export const useGetOrderInfo = ({
 } = {}) => {
   console.log('useGetOrderInfo called with:', { enabled, orderId });
 
+  // ✅ Validate orderId before making any requests
+  const isValidOrderId = Boolean(orderId && String(orderId).trim());
+  
   const {
-  isLoading,
-  error,
-  data,
-  refetch,
-  isFetching,
-  setFilter,
-} = useFetchItem({
-  queryKey: ["orderInfo", orderId], // ✅ This is good
-  queryFn: async () => { // ✅ Remove params, use orderId directly
+    isLoading,
+    error,
+    data,
+    refetch,
+    isFetching,
+    setFilter,
+  } = useFetchItem({
+    queryKey: ["orderInfo", orderId],
+    queryFn: async () => {
       console.log('useGetOrderInfo queryFn called with ID:', orderId);
       
       if (!orderId) {
         const error = new Error("Order ID is required");
         console.error('useGetOrderInfo error:', error.message);
-        return Promise.reject(error);
+        throw error;
       }
       
+      // ✅ Clean the orderId before making the API call
+      const cleanOrderId = String(orderId).replace('#', '').trim();
+      
       try {
-        console.log('Fetching order details for ID:', orderId);
-        const response = await httpService.getData(routes.getOrderInfo(orderId));
+        console.log('Fetching order details for clean ID:', cleanOrderId);
+        
+        // ✅ Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        
+        const response = await httpService.getData(
+          routes.getOrderInfo(cleanOrderId),
+          { signal: controller.signal }
+        );
+        
+        clearTimeout(timeoutId);
         
         console.log('Raw API response for order details:', response);
         
-        if (response && response.success && response.data) {
+        // ✅ Handle different response structures
+        if (response?.success && response?.data) {
           console.log('✅ Extracted order data from wrapped response');
           return response.data;
         }
         
-        if (response && response.id) {
+        if (response?.id || response?.orderId) {
           console.log('✅ Using direct response data');
           return response;
+        }
+        
+        // ✅ Handle empty or null responses
+        if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
+          throw new Error(`Order ${cleanOrderId} not found`);
         }
         
         console.error('❌ Unexpected API response structure:', response);
@@ -101,14 +123,35 @@ export const useGetOrderInfo = ({
         
       } catch (error) {
         console.error('❌ API call failed:', error);
+        
+        // ✅ Handle specific error types
+        if (error.name === 'AbortError') {
+          throw new Error('Request timed out. Please try again.');
+        }
+        
+        if (error.response?.status === 404) {
+          throw new Error(`Order ${cleanOrderId} not found`);
+        }
+        
+        if (error.response?.status === 403) {
+          throw new Error('You do not have permission to view this order');
+        }
+        
         throw error;
       }
     },
-  enabled: Boolean(orderId), // ✅ Simplified condition
-  retry: 2,
-  initialFilter: { orderId },
-  staleTime: 30 * 1000,
-});
+    enabled: enabled && isValidOrderId, // ✅ Only enable if orderId is valid
+    retry: (failureCount, error) => {
+      // ✅ Don't retry on 404 or 403 errors
+      if (error?.response?.status === 404 || error?.response?.status === 403) {
+        return false;
+      }
+      return failureCount < 2; // Retry up to 2 times for other errors
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
+    initialFilter: { orderId },
+    staleTime: 30 * 1000,
+  });
 
   // Memoize the processed data to prevent unnecessary re-renders
   const processedData = useMemo(() => {
@@ -134,6 +177,8 @@ export const useGetOrderInfo = ({
       orderId: data.orderId || `#${String(data.id || orderId).padStart(6, '0')}`,
       status: data.status || 'PENDING',
       totalPrice: data.totalPrice || 0,
+      createdAt: data.createdAt || new Date().toISOString(),
+      paymentStatus: data.paymentStatus || 'PENDING',
     };
     
     console.log('✅ Processed order data:', processed);
@@ -144,12 +189,13 @@ export const useGetOrderInfo = ({
   useEffect(() => {
     console.log('useGetOrderInfo state changed:', {
       orderId,
+      isValidOrderId,
       loading: isLoading,
       hasData: !!processedData,
       error: error?.message || error,
       dataKeys: processedData ? Object.keys(processedData) : []
     });
-  }, [orderId, isLoading, processedData, error]);
+  }, [orderId, isValidOrderId, isLoading, processedData, error]);
 
   return {
     getOrderInfoData: processedData,
@@ -160,7 +206,8 @@ export const useGetOrderInfo = ({
     isFetchingOrderInfo: isFetching,
     // Additional debugging info
     rawData: data,
-    hasOrderId: !!orderId,
+    hasOrderId: isValidOrderId,
+    isValidRequest: enabled && isValidOrderId,
   };
 };
 

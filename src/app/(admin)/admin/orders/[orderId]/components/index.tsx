@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useGetOrderInfo } from "@/services/orders";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-// @ts-ignore - Import your services (adjust paths as needed)
 import httpService from "@/services/httpService";
-// @ts-ignore - Import your routes (adjust paths as needed) 
 import { routes } from "@/services/api-routes";
 import {
   ArrowLeft,
@@ -50,6 +48,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 // Product Details Modal Component
 const ProductDetailsModal = ({
@@ -76,11 +75,24 @@ const ProductDetailsModal = ({
         <div className="space-y-6">
           <div className="flex gap-6">
             <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
-              <Package className="w-12 h-12 text-gray-400" />
+              {product.image || product.images?.[0] ? (
+                <Image
+                  src={product.image || product.images[0]}
+                  alt={product.name}
+                  width={128}
+                  height={128}
+                  className="w-full h-full object-cover rounded-lg"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <Package className="w-12 h-12 text-gray-400" />
+              )}
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
-              <p className="text-gray-600 mb-4">{product.shortDescription}</p>
+              <p className="text-gray-600 mb-4">{product.shortDescription || product.description}</p>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-500">Category:</span>
@@ -92,7 +104,7 @@ const ProductDetailsModal = ({
                 </div>
                 <div>
                   <span className="text-gray-500">Processing Time:</span>
-                  <p className="font-medium">{product.processingTimeDays} days</p>
+                  <p className="font-medium">{product.processingTimeDays || 'N/A'} days</p>
                 </div>
                 <div>
                   <span className="text-gray-500">Returns:</span>
@@ -311,7 +323,7 @@ const OrderTrackingModal = ({
   );
 };
 
-// Type definitions with more flexible typing
+// Type definitions
 interface OrderStatus {
   variant: 'default' | 'secondary' | 'destructive' | 'outline';
   text: string;
@@ -324,7 +336,6 @@ interface StatusTransition {
   color: string;
 }
 
-// Flexible order data type to handle your backend structure
 interface OrderData {
   id: any;
   orderId?: any;
@@ -368,6 +379,30 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const [trackingModalOpen, setTrackingModalOpen] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+
+  // Validate orderId before proceeding
+  if (!orderId) {
+    console.error("OrderDetails: No orderId provided");
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Invalid Order ID
+          </h2>
+          <p className="text-gray-600 mb-6">
+            No order ID was provided. Please check the URL and try again.
+          </p>
+          <Button onClick={() => router.back()} className="bg-orange-500 hover:bg-orange-600">
+            {isModal ? "Close" : "Go Back"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const {
     getOrderInfoData: rawData,
@@ -378,17 +413,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     enabled: Boolean(orderId),
     orderId: orderId
   } as any);
-
-  // State for updating status
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [hasInitialLoad, setHasInitialLoad] = useState(false);
-
-  // Track initial load completion
-  useEffect(() => {
-    if (!getOrderInfoIsLoading && (rawData || getOrderInfoError)) {
-      setHasInitialLoad(true);
-    }
-  }, [getOrderInfoIsLoading, rawData, getOrderInfoError]);
 
   // Handle product view
   const handleViewProduct = useCallback((product: any) => {
@@ -410,10 +434,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     }
   }, [setClose, router]);
 
-  // Handle status update using your existing httpService
+  // Handle status update
   const handleStatusUpdate = useCallback(async (newStatus: string) => {
     if (!orderId) {
       console.error('No order ID available');
+      toast.error('No order ID available');
       return;
     }
 
@@ -422,13 +447,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     try {
       console.log(`Updating order ${orderId} to status: ${newStatus}`);
 
-      // Use your existing httpService and routes
-      const response = await (httpService as any).patchData(
-        {
-          status: newStatus,
-          notes: `Status updated to ${newStatus} via admin panel`
-        },
-        (routes as any).updateOrderStatus(orderId)
+      const response = await httpService.patchData(
+        { status: newStatus, notes: `Status updated to ${newStatus} via admin panel` },
+        routes.updateOrderStatus(orderId)
       );
 
       console.log('✅ Order status update response:', response);
@@ -439,33 +460,25 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       }
 
       console.log(`✅ Order ${orderId} successfully updated to ${newStatus}`);
-
-      // Show success message
-      alert(`Order status successfully updated to ${newStatus}`);
+      toast.success(`Order status successfully updated to ${newStatus}`);
 
     } catch (error: any) {
       console.error('❌ Failed to update order status:', error);
-      alert(`Failed to update order status: ${error?.message || 'Unknown error'}`);
+      toast.error(`Failed to update order status: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsUpdatingStatus(false);
     }
   }, [orderId, refetchOrderInfo]);
 
-  const handleEditOrder = useCallback(() => {
-    if (isModal && setClose) setClose(false);
-    router.push(`/admin/orders/${orderId}/edit`);
-  }, [isModal, setClose, router, orderId]);
-
   const handleRetry = useCallback(() => {
     console.log('🔄 Retrying order data fetch...');
-    setHasInitialLoad(false);
     if (refetchOrderInfo) {
       refetchOrderInfo();
     }
   }, [refetchOrderInfo]);
 
-  // Don't show error immediately - give it time to load on first render
-  if (getOrderInfoIsLoading && !hasInitialLoad) {
+  // Improved loading state - show loading immediately
+  if (getOrderInfoIsLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -477,8 +490,12 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
-  // Only show error after initial load attempt or if we have tried before
-  if ((getOrderInfoError && hasInitialLoad) || (getOrderInfoError && !getOrderInfoIsLoading && !rawData)) {
+  // Handle errors immediately after loading
+  if (getOrderInfoError) {
+    const errorMessage = getOrderInfoError.includes('not found')
+      ? `Order #${orderId} was not found or you don't have permission to view it.`
+      : getOrderInfoError;
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
@@ -489,7 +506,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             Error Loading Order
           </h2>
           <p className="text-gray-600 mb-6">
-            {getOrderInfoError || "Unable to load order details. Please try again."}
+            {errorMessage}
           </p>
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={handleClose}>
@@ -505,21 +522,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
-  // Show loading if still loading and no data
-  if (getOrderInfoIsLoading && !rawData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-lg font-medium">Loading order details...</p>
-          <p className="text-sm text-gray-500 mt-2">Order #{orderId}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If no data after loading, show empty state
-  if (!rawData && hasInitialLoad) {
+  // Handle empty data state
+  if (!rawData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
@@ -530,7 +534,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             Order Not Found
           </h2>
           <p className="text-gray-600 mb-6">
-            The order #{orderId} could not be found or you don't have permission to view it.
+            The order #{orderId} could not be found.
           </p>
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={handleClose}>
@@ -546,13 +550,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
+  // At this point, we have valid data
   const order = rawData as OrderData;
   const customer = order.user;
   const profile = customer?.profile || customer?.businessProfile;
 
   // Safe property access with fallbacks
-  const orderCreatedAt = order.createdAt || (rawData as any)?.createdAt || new Date().toISOString();
-  const orderPaymentStatus = order.paymentStatus || (rawData as any)?.paymentStatus || 'PENDING';
+  const orderCreatedAt = order.createdAt || new Date().toISOString();
+  const orderPaymentStatus = order.paymentStatus || 'PENDING';
 
   // Find shipping address from multiple possible sources
   const getShippingAddress = useCallback(() => {
@@ -716,7 +721,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => alert('Advanced edit options would go here')}
+                  onClick={() => toast.info('Advanced edit options coming soon')}
                   className="flex items-center gap-2 cursor-pointer"
                 >
                   <Edit className="w-4 h-4 text-gray-600" />
@@ -794,24 +799,31 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {order.timeline?.map((event: any, index: number) => (
-                    <div key={index} className="flex gap-3">
-                      <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
-                        <Package className="w-4 h-4 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium">{event?.action?.replace?.(/_/g, ' ') || 'Order Update'}</h4>
-                          <span className="text-sm text-gray-500">
-                            {formatDateTime(event?.createdAt || orderCreatedAt)}
-                          </span>
+                  {order.timeline && order.timeline.length > 0 ? (
+                    order.timeline.map((event: any, index: number) => (
+                      <div key={index} className="flex gap-3">
+                        <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
+                          <Package className="w-4 h-4 text-white" />
                         </div>
-                        <p className="text-sm text-gray-600">
-                          {event?.details?.description || "Order status updated"}
-                        </p>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium">{event?.action?.replace?.(/_/g, ' ') || 'Order Update'}</h4>
+                            <span className="text-sm text-gray-500">
+                              {formatDateTime(event?.createdAt || orderCreatedAt)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            {event?.details?.description || "Order status updated"}
+                          </p>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Package className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                      <p>No timeline events available</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -833,33 +845,54 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                       </tr>
                     </thead>
                     <tbody>
-                      {order.items?.map((item: any, index: number) => (
-                        <tr key={index} className="border-b">
-                          <td className="py-3">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
-                                <Package className="w-5 h-5 text-gray-400" />
+                      {order.items && order.items.length > 0 ? (
+                        order.items.map((item: any, index: number) => (
+                          <tr key={index} className="border-b">
+                            <td className="py-3">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                                  {item.product?.image || item.product?.images?.[0] ? (
+                                    <Image
+                                      src={item.product.image || item.product.images[0]}
+                                      alt={item.product?.name || 'Product'}
+                                      width={40}
+                                      height={40}
+                                      className="w-full h-full object-cover rounded"
+                                      onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                      }}
+                                    />
+                                  ) : (
+                                    <Package className="w-5 h-5 text-gray-400" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-medium">{item.product?.name || item.name || 'Unknown Product'}</p>
+                                  <p className="text-sm text-gray-500">{item.product?.category?.name || item.category || 'No Category'}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-medium">{item.product?.name || item.name || 'Unknown Product'}</p>
-                                <p className="text-sm text-gray-500">{item.product?.category?.name || item.category || 'No Category'}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-3 font-medium">₦{item.price?.toLocaleString() || '0'}</td>
-                          <td className="py-3">{item.quantity || 0}</td>
-                          <td className="py-3">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleViewProduct(item.product || item)}
-                              className="flex items-center gap-1"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
+                            </td>
+                            <td className="py-3 font-medium">₦{(item.price || 0).toLocaleString()}</td>
+                            <td className="py-3">{item.quantity || 0}</td>
+                            <td className="py-3">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewProduct(item.product || item)}
+                                className="flex items-center gap-1"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="py-8 text-center text-gray-500">
+                            No products found
                           </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>
@@ -873,12 +906,39 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             <Card>
               <CardHeader className="text-center">
                 <div className="w-16 h-16 rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center">
-                  <User className="w-8 h-8 text-gray-400" />
+                  {profile?.profileImage ? (
+                    <Image
+                      src={profile.profileImage}
+                      alt="Customer"
+                      width={64}
+                      height={64}
+                      className="w-full h-full object-cover rounded-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  ) : (
+                    <User className="w-8 h-8 text-gray-400" />
+                  )}
                 </div>
-                <CardTitle>{profile?.fullName || profile?.businessName || customer?.email}</CardTitle>
+                <CardTitle>{profile?.fullName || profile?.businessName || customer?.email || 'Unknown Customer'}</CardTitle>
                 <p className="text-sm text-gray-500">{customer?.type || "Customer"}</p>
                 <Badge className="bg-green-100 text-green-800">ACTIVE</Badge>
               </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    <span>{customer?.email || 'No email'}</span>
+                  </div>
+                  {profile?.phoneNumber && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <span>{profile.phoneNumber}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
             </Card>
 
             {/* Shipping Address */}
@@ -928,11 +988,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Quantity:</span>
-                    <span className="font-medium">{order.summary?.totalQuantity || order.items?.length}</span>
+                    <span className="font-medium">{order.summary?.totalQuantity || order.items?.length || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Sub Total:</span>
-                    <span className="font-medium">₦{order.summary?.itemsSubtotal?.toLocaleString()}</span>
+                    <span className="font-medium">₦{(order.summary?.itemsSubtotal || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Tax:</span>
@@ -940,16 +1000,38 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping Fee:</span>
-                    <span className="font-medium">₦{order.summary?.shippingFee?.toLocaleString()}</span>
+                    <span className="font-medium">₦{(order.summary?.shippingFee || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Discount:</span>
-                    <span className="font-medium text-red-500">-₦0</span>
+                    <span className="font-medium text-red-500">-₦{(order.summary?.discount || 0).toLocaleString()}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total Amount:</span>
-                    <span>₦{order.totalPrice?.toLocaleString()}</span>
+                    <span>₦{(order.totalPrice || 0).toLocaleString()}</span>
+                  </div>
+
+                  {/* Payment Status */}
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-600">Payment Status:</span>
+                      <Badge variant={orderPaymentStatus === 'PAID' ? 'default' : 'secondary'}>
+                        {orderPaymentStatus}
+                      </Badge>
+                    </div>
+                    {order.amountPaid && (
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-sm text-gray-600">Amount Paid:</span>
+                        <span className="text-sm font-medium">₦{order.amountPaid.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {order.amountDue && order.amountDue > 0 && (
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-sm text-gray-600">Amount Due:</span>
+                        <span className="text-sm font-medium text-red-600">₦{order.amountDue.toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -960,7 +1042,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 
       {/* Modals */}
       <OrderTrackingModal
-        order={{ ...order, createdAt: orderCreatedAt, paymentStatus: orderPaymentStatus }}
+        order={{
+          ...order,
+          createdAt: orderCreatedAt,
+          paymentStatus: orderPaymentStatus
+        }}
         isOpen={trackingModalOpen}
         onClose={() => setTrackingModalOpen(false)}
       />
@@ -968,7 +1054,10 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       <ProductDetailsModal
         product={selectedProduct}
         isOpen={productModalOpen}
-        onClose={() => setProductModalOpen(false)}
+        onClose={() => {
+          setProductModalOpen(false);
+          setSelectedProduct(null);
+        }}
       />
     </div>
   );
