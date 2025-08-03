@@ -1,12 +1,15 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import Orders from "./components";
 import { Card, CardContent } from "@/components/ui/card";
 import { OrdersErrorBoundary } from "@/components/error-boundary"; // Adjust path as needed
 
 // Loading component for the orders page
 const OrdersLoading = () => (
+
+
+
   <section className="p-6">
     <Card className="bg-white">
       <CardContent className="p-6">
@@ -53,6 +56,28 @@ const OrdersLoading = () => (
 );
 
 export default function OrdersPage() {
+
+  // Add this to your Orders component for debugging
+  useEffect(() => {
+    const debugClicks = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      console.log('Click detected:', {
+        target: target.tagName,
+        className: target.className,
+        id: target.id,
+        preventDefault: e.defaultPrevented,
+        bubbles: e.bubbles,
+        path: e.composedPath?.() || 'Not available'
+      });
+    };
+
+    document.addEventListener('click', debugClicks, true);
+
+    return () => {
+      document.removeEventListener('click', debugClicks, true);
+    };
+  }, []);
+
   return (
     <OrdersErrorBoundary>
       <Suspense fallback={<OrdersLoading />}>

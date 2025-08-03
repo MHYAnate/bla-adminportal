@@ -27,7 +27,6 @@ import {
   DashboardIcon,
   NotificationIcon,
   SettingsIcon,
-  OrderIcon,
 } from "../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
 import LogoutButton from "./logout";
@@ -60,6 +59,7 @@ const AdminSidebar: React.FC = () => {
               </div>
             </SidebarGroupLabel>
             <SidebarGroupContent>
+              {/* Dashboard Menu Item */}
               <SidebarMenu className="mb-6">
                 <SidebarMenuItem
                   className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.DASHBOARD)
@@ -71,6 +71,12 @@ const AdminSidebar: React.FC = () => {
                     <Link
                       href={ROUTES.ADMIN.SIDEBAR.DASHBOARD}
                       className="flex w-full items-center justify-between gap-2 py-[17px] px-5"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Navigating to Dashboard:', ROUTES.ADMIN.SIDEBAR.DASHBOARD);
+                        router.push(ROUTES.ADMIN.SIDEBAR.DASHBOARD);
+                      }}
                     >
                       <h5 className="text-sm font-bold">Dashboard</h5>
                       <span
@@ -86,8 +92,10 @@ const AdminSidebar: React.FC = () => {
                 </SidebarMenuItem>
               </SidebarMenu>
 
-              {adminSidebarList.filter(item => item.sidebar !== "Orders").map((item) =>
+              {/* All Menu Items Including Orders */}
+              {adminSidebarList.map((item) =>
                 item.child ? (
+                  // Menu items with children (collapsible)
                   <SidebarMenu key={item.id} className="flex flex-col">
                     <Collapsible
                       defaultOpen={false}
@@ -113,6 +121,12 @@ const AdminSidebar: React.FC = () => {
                                     ? "bg-warning text-[#FFEDEC]"
                                     : "text-[#111827]"
                                     }`}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    console.log('Navigating to sub-item:', subItem.href);
+                                    router.push(subItem.href);
+                                  }}
                                 >
                                   {subItem.sidebar}
                                 </Link>
@@ -124,9 +138,10 @@ const AdminSidebar: React.FC = () => {
                     </Collapsible>
                   </SidebarMenu>
                 ) : (
-                  <SidebarMenu key={item.id}>
+                  // Single menu items (including Orders)
+                  <SidebarMenu key={item.id} className="mb-1">
                     <SidebarMenuItem
-                      className={`mb-0 ${path.startsWith(item.href)
+                      className={`${path.startsWith(item.href)
                         ? "rounded-lg bg-warning text-[#FFEDEC]"
                         : "text-[#111827]"
                         }`}
@@ -134,11 +149,19 @@ const AdminSidebar: React.FC = () => {
                       <SidebarMenuButton asChild className="p-0">
                         <Link
                           href={item.href}
-                          className="flex w-full items-center gap-2 py-[17px]"
+                          className="flex w-full items-center gap-2 py-[17px] px-5"
+                          onClick={(e) => {
+                            // Ensure navigation works properly
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Navigating to:', item.href);
+                            router.push(item.href);
+                          }}
+                          onDoubleClick={item.sidebar === "Orders" ? handleOrdersDoubleClick : undefined}
                         >
                           <span
-                            className={`${path.startsWith(item?.href)
-                              ? "text-[#FFEDEC] ps-2"
+                            className={`${path.startsWith(item.href)
+                              ? "text-[#FFEDEC]"
                               : "text-[#D0D0D0]"
                               }`}
                           >
@@ -152,6 +175,7 @@ const AdminSidebar: React.FC = () => {
                 )
               )}
 
+              {/* Notifications Menu Item */}
               <SidebarMenu className="mt-10">
                 <SidebarMenuItem
                   className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS)
@@ -161,8 +185,16 @@ const AdminSidebar: React.FC = () => {
                 >
                   <SidebarMenuButton asChild className="p-0">
                     <Link
-                      href=""
-                      className="flex w-full items-center gap-2 py-[17px]"
+                      href={ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || "#"}
+                      className="flex w-full items-center gap-2 py-[17px] px-5"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS) {
+                          console.log('Navigating to Notifications:', ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS);
+                          router.push(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS);
+                        }
+                      }}
                     >
                       <span
                         className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS)
@@ -177,6 +209,8 @@ const AdminSidebar: React.FC = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
+
+              {/* Settings Menu Item */}
               <SidebarMenu>
                 <SidebarMenuItem
                   className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.SETTINGS)
@@ -187,7 +221,14 @@ const AdminSidebar: React.FC = () => {
                   <SidebarMenuButton asChild className="p-0">
                     <Link
                       href={`${ROUTES.ADMIN.SIDEBAR.SETTINGS}?tab=general`}
-                      className="flex w-full items-center gap-2 py-[17px]"
+                      className="flex w-full items-center gap-2 py-[17px] px-5"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const settingsUrl = `${ROUTES.ADMIN.SIDEBAR.SETTINGS}?tab=general`;
+                        console.log('Navigating to Settings:', settingsUrl);
+                        router.push(settingsUrl);
+                      }}
                     >
                       <span
                         className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.SETTINGS)
@@ -212,3 +253,6 @@ const AdminSidebar: React.FC = () => {
 };
 
 export default AdminSidebar;
+
+
+

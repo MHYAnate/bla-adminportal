@@ -429,6 +429,21 @@ export default function Orders() {
     }
   }, [data, mapStatusToFrontend]);
 
+  useEffect(() => {
+    console.log('Orders component mounted');
+
+    // Check if any global event listeners are blocking navigation
+    const handleClick = (e: Event) => {
+      console.log('Global click detected:', e.target);
+    };
+
+    document.addEventListener('click', handleClick);
+
+    return () => {
+      document.removeEventListener('click', handleClick);
+    };
+  }, []);
+
   // Debug filter changes
   useEffect(() => {
     console.log('Status filter changed:', {
