@@ -62,7 +62,7 @@ export const useGetOrderInfo = ({
 } = {}) => {
   console.log('useGetOrderInfo called with:', { enabled, orderId });
 
-  // ✅ Validate orderId before making any requests
+  // Validate orderId before making any requests
   const isValidOrderId = Boolean(orderId && String(orderId).trim());
   
   const {
@@ -83,15 +83,15 @@ export const useGetOrderInfo = ({
         throw error;
       }
       
-      // ✅ Clean the orderId before making the API call
+      // Clean the orderId before making the API call
       const cleanOrderId = String(orderId).replace('#', '').trim();
       
       try {
         console.log('Fetching order details for clean ID:', cleanOrderId);
         
-        // ✅ Add timeout to prevent hanging requests
+        // Add timeout to prevent hanging requests
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
         
         const response = await httpService.getData(
           routes.getOrderInfo(cleanOrderId),
@@ -102,9 +102,9 @@ export const useGetOrderInfo = ({
         
         console.log('Raw API response for order details:', response);
         
-        // ✅ Handle different response structures
+        // Handle the response structure from your controller
         if (response?.success && response?.data) {
-          console.log('✅ Extracted order data from wrapped response');
+          console.log('✅ Extracted order data from success wrapper');
           return response.data;
         }
         
@@ -113,7 +113,7 @@ export const useGetOrderInfo = ({
           return response;
         }
         
-        // ✅ Handle empty or null responses
+        // Handle empty or null responses
         if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
           throw new Error(`Order ${cleanOrderId} not found`);
         }
@@ -124,7 +124,7 @@ export const useGetOrderInfo = ({
       } catch (error) {
         console.error('❌ API call failed:', error);
         
-        // ✅ Handle specific error types
+        // Handle specific error types
         if (error.name === 'AbortError') {
           throw new Error('Request timed out. Please try again.');
         }
@@ -137,18 +137,24 @@ export const useGetOrderInfo = ({
           throw new Error('You do not have permission to view this order');
         }
         
+        if (error.response?.status >= 500) {
+          throw new Error('Server error. Please try again later.');
+        }
+        
         throw error;
       }
     },
-    enabled: enabled && isValidOrderId, // ✅ Only enable if orderId is valid
+    enabled: enabled && isValidOrderId,
     retry: (failureCount, error) => {
-      // ✅ Don't retry on 404 or 403 errors
-      if (error?.response?.status === 404 || error?.response?.status === 403) {
+      // Don't retry on 404, 403, or timeout errors
+      if (error?.response?.status === 404 || 
+          error?.response?.status === 403 || 
+          error?.message?.includes('timeout')) {
         return false;
       }
-      return failureCount < 2; // Retry up to 2 times for other errors
+      return failureCount < 2;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Exponential backoff
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
     initialFilter: { orderId },
     staleTime: 30 * 1000,
   });
@@ -162,23 +168,35 @@ export const useGetOrderInfo = ({
     
     console.log('Processing order data:', data);
     
+    // Process the data according to your controller's response structure
     const processed = {
       ...data,
-      // Ensure arrays are properly initialized
+      // Ensure arrays are properly initialized (from your controller structure)
       items: Array.isArray(data.items) ? data.items : [],
       timeline: Array.isArray(data.timeline) ? data.timeline : [],
+      transactions: Array.isArray(data.transactions) ? data.transactions : [],
+      adminAlerts: Array.isArray(data.adminAlerts) ? data.adminAlerts : [],
+      notes: Array.isArray(data.notes) ? data.notes : [],
+      
       // Ensure nested objects exist
       user: data.user || {},
       breakdown: data.breakdown || {},
       shipping: data.shipping || null,
       summary: data.summary || {},
-      // Ensure we have the basic order info
+      
+      // Ensure we have the basic order info with proper fallbacks
       id: data.id || orderId,
       orderId: data.orderId || `#${String(data.id || orderId).padStart(6, '0')}`,
       status: data.status || 'PENDING',
-      totalPrice: data.totalPrice || 0,
+      totalPrice: Number(data.totalPrice) || 0,
       createdAt: data.createdAt || new Date().toISOString(),
+      updatedAt: data.updatedAt || data.createdAt || new Date().toISOString(),
       paymentStatus: data.paymentStatus || 'PENDING',
+      orderType: data.orderType || 'IMMEDIATE',
+      
+      // Payment fields (handle both direct properties and nested in breakdown)
+      amountPaid: data.amountPaid || data.breakdown?.amountPaid || 0,
+      amountDue: data.amountDue || data.breakdown?.amountDue || 0,
     };
     
     console.log('✅ Processed order data:', processed);

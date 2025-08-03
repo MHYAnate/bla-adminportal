@@ -51,7 +51,7 @@ import {
 import { toast } from "sonner";
 
 // Product Details Modal Component
-const ProductDetailsModal = ({
+const ProductDetailsModal = React.memo(({
   product,
   onClose,
   isOpen
@@ -75,9 +75,9 @@ const ProductDetailsModal = ({
         <div className="space-y-6">
           <div className="flex gap-6">
             <div className="w-32 h-32 bg-gray-100 rounded-lg flex items-center justify-center">
-              {product.image || product.images?.[0] ? (
+              {product.image ? (
                 <Image
-                  src={product.image || product.images[0]}
+                  src={product.image}
                   alt={product.name}
                   width={128}
                   height={128}
@@ -92,7 +92,7 @@ const ProductDetailsModal = ({
             </div>
             <div className="flex-1">
               <h3 className="text-xl font-semibold mb-2">{product.name}</h3>
-              <p className="text-gray-600 mb-4">{product.shortDescription || product.description}</p>
+              <p className="text-gray-600 mb-4">{product.shortDescription}</p>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-gray-500">Category:</span>
@@ -104,7 +104,7 @@ const ProductDetailsModal = ({
                 </div>
                 <div>
                   <span className="text-gray-500">Processing Time:</span>
-                  <p className="font-medium">{product.processingTimeDays || 'N/A'} days</p>
+                  <p className="font-medium">{product.processingTime || 'N/A'} days</p>
                 </div>
                 <div>
                   <span className="text-gray-500">Returns:</span>
@@ -113,13 +113,6 @@ const ProductDetailsModal = ({
               </div>
             </div>
           </div>
-
-          {product.description && (
-            <div>
-              <h4 className="font-semibold mb-2">Description</h4>
-              <p className="text-gray-600">{product.description}</p>
-            </div>
-          )}
 
           <div className="flex justify-end">
             <Button onClick={onClose} variant="outline">
@@ -130,7 +123,9 @@ const ProductDetailsModal = ({
       </DialogContent>
     </Dialog>
   );
-};
+});
+
+ProductDetailsModal.displayName = 'ProductDetailsModal';
 
 // Order Tracking Modal Component
 const OrderTrackingModal = React.memo(({
@@ -155,12 +150,10 @@ const OrderTrackingModal = React.memo(({
       },
       {
         id: 2,
-        name: "Payment Pending",
-        status: paymentStatus === "PAID" ? "completed" :
-          paymentStatus === "PARTIALLY_PAID" ? "current" :
-            status === "PROCESSING" ? "current" : "pending",
+        name: "Payment",
+        status: paymentStatus === "PAID" ? "completed" : "current",
         icon: <CreditCard className="w-6 h-6" />,
-        description: "Awaiting payment confirmation"
+        description: "Payment processing"
       },
       {
         id: 3,
@@ -199,54 +192,33 @@ const OrderTrackingModal = React.memo(({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="p-1"
-              onClick={onClose}
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
             <Truck className="w-6 h-6" />
             <span className="text-2xl font-semibold">Order Tracking</span>
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>Home</span>
-            <span>›</span>
-            <span>Orders</span>
-            <span>›</span>
-            <span className="text-gray-800">Tracking</span>
-          </div>
-
           {/* Progress Tracker */}
           <div className="mb-8">
             <div className="flex items-center justify-between relative">
-              {/* Progress line background */}
               <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 z-0"></div>
 
-              {trackingSteps.map((step, index) => (
+              {trackingSteps.map((step) => (
                 <div key={step.id} className="flex flex-col items-center relative z-10 bg-white px-2">
-                  {/* Step icon */}
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 border-white shadow-sm ${step.status === "completed"
-                        ? "bg-green-500 text-white"
-                        : step.status === "current"
-                          ? "bg-yellow-500 text-white"
-                          : "bg-gray-200 text-gray-400"
+                      ? "bg-green-500 text-white"
+                      : step.status === "current"
+                        ? "bg-yellow-500 text-white"
+                        : "bg-gray-200 text-gray-400"
                       }`}
                   >
                     {step.icon}
                   </div>
-
-                  {/* Step label */}
                   <span
                     className={`text-xs text-center font-medium max-w-20 ${step.status === "completed" || step.status === "current"
-                        ? "text-gray-800"
-                        : "text-gray-400"
+                      ? "text-gray-800"
+                      : "text-gray-400"
                       }`}
                   >
                     {step.name}
@@ -280,7 +252,7 @@ const OrderTrackingModal = React.memo(({
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total Amount:</span>
-                  <span className="font-medium">₦{order.totalPrice?.toLocaleString()}</span>
+                  <span className="font-medium">₦{(order.totalPrice || 0).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -296,7 +268,7 @@ const OrderTrackingModal = React.memo(({
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Shipping Fee:</span>
-                      <span className="font-medium">₦{order.shipping.totalShippingFee?.toLocaleString()}</span>
+                      <span className="font-medium">₦{(order.shipping.totalShippingFee || 0).toLocaleString()}</span>
                     </div>
                   </>
                 )}
@@ -314,7 +286,6 @@ const OrderTrackingModal = React.memo(({
             </div>
           </div>
 
-          {/* Close Button */}
           <div className="flex justify-end pt-4">
             <Button onClick={onClose} className="bg-orange-500 hover:bg-orange-600">
               Close
@@ -341,65 +312,28 @@ interface StatusTransition {
   color: string;
 }
 
-interface OrderData {
-  id: any;
-  orderId?: any;
-  status: string;
-  totalPrice: any;
-  createdAt?: string;
-  updatedAt?: string;
-  paymentStatus?: string;
-  orderType?: string;
-  amountDue?: number;
-  amountPaid?: number;
-  userId?: number;
-  user: {
-    id?: number;
-    email?: string;
-    type?: string;
-    profile?: any;
-    businessProfile?: any;
-  };
-  items?: any[];
-  timeline?: any[];
-  shipping?: any;
-  breakdown?: any;
-  summary?: any;
-  [key: string]: any;
-}
-
-// Processed order data type - ensures all required fields are present
+// Enhanced order data type matching your backend response
 interface ProcessedOrderData {
-  // Core required fields
   id: any;
-  orderId: string;
+  orderId?: string;
   status: string;
   totalPrice: number;
   createdAt: string;
+  updatedAt?: string;
   paymentStatus: string;
-
-  // Arrays (always present, may be empty)
+  orderType?: string;
+  user: any;
   items: any[];
   timeline: any[];
-
-  // Objects (always present, may be empty)
-  user: any;
-  summary: any;
-  breakdown: any;
-
-  // Optional/nullable fields
   shipping: any;
-
-  // Payment fields (always numbers, may be 0)
-  amountPaid: number;
-  amountDue: number;
-
-  // Additional optional fields
-  updatedAt?: string;
-  orderType?: string;
-  userId?: number;
-
-  // Allow additional properties from raw data
+  breakdown: any;
+  summary: any;
+  transactions?: any[];
+  adminAlerts?: any[];
+  notes?: any[];
+  // Payment fields from your controller
+  amountPaid?: number;
+  amountDue?: number;
   [key: string]: any;
 }
 
@@ -423,7 +357,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 
   // Validate orderId before proceeding
   if (!orderId) {
-    console.error("OrderDetails: No orderId provided");
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
@@ -454,7 +387,42 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     orderId: orderId
   } as any);
 
-  // ✅ FIXED: Memoize all callbacks with stable dependencies
+  // Helper functions for safe property access
+  const getAmountPaid = useCallback((orderData: any): number => {
+    return typeof orderData?.amountPaid === 'number' ? orderData.amountPaid :
+      typeof orderData?.breakdown?.amountPaid === 'number' ? orderData.breakdown.amountPaid : 0;
+  }, []);
+
+  const getAmountDue = useCallback((orderData: any): number => {
+    return typeof orderData?.amountDue === 'number' ? orderData.amountDue :
+      typeof orderData?.breakdown?.amountDue === 'number' ? orderData.breakdown.amountDue : 0;
+  }, []);
+
+  // Determine payment type and schedule based on available data
+  const getPaymentInfo = useCallback((order: any) => {
+    const paymentStatus = order.paymentStatus || 'PENDING';
+    const orderType = order.orderType || 'IMMEDIATE';
+
+    // Determine if it's pay on delivery based on amount due vs total
+    const totalPrice = order.totalPrice || 0;
+    const amountPaid = getAmountPaid(order);
+    const amountDue = getAmountDue(order);
+
+    const isPayOnDelivery = amountDue === totalPrice && amountPaid === 0 && paymentStatus === 'PENDING';
+    const requiresImmediatePayment = paymentStatus === 'PENDING' && !isPayOnDelivery;
+    const isScheduled = orderType === 'SCHEDULED' || Boolean(order.scheduledDeliveryDate);
+
+    return {
+      paymentStatus,
+      orderType,
+      isPayOnDelivery,
+      requiresImmediatePayment,
+      isScheduled,
+      method: isPayOnDelivery ? 'Pay on Delivery' : 'Online Payment'
+    };
+  }, [getAmountPaid, getAmountDue]);
+
+  // Memoized callbacks to prevent infinite loops
   const handleViewProduct = useCallback((product: any) => {
     setSelectedProduct(product);
     setProductModalOpen(true);
@@ -474,7 +442,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 
   const handleStatusUpdate = useCallback(async (newStatus: string) => {
     if (!orderId) {
-      console.error('No order ID available');
       toast.error('No order ID available');
       return;
     }
@@ -482,25 +449,21 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     setIsUpdatingStatus(true);
 
     try {
-      console.log(`Updating order ${orderId} to status: ${newStatus}`);
-
       const response = await httpService.patchData(
-        { status: newStatus, notes: `Status updated to ${newStatus} via admin panel` },
+        {
+          status: newStatus,
+          notes: `Status updated to ${newStatus} via admin panel`
+        },
         routes.updateOrderStatus(orderId)
       );
 
-      console.log('✅ Order status update response:', response);
-
-      // Refresh the order data
       if (refetchOrderInfo) {
         await refetchOrderInfo();
       }
 
-      console.log(`✅ Order ${orderId} successfully updated to ${newStatus}`);
       toast.success(`Order status successfully updated to ${newStatus}`);
-
     } catch (error: any) {
-      console.error('❌ Failed to update order status:', error);
+      console.error('Failed to update order status:', error);
       toast.error(`Failed to update order status: ${error?.message || 'Unknown error'}`);
     } finally {
       setIsUpdatingStatus(false);
@@ -508,55 +471,43 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   }, [orderId, refetchOrderInfo]);
 
   const handleRetry = useCallback(() => {
-    console.log('🔄 Retrying order data fetch...');
     if (refetchOrderInfo) {
       refetchOrderInfo();
     }
   }, [refetchOrderInfo]);
 
-  // ✅ Helper functions for safe property access
-  const getAmountPaid = useCallback((orderData: any): number => {
-    return typeof orderData?.amountPaid === 'number' ? orderData.amountPaid : 0;
-  }, []);
-
-  const getAmountDue = useCallback((orderData: any): number => {
-    return typeof orderData?.amountDue === 'number' ? orderData.amountDue : 0;
-  }, []);
-
-  // ✅ FIXED: Memoize processed data to prevent re-renders
-  const processedOrderData = useMemo(() => {
+  // Memoized processed data based on your controller's response structure
+  const processedOrderData = useMemo((): ProcessedOrderData | null => {
     if (!rawData) return null;
 
-    // Create a properly typed processed order data object with explicit typing
-    const processed = {
-      // Spread all existing properties first
+    return {
       ...rawData,
-      // Then override/ensure required properties
       id: rawData.id,
       orderId: rawData.orderId || `#${String(rawData.id || '').padStart(6, '0')}`,
       status: rawData.status || 'PENDING',
       totalPrice: Number(rawData.totalPrice) || 0,
       createdAt: rawData.createdAt || new Date().toISOString(),
       paymentStatus: rawData.paymentStatus || 'PENDING',
+      orderType: rawData.orderType || 'IMMEDIATE',
       items: Array.isArray(rawData.items) ? rawData.items : [],
       timeline: Array.isArray(rawData.timeline) ? rawData.timeline : [],
       user: rawData.user || {},
       summary: rawData.summary || {},
       breakdown: rawData.breakdown || {},
       shipping: rawData.shipping || null,
-      // Payment properties with explicit handling
-      amountPaid: (rawData as any).amountPaid || 0,
-      amountDue: (rawData as any).amountDue || 0,
+      transactions: rawData.transactions || [],
+      adminAlerts: rawData.adminAlerts || [],
+      notes: rawData.notes || [],
+      amountPaid: rawData.amountPaid || rawData.breakdown?.amountPaid || 0,
+      amountDue: rawData.amountDue || rawData.breakdown?.amountDue || 0,
     };
-
-    return processed;
   }, [rawData]);
 
-  // ✅ FIXED: Memoize shipping address calculation
+  // Memoized shipping address calculation
   const shippingAddress = useMemo(() => {
     if (!processedOrderData) return null;
 
-    // First try to find in timeline - look for ORDER_CREATED event specifically
+    // Look for shipping address in timeline or user profile
     const orderCreatedEvent = processedOrderData.timeline?.find((event: any) =>
       event?.action === 'ORDER_CREATED' && event?.details?.shippingAddress
     );
@@ -565,22 +516,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
       return orderCreatedEvent.details.shippingAddress;
     }
 
-    // Fallback: try first timeline entry with shipping address
-    const timelineWithAddress = processedOrderData.timeline?.find((event: any) =>
-      event?.details?.shippingAddress
-    );
-
-    if (timelineWithAddress?.details?.shippingAddress) {
-      return timelineWithAddress.details.shippingAddress;
-    }
-
-    // Fallback: try user profile address
-    if (processedOrderData.user?.profile?.address || processedOrderData.user?.businessProfile?.businessAddress) {
+    // Fallback to user profile address
+    const user = processedOrderData.user;
+    if (user?.profile?.address || user?.businessProfile?.businessAddress) {
       return {
-        fullAddress: processedOrderData.user?.profile?.address || processedOrderData.user?.businessProfile?.businessAddress,
+        fullAddress: user.profile?.address || user.businessProfile?.businessAddress,
         city: 'N/A',
         stateProvince: 'N/A',
-        country: 'N/A',
+        country: 'Nigeria',
         postalCode: 'N/A'
       };
     }
@@ -588,13 +531,15 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     return null;
   }, [processedOrderData]);
 
-  // ✅ FIXED: Memoize status badge and transitions
+  // Memoized status info
   const statusInfo = useMemo(() => {
     if (!processedOrderData) return { variant: 'secondary' as const, text: 'Unknown' };
 
     const statusMap: Record<string, OrderStatus> = {
       'PENDING': { variant: 'secondary' as const, text: 'Pending' },
-      'PROCESSING': { variant: 'default' as const, text: 'In Progress' },
+      'SCHEDULED': { variant: 'secondary' as const, text: 'Scheduled' },
+      'PROCESSING': { variant: 'default' as const, text: 'Processing' },
+      'ONGOING': { variant: 'default' as const, text: 'Ongoing' },
       'SHIPPED': { variant: 'default' as const, text: 'Shipped' },
       'DELIVERED': { variant: 'default' as const, text: 'Delivered' },
       'COMPLETED': { variant: 'default' as const, text: 'Completed' },
@@ -603,6 +548,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     return statusMap[processedOrderData.status] || { variant: 'secondary' as const, text: processedOrderData.status };
   }, [processedOrderData]);
 
+  // Memoized available transitions
   const availableTransitions = useMemo(() => {
     if (!processedOrderData) return [];
 
@@ -611,9 +557,20 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
         { value: 'PROCESSING', label: 'Start Processing', icon: Package, color: 'text-blue-600' },
         { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
       ],
+      'SCHEDULED': [
+        { value: 'PENDING', label: 'Mark as Pending', icon: Clock, color: 'text-orange-600' },
+        { value: 'PROCESSING', label: 'Start Processing', icon: Package, color: 'text-blue-600' },
+        { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
+      ],
       'PROCESSING': [
         { value: 'SHIPPED', label: 'Mark as Shipped', icon: Truck, color: 'text-purple-600' },
+        { value: 'COMPLETED', label: 'Mark as Completed', icon: CheckCircle, color: 'text-green-600' },
         { value: 'CANCELLED', label: 'Cancel Order', icon: X, color: 'text-red-600' }
+      ],
+      'ONGOING': [
+        { value: 'PROCESSING', label: 'Start Processing', icon: Package, color: 'text-blue-600' },
+        { value: 'SHIPPED', label: 'Mark as Shipped', icon: Truck, color: 'text-purple-600' },
+        { value: 'DELIVERED', label: 'Mark as Delivered', icon: CheckCircle, color: 'text-green-600' }
       ],
       'SHIPPED': [
         { value: 'DELIVERED', label: 'Mark as Delivered', icon: CheckCircle, color: 'text-green-600' }
@@ -641,12 +598,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
-  // Handle errors
+  // Error state
   if (getOrderInfoError) {
-    const errorMessage = getOrderInfoError.includes('not found')
-      ? `Order #${orderId} was not found or you don't have permission to view it.`
-      : getOrderInfoError;
-
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
@@ -657,7 +610,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             Error Loading Order
           </h2>
           <p className="text-gray-600 mb-6">
-            {errorMessage}
+            {getOrderInfoError}
           </p>
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={handleClose}>
@@ -673,7 +626,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
     );
   }
 
-  // Handle empty data
+  // Empty state
   if (!processedOrderData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -705,6 +658,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const order = processedOrderData;
   const customer = order.user;
   const profile = customer?.profile || customer?.businessProfile;
+  const paymentInfo = getPaymentInfo(order);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -770,7 +724,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                     No status changes available
                   </div>
                 ) : (
-                  availableTransitions.map((transition: StatusTransition) => {
+                  availableTransitions.map((transition) => {
                     const IconComponent = transition.icon;
                     return (
                       <DropdownMenuItem
@@ -784,15 +738,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                     );
                   })
                 )}
-
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => toast.info('Advanced edit options coming soon')}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
-                  <Edit className="w-4 h-4 text-gray-600" />
-                  <span>Advanced Edit...</span>
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -806,7 +751,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-xl font-semibold">Order# {order.id}</h2>
+                    <h2 className="text-xl font-semibold">Order {order.orderId || `#${order.id}`}</h2>
                     <p className="text-gray-500 text-sm">
                       Order Date: {formatDate(order.createdAt)} | Order Time: {formatDateTime(order.createdAt)}
                     </p>
@@ -828,15 +773,15 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   <div className="flex items-center justify-between">
                     {[
                       { label: "Order Confirming", status: "completed" },
-                      { label: "Payment Pending", status: order.paymentStatus === "PAID" ? "completed" : "current" },
-                      { label: "Processing", status: order.status === "PROCESSING" ? "current" : order.status === "SHIPPED" || order.status === "DELIVERED" ? "completed" : "pending" },
-                      { label: "Shipping", status: order.status === "SHIPPED" ? "current" : order.status === "DELIVERED" ? "completed" : "pending" },
-                      { label: "Delivered", status: order.status === "DELIVERED" ? "completed" : "pending" }
+                      { label: "Payment", status: order.paymentStatus === "PAID" ? "completed" : "current" },
+                      { label: "Processing", status: ["PROCESSING", "ONGOING"].includes(order.status) ? "current" : ["SHIPPED", "DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending" },
+                      { label: "Shipping", status: order.status === "SHIPPED" ? "current" : ["DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending" },
+                      { label: "Delivered", status: ["DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending" }
                     ].map((step, index) => (
                       <div key={index} className="flex flex-col items-center">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${step.status === "completed" ? "bg-green-500 text-white" :
-                            step.status === "current" ? "bg-yellow-500 text-white" :
-                              "bg-gray-200 text-gray-500"
+                          step.status === "current" ? "bg-yellow-500 text-white" :
+                            "bg-gray-200 text-gray-500"
                           }`}>
                           {step.status === "completed" ? <CheckCircle className="w-4 h-4" /> :
                             step.status === "current" ? <Clock className="w-4 h-4" /> :
@@ -848,11 +793,62 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   </div>
                   <div className="text-sm text-gray-500 mt-4 flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
-                    Estimated shipping date: {(() => {
+                    Estimated delivery: {(() => {
                       const date = new Date(order.createdAt);
                       date.setDate(date.getDate() + 7);
                       return formatDate(date.toISOString());
                     })()}
+                  </div>
+                </div>
+
+                {/* Payment and Schedule Information */}
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-medium text-blue-900 mb-3">Payment & Schedule Information</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="text-blue-700">Payment Method:</span>
+                      <p className="font-medium text-blue-900">{paymentInfo.method}</p>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">Order Type:</span>
+                      <p className="font-medium text-blue-900">{paymentInfo.orderType}</p>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">Payment Status:</span>
+                      <Badge variant={order.paymentStatus === 'PAID' ? 'default' : 'secondary'} className="ml-2">
+                        {order.paymentStatus}
+                      </Badge>
+                    </div>
+                    <div>
+                      <span className="text-blue-700">Schedule Type:</span>
+                      <Badge variant={paymentInfo.isScheduled ? 'secondary' : 'default'} className="ml-2">
+                        {paymentInfo.isScheduled ? 'Scheduled' : 'Immediate'}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Payment Urgency Indicators */}
+                  <div className="mt-3 flex gap-2">
+                    {paymentInfo.requiresImmediatePayment && (
+                      <Badge className="bg-red-100 text-red-800 text-xs">
+                        ⚠️ Payment Required
+                      </Badge>
+                    )}
+                    {paymentInfo.isPayOnDelivery && (
+                      <Badge className="bg-blue-100 text-blue-800 text-xs">
+                        💰 Pay on Delivery
+                      </Badge>
+                    )}
+                    {paymentInfo.isScheduled && (
+                      <Badge className="bg-purple-100 text-purple-800 text-xs">
+                        📅 Scheduled Order
+                      </Badge>
+                    )}
+                    {order.paymentStatus === 'PAID' && (
+                      <Badge className="bg-green-100 text-green-800 text-xs">
+                        ✅ Payment Complete
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -879,8 +875,15 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                             </span>
                           </div>
                           <p className="text-sm text-gray-600">
-                            {event?.details?.description || "Order status updated"}
+                            {event?.details?.description ||
+                              event?.details?.adminNotes ||
+                              "Order status updated"}
                           </p>
+                          {event?.details?.previousStatus && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Changed from {event.details.previousStatus} to {event.status}
+                            </p>
+                          )}
                         </div>
                       </div>
                     ))
@@ -897,16 +900,17 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             {/* Product Table */}
             <Card>
               <CardHeader>
-                <CardTitle>Products</CardTitle>
+                <CardTitle>Products ({order.items?.length || 0} items)</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b">
-                        <th className="text-left py-3">Product Name</th>
-                        <th className="text-left py-3">Amount</th>
-                        <th className="text-left py-3">QTY</th>
+                        <th className="text-left py-3">Product</th>
+                        <th className="text-left py-3">Unit Price</th>
+                        <th className="text-left py-3">Quantity</th>
+                        <th className="text-left py-3">Total</th>
                         <th className="text-left py-3">Action</th>
                       </tr>
                     </thead>
@@ -916,30 +920,38 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                           <tr key={index} className="border-b">
                             <td className="py-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
-                                  {item.product?.image || item.product?.images?.[0] ? (
+                                <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                                  {item.product?.image ? (
                                     <Image
-                                      src={item.product.image || item.product.images[0]}
+                                      src={item.product.image}
                                       alt={item.product?.name || 'Product'}
-                                      width={40}
-                                      height={40}
+                                      width={48}
+                                      height={48}
                                       className="w-full h-full object-cover rounded"
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';
                                       }}
                                     />
                                   ) : (
-                                    <Package className="w-5 h-5 text-gray-400" />
+                                    <Package className="w-6 h-6 text-gray-400" />
                                   )}
                                 </div>
                                 <div>
-                                  <p className="font-medium">{item.product?.name || item.name || 'Unknown Product'}</p>
-                                  <p className="text-sm text-gray-500">{item.product?.category?.name || item.category || 'No Category'}</p>
+                                  <p className="font-medium">{item.product?.name || 'Unknown Product'}</p>
+                                  <p className="text-sm text-gray-500">
+                                    {item.product?.category?.name || 'No Category'}
+                                  </p>
+                                  {item.status && item.status !== order.status && (
+                                    <Badge variant="outline" className="text-xs mt-1">
+                                      {item.status}
+                                    </Badge>
+                                  )}
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3 font-medium">₦{(item.price || 0).toLocaleString()}</td>
+                            <td className="py-3 font-medium">₦{(item.price || item.unitPrice || 0).toLocaleString()}</td>
                             <td className="py-3">{item.quantity || 0}</td>
+                            <td className="py-3 font-medium">₦{(item.totalPrice || item.lineTotal || (item.price * item.quantity) || 0).toLocaleString()}</td>
                             <td className="py-3">
                               <Button
                                 variant="ghost"
@@ -954,7 +966,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={4} className="py-8 text-center text-gray-500">
+                          <td colSpan={5} className="py-8 text-center text-gray-500">
                             No products found
                           </td>
                         </tr>
@@ -964,6 +976,39 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                 </div>
               </CardContent>
             </Card>
+
+            {/* Admin Alerts (if any) */}
+            {order.adminAlerts && order.adminAlerts.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-orange-500" />
+                    Admin Alerts ({order.adminAlerts.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {order.adminAlerts.map((alert: any, index: number) => (
+                      <div key={index} className={`p-3 rounded-lg border ${alert.isResolved ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                        }`}>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">{alert.alertType?.replace(/_/g, ' ')}</span>
+                          <Badge variant={alert.isResolved ? 'default' : 'destructive'}>
+                            {alert.isResolved ? 'Resolved' : 'Active'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                        {alert.isResolved && alert.resolvedAt && (
+                          <p className="text-xs text-green-600 mt-1">
+                            Resolved on {formatDateTime(alert.resolvedAt)}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Right Column - Customer & Summary */}
@@ -1020,7 +1065,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   <div>
                     <p className="text-sm text-gray-500">Primary address</p>
                     <p className="font-medium">
-                      {shippingAddress?.fullAddress || "Address not available"}
+                      {shippingAddress?.fullAddress || profile?.address || "Address not available"}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-sm">
@@ -1029,12 +1074,12 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                       <p className="font-medium">{shippingAddress?.city || "N/A"}</p>
                     </div>
                     <div>
-                      <p className="text-gray-500">State/Province</p>
+                      <p className="text-gray-500">State</p>
                       <p className="font-medium">{shippingAddress?.stateProvince || "N/A"}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Country</p>
-                      <p className="font-medium">{shippingAddress?.country || "N/A"}</p>
+                      <p className="font-medium">{shippingAddress?.country || "Nigeria"}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Post Code</p>
@@ -1053,24 +1098,24 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               <CardContent>
                 <div className="space-y-3">
                   <div className="flex justify-between">
+                    <span className="text-gray-600">Items:</span>
+                    <span className="font-medium">{order.summary?.totalItems || order.items?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-gray-600">Quantity:</span>
-                    <span className="font-medium">{order.summary?.totalQuantity || order.items?.length || 0}</span>
+                    <span className="font-medium">{order.summary?.totalQuantity || order.items?.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0) || 0}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Sub Total:</span>
-                    <span className="font-medium">₦{(order.summary?.itemsSubtotal || 0).toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax:</span>
-                    <span className="font-medium">6%</span>
+                    <span className="font-medium">₦{(order.summary?.itemsSubtotal || order.breakdown?.itemsSubtotal || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping Fee:</span>
-                    <span className="font-medium">₦{(order.summary?.shippingFee || 0).toLocaleString()}</span>
+                    <span className="font-medium">₦{(order.summary?.shippingFee || order.breakdown?.shippingFee || order.shipping?.totalShippingFee || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Discount:</span>
-                    <span className="font-medium text-red-500">-₦{(order.summary?.discount || 0).toLocaleString()}</span>
+                    <span className="font-medium text-red-500">-₦{(order.summary?.discount || order.breakdown?.discount || 0).toLocaleString()}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between text-lg font-bold">
@@ -1078,27 +1123,83 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                     <span>₦{(order.totalPrice || 0).toLocaleString()}</span>
                   </div>
 
-                  {/* Payment Status */}
+                  {/* Enhanced Payment Information */}
                   <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mb-2">
                       <span className="text-sm text-gray-600">Payment Status:</span>
                       <Badge variant={order.paymentStatus === 'PAID' ? 'default' : 'secondary'}>
                         {order.paymentStatus}
                       </Badge>
                     </div>
+
                     {getAmountPaid(order) > 0 && (
-                      <div className="flex justify-between items-center mt-2">
+                      <div className="flex justify-between items-center mb-2">
                         <span className="text-sm text-gray-600">Amount Paid:</span>
-                        <span className="text-sm font-medium">₦{getAmountPaid(order).toLocaleString()}</span>
+                        <span className="text-sm font-medium text-green-600">
+                          ₦{getAmountPaid(order).toLocaleString()}
+                        </span>
                       </div>
                     )}
+
                     {getAmountDue(order) > 0 && (
-                      <div className="flex justify-between items-center mt-2">
+                      <div className="flex justify-between items-center mb-2">
                         <span className="text-sm text-gray-600">Amount Due:</span>
-                        <span className="text-sm font-medium text-red-600">₦{getAmountDue(order).toLocaleString()}</span>
+                        <span className="text-sm font-medium text-red-600">
+                          ₦{getAmountDue(order).toLocaleString()}
+                        </span>
                       </div>
                     )}
+
+                    {paymentInfo.isPayOnDelivery && getAmountDue(order) === 0 && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-600">Collect on Delivery:</span>
+                        <span className="text-sm font-medium text-blue-600">
+                          ₦{order.totalPrice.toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Action Buttons based on Payment Type */}
+                    <div className="mt-3 space-y-2">
+                      {paymentInfo.requiresImmediatePayment && (
+                        <Button size="sm" className="w-full bg-red-500 hover:bg-red-600 text-white">
+                          Send Payment Reminder
+                        </Button>
+                      )}
+
+                      {paymentInfo.isPayOnDelivery && (
+                        <Button size="sm" variant="outline" className="w-full border-blue-500 text-blue-600">
+                          Prepare for Collection
+                        </Button>
+                      )}
+
+                      {order.paymentStatus === 'PAID' && paymentInfo.isScheduled && (
+                        <Button size="sm" className="w-full bg-green-500 hover:bg-green-600 text-white">
+                          Schedule Delivery
+                        </Button>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Transaction History */}
+                  {order.transactions && order.transactions.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">Transaction History</h4>
+                      <div className="space-y-2">
+                        {order.transactions.map((transaction: any, index: number) => (
+                          <div key={index} className="text-xs p-2 bg-white rounded border">
+                            <div className="flex justify-between">
+                              <span>{transaction.type || 'Payment'}</span>
+                              <span className="font-medium">₦{(transaction.amount || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="text-gray-500 mt-1">
+                              {formatDate(transaction.createdAt)} - {transaction.status}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
