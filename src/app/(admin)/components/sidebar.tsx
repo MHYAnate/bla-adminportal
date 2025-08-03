@@ -171,9 +171,26 @@ const AdminSidebar: React.FC = () => {
                             e.stopPropagation();
                             console.log('🔥 Single item clicked! Navigating to:', item.href, '(' + item.sidebar + ')');
 
+                            // Store current path for comparison
+                            const currentPath = window.location.pathname;
+                            console.log('📍 Current path:', currentPath);
+                            console.log('🎯 Target path:', item.href);
+
                             try {
                               router.push(item.href);
-                              console.log('✅ Router.push successful');
+                              console.log('✅ Router.push called');
+
+                              // Check if navigation actually happened after a delay
+                              setTimeout(() => {
+                                const newPath = window.location.pathname;
+                                console.log('🔍 Path check - Current:', newPath, 'Expected:', item.href);
+
+                                if (newPath === currentPath && newPath !== item.href) {
+                                  console.warn('🚨 Router.push failed silently, using window.location');
+                                  window.location.href = item.href;
+                                }
+                              }, 500);
+
                             } catch (error) {
                               console.error('❌ Router push failed:', error);
                               console.log('🔄 Falling back to window.location');
