@@ -9,67 +9,32 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts"
-import { useGetOrdersSummary } from "@/services/orders"
-import { Button } from "@/components/ui/button"
-import { useState, useMemo, useCallback } from "react"
-
-// Define types for the data
-interface OrderSummaryDataItem {
-  month: string;
-  ordered: number;
-  delivered: number;
-}
-
-interface OrderSummaryResponse {
-  data?: OrderSummaryDataItem[];
-}
-
-interface TransformedDataItem {
-  month: string;
-  Ordered: number;
-  Delivered: number;
-  DeliveryRate: number;
-}
+import { useGetSalesData } from "@/services/orders"
+import { useState } from "react"
 
 const CustomLegend = () => (
   <div className="flex items-center justify-start gap-6 mt-6 ml-12">
     <div className="flex items-center gap-2">
       <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-      <span className="text-gray-500 text-sm">Ordered</span>
+      <span className="text-gray-500 text-sm">Individual Orders</span>
     </div>
     <div className="flex items-center gap-2">
       <div className="w-3 h-3 rounded-full bg-emerald-700"></div>
-      <span className="text-gray-500 text-sm">Delivered</span>
-    </div>
-    <div className="flex items-center gap-2">
-      <div className="w-3 h-3 border-2 border-blue-600 border-dashed rounded-full"></div>
-      <span className="text-gray-500 text-sm">Delivery Rate (%)</span>
+      <span className="text-gray-500 text-sm">Business Orders</span>
     </div>
   </div>
 )
 
-interface CustomTooltipProps {
-  active?: boolean;
-  payload?: {
-    dataKey: string;
-    value: number;
-    color?: string;
-  }[];
-  label?: string;
-}
-
-const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
-    const ordered = payload.find((p) => p.dataKey === "Ordered")?.value
-    const delivered = payload.find((p) => p.dataKey === "Delivered")?.value
-    const deliveryRate = payload.find((p) => p.dataKey === "DeliveryRate")?.value
+    const individual = payload.find((p: any) => p.dataKey === "Ordered")?.value
+    const business = payload.find((p: any) => p.dataKey === "Delivered")?.value
 
     return (
       <div className="bg-white border shadow-sm p-3 rounded-md text-sm text-gray-800">
         <p className="font-medium mb-1">{label}</p>
-        <p>Ordered: {ordered?.toLocaleString()}</p>
-        <p>Delivered: {delivered?.toLocaleString()}</p>
-        <p>Delivery Rate: {deliveryRate?.toFixed(1)}%</p>
+        <p>Individual Orders: {individual}</p>
+        <p>Business Orders: {business}</p>
       </div>
     )
   }
@@ -79,97 +44,49 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
 export default function OrderSummary() {
   const [timeframe, setTimeframe] = useState<"3m" | "6m" | "12m">("6m")
+  const currentYear = new Date().getFullYear()
 
   const {
-    getOrdersSummaryData,
-    getOrdersSummaryIsLoading,
-    getOrdersSummaryError,
-    setOrdersSummaryFilter,
-  } = useGetOrdersSummary() as {
-    getOrdersSummaryData: OrderSummaryResponse;
-    getOrdersSummaryIsLoading: boolean;
-    getOrdersSummaryError: any;
-    setOrdersSummaryFilter: (params: { timeframe: string }) => void;
-  };
+    isSalesLoading,
+    salesData,
+    setSalesFilter,
+    salesError,
+  } = useGetSalesData()
 
-  // Memoize the timeframe change handler
-  const handleTimeframeChange = useCallback((value: "3m" | "6m" | "12m") => {
+  // Debug logs
+  console.log('isSalesLoading:', isSalesLoading)
+  console.log('salesData:', salesData)
+  console.log('salesError:', salesError)
+
+  // Trigger filter on button click
+  const handleTimeframeChange = (value: "3m" | "6m" | "12m") => {
     setTimeframe(value)
-    if (setOrdersSummaryFilter) {
-      setOrdersSummaryFilter({ timeframe: value })
-    }
-  }, [setOrdersSummaryFilter])
+    setSalesFilter({ timeframe: value })
+  }
 
-  // Memoize the data transformation
-  const transformedData: TransformedDataItem[] = useMemo(() => {
-    if (!getOrdersSummaryData?.data || !Array.isArray(getOrdersSummaryData.data)) {
-      return [];
-    }
-
-    return getOrdersSummaryData.data.map((item) => {
-      const ordered = Number(item.ordered) || 0;
-      const delivered = Number(item.delivered) || 0;
-      const deliveryRate = ordered === 0 ? 0 : (delivered / ordered) * 100;
-
-      return {
-        month: item.month || '',
-        Ordered: ordered,
-        Delivered: delivered,
-        DeliveryRate: deliveryRate,
-      };
-    });
-  }, [getOrdersSummaryData?.data]);
-
-  // Memoize timeframe options
-  const timeframeOptions = useMemo(() => [
-    { value: "3m" as const, label: "3M" },
-    { value: "6m" as const, label: "6M" },
-    { value: "12m" as const, label: "12M" },
-  ], []);
+  const transformedData = Array.isArray(salesData?.data)
+    ? salesData.data.map((item: any) => ({
+      month: item.month,
+      Ordered: item.individualOrders || 0, // Individual orders
+      Delivered: item.businessOwnerOrders || 0, // Business owner orders
+      DeliveryRate: 100, // Not used currently
+    }))
+    : []
 
   return (
-    <div className="w-full bg-gray-50">
+    <div className="w-full  bg-gray-50">
       <div className="bg-white rounded-lg p-8 shadow-sm">
+        {/* Header + Filters */}
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-light text-gray-800">Order Summary</h1>
 
-          {/* Timeframe selector */}
-          <div className="flex gap-2">
-            {timeframeOptions.map((option) => (
-              <Button
-                key={option.value}
-                variant={timeframe === option.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleTimeframeChange(option.value)}
-                className="text-xs"
-              >
-                {option.label}
-              </Button>
-            ))}
-          </div>
         </div>
 
+        {/* Chart */}
         <div className="h-80">
-          {getOrdersSummaryIsLoading ? (
+          {isSalesLoading ? (
             <div className="flex justify-center items-center h-full text-gray-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mr-3"></div>
-              <span>Loading order summary...</span>
-            </div>
-          ) : getOrdersSummaryError ? (
-            <div className="flex flex-col items-center justify-center h-full text-red-500">
-              <p className="text-center mb-4">Error loading order summary</p>
-              <Button variant="outline" onClick={() => handleTimeframeChange(timeframe)}>
-                Try Again
-              </Button>
-            </div>
-          ) : transformedData.length === 0 ? (
-            <div className="flex justify-center items-center h-full text-gray-500">
-              <div className="text-center">
-                <p className="mb-4">No order summary data available</p>
-                <Button variant="outline" onClick={() => handleTimeframeChange(timeframe)}>
-                  Refresh Data
-                </Button>
-              </div>
+              Loading...
             </div>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
@@ -200,11 +117,9 @@ export default function OrderSummary() {
                 <YAxis
                   yAxisId="right"
                   orientation="right"
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: "#9ca3af", fontSize: 14 }}
-                  domain={[0, 100]}
-                  tickFormatter={(value) => `${value}%`}
+                // tickFormatter={(v) => `${v.toFixed(0)}%`}
+                // tick={{ fill: "#9ca3af", fontSize: 14 }}
+                // domain={[0, 100]}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Line
@@ -242,6 +157,7 @@ export default function OrderSummary() {
           )}
         </div>
 
+        {/* Legend */}
         <CustomLegend />
       </div>
     </div>
