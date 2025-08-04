@@ -24,7 +24,7 @@ import RoleCard from "./roleCard";
 const Customers: React.FC = () => {
   const {
     getCustomersData: data,
-
+    refetchCustomers,
     getCustomersIsLoading,
     setCustomersFilter,
   } = useGetCustomers();

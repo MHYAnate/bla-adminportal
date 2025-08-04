@@ -64,24 +64,24 @@ const DataTable: React.FC<iProps> = ({
       <div className="font-medium flex items-center gap-3">{item.id}</div>
     ),
     kyc: (item: CustomersData) => (
-        <div className="font-medium flex items-center gap-3"> {item?.kyc?.toUpperCase()}</div>
-     
+      <div className="font-medium flex items-center gap-3"> {item?.kyc?.toUpperCase()}</div>
+
     ),
     customerstatus: (item: CustomersData) => (
       <Badge
-      variant={
-        item?.status === "ACTIVE"
-          ? "success"
-          : item?.status === "INACTIVE"
-            ? "tertiary"
-            : item?.status === "FLAGGED"
-              ? "destructive"
-              : "warning"
-      }
-      className="py-1 px-[26px] font-bold"
-    >
-      {item?.status}
-    </Badge>
+        variant={
+          item?.status === "ACTIVE"
+            ? "success"
+            : item?.status === "INACTIVE"
+              ? "tertiary"
+              : item?.status === "FLAGGED"
+                ? "destructive"
+                : "warning"
+        }
+        className="py-1 px-[26px] font-bold"
+      >
+        {item?.status}
+      </Badge>
     ),
 
     action: (item: CustomersData) => (

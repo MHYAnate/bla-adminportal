@@ -1,3 +1,6 @@
+// In services/customers/index.js
+"use client";
+
 import { routes } from "../api-routes";
 import { ErrorHandler } from "../errorHandler";
 import httpService from "../httpService";
@@ -5,19 +8,24 @@ import useFetchItem from "../useFetchItem";
 import useMutateItem from "../useMutateItem";
 
 export const useGetCustomers = () => {
-  const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
+  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchCustomers"],
     queryFn: (queryParams) => {
       console.log('🚀 Customers API Call with params:', queryParams);
       
-      // Ensure pageSize is sent as number in API call
-       const processedParams = {
+      // Process parameters to ensure proper types and add customer filter
+      const processedParams = {
         ...queryParams,
         pageSize: queryParams?.pageSize ? Number(queryParams.pageSize) : 10,
         page: queryParams?.page ? Number(queryParams.page) : 1,
         // Force filter to only business and individual customers at API level
-        customerTypes: 'business,individual' // Add this filter
+        customerTypes: 'business,individual'
       };
+
+      // Handle type filter from frontend
+      if (queryParams?.type && queryParams.type !== 'all' && queryParams.type !== '') {
+        processedParams.customerTypes = queryParams.type;
+      }
       
       console.log('🚀 Processed params for API:', processedParams);
       return httpService.getData(routes.customers(processedParams));
@@ -55,7 +63,7 @@ export const useGetCustomers = () => {
   return {
     getCustomersIsLoading: isLoading,
     getCustomersData: {
-      data: processedData,
+      data: processedData, // No frontend filtering needed anymore
       pagination: paginationData
     },
     getCustomersError: ErrorHandler(error),
@@ -64,7 +72,7 @@ export const useGetCustomers = () => {
   };
 };
 
-// In your customers service file
+// Keep your other hooks unchanged
 export const useGetCustomerInfo = () => {
   const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
     queryKey: ["fetchCustomerInfo"],
@@ -121,4 +129,3 @@ export const useGetCustomerOrderHistory = () => {
     setCustomerOrderHistoryFilter: setFilter,
   };
 };
-
