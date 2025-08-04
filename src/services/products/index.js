@@ -10,7 +10,7 @@ import useFetchItem from "@/services/useFetchItem";
 import httpService from "@/services/httpService";
 import { useState, useMemo } from "react";
 
-// ✅ Fixed Get all products with comprehensive debugging
+// ✅ Get all products (unchanged)
 export const useGetProducts = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchProducts"],
@@ -21,27 +21,12 @@ export const useGetProducts = () => {
     retry: 2,
   });
 
-  // ✅ Add comprehensive debugging
-  console.log('🔍 useGetProducts Debug:', {
-    isLoading,
-    error,
-    rawData: data,
-    dataStructure: data ? Object.keys(data) : 'no data',
-    hasDataProperty: data?.hasOwnProperty('data'),
-    dataContent: data?.data,
-    isDataArray: Array.isArray(data?.data),
-    dataLength: data?.data?.length,
-    firstProduct: data?.data?.[0]
-  });
-
-  // ✅ Extract with robust safety checks using the same pattern as manufacturers
   const extractedData = useMemo(() => {
     if (!data) {
       console.log('❌ No products data received');
       return [];
     }
     
-    // Handle different response structures
     if (Array.isArray(data)) {
       console.log('✅ Products data is direct array:', data.length, 'items');
       return data;
@@ -76,17 +61,10 @@ export const useGetProducts = () => {
     return [];
   }, [data]);
 
-  // ✅ Extract pagination safely
   const extractedPagination = useMemo(() => {
     if (!data) return {};
-    
-    // Try different pagination locations
     return data?.pagination || data?.data?.pagination || data?.meta || {};
   }, [data]);
-
-  console.log('🔍 useGetProducts - Final processed data:', extractedData);
-  console.log('🔍 useGetProducts - Final processed data length:', extractedData.length);
-  console.log('🔍 useGetProducts - Final pagination:', extractedPagination);
 
   return {
     getPRoductsIsLoading: isLoading,
@@ -100,8 +78,7 @@ export const useGetProducts = () => {
   };
 };
 
-// ✅ Rest of your existing hooks remain the same...
-export const useCreateProduct = (onSuccessCallback) => {
+export const useCreateProduct = ({ onSuccess }) => {
   const queryClient = useQueryClient();
 
   const {
@@ -110,22 +87,28 @@ export const useCreateProduct = (onSuccessCallback) => {
     error,
   } = useMutation({
     mutationFn: async (payload) => {
+      console.log('🚀 Creating product with httpService:', payload);
+      
       const processedOptions = await Promise.all(
         payload.options.map(async (option) => {
-          let imageUrls = [];
+          let uploadedImageUrls = [];
+
+          // Handle new images (for create, they might be in imageFiles)
+          const imagesToUpload = option.imageFiles || [];
           
-          if (option.imageFiles && option.imageFiles.length > 0) {
+          if (imagesToUpload && imagesToUpload.length > 0) {
             const formData = new FormData();
-            option.imageFiles.forEach((file) => 
+            imagesToUpload.forEach((file) => 
               formData.append("images", file)
             );
             formData.append("folder", "products");
 
             try {
-              const uploadResponse = await apiClient.post("/upload", formData, {
+              // Keep using apiClient for file uploads (this works)
+              const uploadResponse = await apiClient.post(routes.upload(), formData, {
                 headers: { "Content-Type": "multipart/form-data" },
               });
-              imageUrls = uploadResponse.data.urls || [];
+              uploadedImageUrls = uploadResponse.data.urls || [];
             } catch (error) {
               console.error("Image upload failed:", error);
               throw new Error("Image upload failed. Please try again.");
@@ -135,14 +118,14 @@ export const useCreateProduct = (onSuccessCallback) => {
           return {
             value: option.value,
             stockPrice: option.stockPrice,
-            retailPrice: option.price,
+            retailPrice: option.price, // Backend expects retailPrice
             discountType: option.discountType,
             bulkDiscount: option.bulkDiscount,
             minimumBulkQuantity: option.minimumBulkQuantity,
             inventory: option.inventory,
             weight: option.weight,
             unit: option.unit,
-            image: imageUrls,
+            image: uploadedImageUrls,
           };
         })
       );
@@ -151,18 +134,19 @@ export const useCreateProduct = (onSuccessCallback) => {
         name: payload.name,
         description: payload.description,
         shortDescription: payload.shortDescription,
-        categoryId: parseInt(payload.categoryId),
-        manufacturerId: parseInt(payload.manufacturerId),
-        type: payload.type || "platform",
+        type: "platform",
         processingTimeDays: payload.processingTimeDays,
         minDeliveryDays: payload.minDeliveryDays,
         maxDeliveryDays: payload.maxDeliveryDays,
         includeSaturdays: payload.includeSaturdays,
         acceptsReturns: payload.acceptsReturns,
-        options: processedOptions,
+        categoryId: parseInt(payload.categoryId),
+        manufacturerId: parseInt(payload.manufacturerId),
+        options: processedOptions
       };
 
-      const response = await apiClient.post(routes.createProduct(), productPayload);
+      // ✅ FIXED: Use httpService instead of direct apiClient
+      const response = await httpService.postData(productPayload, routes.createProduct());
       return response.data;
     },
     onSuccess: (response) => {
@@ -171,12 +155,16 @@ export const useCreateProduct = (onSuccessCallback) => {
       
       toast.success(response?.message || "Product created successfully!");
       
-      if (onSuccessCallback) {
-        onSuccessCallback();
+      if (onSuccess) {
+        onSuccess();
       }
     },
     onError: (error) => {
-      const errorMessage = ErrorHandler(error) || "Product creation failed.";
+      console.error("Create Product Error:", error);
+      const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message ||
+                          error.message || 
+                          "Failed to create product";
       toast.error(errorMessage);
     },
   });
@@ -188,6 +176,7 @@ export const useCreateProduct = (onSuccessCallback) => {
   };
 };
 
+// ✅ FIXED: Update Product - Now uses httpService and expects { id, payload }
 export const useUpdateProduct = ({ onSuccess }) => {
   const queryClient = useQueryClient();
 
@@ -197,6 +186,8 @@ export const useUpdateProduct = ({ onSuccess }) => {
     error,
   } = useMutation({
     mutationFn: async ({ id, payload }) => {
+      console.log('🚀 Updating product with httpService:', { id, payload });
+      
       const processedOptions = await Promise.all(
         payload.options.map(async (option) => {
           let uploadedImageUrls = [];
@@ -209,7 +200,7 @@ export const useUpdateProduct = ({ onSuccess }) => {
             formData.append("folder", "products");
 
             try {
-              const uploadResponse = await apiClient.post("/upload", formData, {
+              const uploadResponse = await apiClient.post(routes.upload(), formData, {
                 headers: { "Content-Type": "multipart/form-data" },
               });
               uploadedImageUrls = uploadResponse.data.urls || [];
@@ -252,7 +243,8 @@ export const useUpdateProduct = ({ onSuccess }) => {
         options: processedOptions
       };
 
-      const response = await apiClient.patch(`/admin/products/${id}`, updateData);
+      // ✅ FIXED: Use httpService instead of direct apiClient
+      const response = await httpService.updateData(updateData, routes.updateProduct(id));
       return response.data;
     },
     onSuccess: (response, variables) => {
@@ -269,8 +261,9 @@ export const useUpdateProduct = ({ onSuccess }) => {
       }
     },
     onError: (error) => {
-      console.error("Update Mutation Error:", error);
+      console.error("Update Product Error:", error);
       const errorMessage = error.response?.data?.error || 
+                          error.response?.data?.message ||
                           error.message || 
                           "Failed to update product";
       toast.error(errorMessage);
@@ -284,6 +277,7 @@ export const useUpdateProduct = ({ onSuccess }) => {
   };
 };
 
+// Rest of your existing hooks (deleteProduct, getProductInfo, etc.) remain the same...
 export const useDeleteProduct = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);

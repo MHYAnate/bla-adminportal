@@ -65,7 +65,7 @@ const ProductDetailsModal = React.memo(({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl h-full flex flex-col right-0 overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 mb-4">
             <Package className="w-5 h-5" />
@@ -190,7 +190,7 @@ const OrderTrackingModal = React.memo(({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl h-full flex flex-col  right-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 mb-4">
             <Truck className="w-6 h-6" />
@@ -202,7 +202,7 @@ const OrderTrackingModal = React.memo(({
           {/* Progress Tracker */}
           <div className="mb-8">
             <div className="flex items-center justify-between relative">
-              <div className="absolute top-6 left-0 right-0 h-0.5 bg-gray-200 z-0"></div>
+              <div className="absolute top-6 left-10 right-0 h-0.5 bg-gray-200 z-0"></div>
 
               {trackingSteps.map((step) => (
                 <div key={step.id} className="flex flex-col items-center relative z-10 bg-white px-2">
@@ -233,7 +233,7 @@ const OrderTrackingModal = React.memo(({
           </div>
 
           {/* Order Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
             <div>
               <h3 className="font-semibold mb-3">Order Information</h3>
               <div className="space-y-2 text-sm">
@@ -681,175 +681,245 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
   const paymentInfo = getPaymentInfo(order);
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6">
+    <div className="min-h-screen bg-[#F8F8F8] -50">
+      <div className=" mx-12  bg-[#fdfafa] p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={handleClose}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Manage orders
-            </Button>
-            <h1 className="text-2xl font-bold">Order Details</h1>
+          <div className="flex flex-col items-start gap-2">
+            <h1 className="text-3xl font-bold">Order Details</h1>
+            <p className="text-[#687588]">Manage orders</p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={handleOpenTrackingModal}
-              className="flex items-center gap-2"
-            >
-              <Truck className="w-4 h-4" />
-              Track order
-            </Button>
 
-            {/* Status Update Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="bg-orange-500 hover:bg-orange-600 flex items-center gap-2"
-                  disabled={isUpdatingStatus || availableTransitions.length === 0}
-                >
-                  {isUpdatingStatus ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Edit className="w-4 h-4" />
-                      Update Progress
-                      <ChevronDown className="w-4 h-4" />
-                    </>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel className="flex items-center gap-2">
-                  <ShoppingCart className="w-4 h-4" />
-                  Update Order Status
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-
-                <div className="px-2 py-1.5 text-xs text-gray-500">
-                  Current: <span className="font-medium text-gray-700">{statusInfo.text}</span>
-                </div>
-                <DropdownMenuSeparator />
-
-                {availableTransitions.length === 0 ? (
-                  <div className="px-2 py-2 text-sm text-gray-500 italic">
-                    No status changes available
-                  </div>
-                ) : (
-                  availableTransitions.map((transition) => {
-                    const IconComponent = transition.icon;
-                    return (
-                      <DropdownMenuItem
-                        key={transition.value}
-                        onClick={() => handleStatusUpdate(transition.value)}
-                        className="flex items-center gap-2 cursor-pointer"
-                      >
-                        <IconComponent className={`w-4 h-4 ${transition.color}`} />
-                        <span>{transition.label}</span>
-                      </DropdownMenuItem>
-                    );
-                  })
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Order Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Order Header */}
-            <Card>
+            <Card className="bg-white rounded-lg">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold">Order {order.orderId || `#${order.id}`}</h2>
+                  <div className="">
+                    <div className="flex gap-5 mb-2">
+                      <h2 className="text-xl font-semibold">Order {order.orderId || `#${order.id}`}</h2>
+                      <Badge variant={statusInfo.variant} className="px-3 py-1">
+                        {statusInfo.text}
+                      </Badge>
+                    </div>
                     <p className="text-gray-500 text-sm">
-                      Order Date: {formatDate(order.createdAt)} | Order Time: {formatDateTime(order.createdAt)}
+                      Order / Order Details / Order {order.orderId || `#${order.id}`} - {formatDateTime(order.createdAt)}
                     </p>
+
                   </div>
-                  <div className="flex gap-2">
-                    <Badge variant={statusInfo.variant} className="px-3 py-1">
-                      {statusInfo.text}
-                    </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setRefundModalOpen(true)}
-                      disabled={
-                        processRefundMutation.isPending ||
-                        order.paymentStatus !== 'PAID' ||
-                        ['REFUNDED', 'CANCELLED'].includes(order.status)
-                      }
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      {processRefundMutation.isPending ? 'Processing...' : 'Refund'}
-                    </Button>
+                  <div>
+                    <div className="flex flex-row gap-2">
+                      <div className="flex gap-2">
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setRefundModalOpen(true)}
+                          disabled={
+                            processRefundMutation.isPending ||
+                            order.paymentStatus !== 'PAID' ||
+                            ['REFUNDED', 'CANCELLED'].includes(order.status)
+                          }
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          {processRefundMutation.isPending ? 'Processing...' : 'Refund'}
+                        </Button>
+                      </div>
+
+                      {/* Status Update Dropdown */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            className="bg-[#FFBF3B] text-black font-semibold flex items-center gap-2"
+                            disabled={isUpdatingStatus || availableTransitions.length === 0}
+                          >
+                            {isUpdatingStatus ? (
+                              <>
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                                Updating...
+                              </>
+                            ) : (
+                              <>
+
+                                Edit Order
+
+                              </>
+                            )}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuLabel className="flex items-center gap-2">
+                            <ShoppingCart className="w-4 h-4" />
+                            Update Order Status
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+
+                          <div className="px-2 py-1.5 text-xs text-gray-500">
+                            Current: <span className="font-medium text-gray-700">{statusInfo.text}</span>
+                          </div>
+                          <DropdownMenuSeparator />
+
+                          {availableTransitions.length === 0 ? (
+                            <div className="px-2 py-2 text-sm text-gray-500 italic">
+                              No status changes available
+                            </div>
+                          ) : (
+                            availableTransitions.map((transition) => {
+                              const IconComponent = transition.icon;
+                              return (
+                                <DropdownMenuItem
+                                  key={transition.value}
+                                  onClick={() => handleStatusUpdate(transition.value)}
+                                  className="flex items-center gap-2 cursor-pointer"
+                                >
+                                  <IconComponent className={`w-4 h-4 ${transition.color}`} />
+                                  <span>{transition.label}</span>
+                                </DropdownMenuItem>
+                              );
+                            })
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+
+                    </div>
                   </div>
+
                 </div>
+
 
                 {/* Progress Bar */}
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium mb-4">Order Progress</h3>
-                  <div className="flex items-center justify-between">
-                    {[
-                      { label: "Order Confirming", status: "completed" },
-                      { label: "Payment", status: order.paymentStatus === "PAID" ? "completed" : "current" },
-                      { label: "Processing", status: ["PROCESSING", "ONGOING"].includes(order.status) ? "current" : ["SHIPPED", "DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending" },
-                      { label: "Shipping", status: order.status === "SHIPPED" ? "current" : ["DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending" },
-                      { label: "Delivered", status: ["DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending" }
-                    ].map((step, index) => (
-                      <div key={index} className="flex flex-col items-center">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${step.status === "completed" ? "bg-green-500 text-white" :
-                          step.status === "current" ? "bg-yellow-500 text-white" :
-                            "bg-gray-200 text-gray-500"
-                          }`}>
-                          {step.status === "completed" ? <CheckCircle className="w-4 h-4" /> :
-                            step.status === "current" ? <Clock className="w-4 h-4" /> :
-                              <Circle className="w-4 h-4" />}
+                  <h3 className="text-sm font-medium mb-6">Order Progress</h3>
+
+                  <div className="relative">
+                    {/* Progress line container */}
+                    <div className="absolute top-4 left-0 right-0 h-2 bg-gray-200 rounded-full z-0"></div>
+
+                    {/* Active progress line */}
+                    <div
+                      className="absolute top-4 left-0 h-2 bg-green-500 rounded-full z-0 transition-all duration-500"
+                      style={{
+                        width: `${(() => {
+                          const steps = [
+                            { key: "ORDER_PLACED", completed: true },
+                            { key: "PAYMENT", completed: order.paymentStatus === "PAID" },
+                            { key: "PROCESSING", completed: ["PROCESSING", "ONGOING", "SHIPPED", "DELIVERED", "COMPLETED"].includes(order.status) },
+                            { key: "SHIPPING", completed: ["SHIPPED", "DELIVERED", "COMPLETED"].includes(order.status) },
+                            { key: "DELIVERED", completed: ["DELIVERED", "COMPLETED"].includes(order.status) }
+                          ];
+
+                          const completedSteps = steps.filter(step => step.completed).length;
+                          return (completedSteps - 1) * 25; // 25% for each step (100% / 4 gaps)
+                        })()}%`
+                      }}
+                    />
+
+                    {/* Progress steps */}
+                    <div className="relative z-10 flex items-center justify-between">
+                      {[
+                        {
+                          label: "Order Confirming",
+                          status: "completed",
+                          isActive: true
+                        },
+                        {
+                          label: order.paymentStatus === "PAID" ? "Payment Completed" : "Payment Pending",
+                          status: order.paymentStatus === "PAID" ? "completed" : "current",
+                          isActive: order.paymentStatus === "PAID"
+                        },
+                        {
+                          label: "Processing",
+                          status: ["PROCESSING", "ONGOING"].includes(order.status) ? "current" :
+                            ["SHIPPED", "DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending",
+                          isActive: ["PROCESSING", "ONGOING", "SHIPPED", "DELIVERED", "COMPLETED"].includes(order.status),
+                          showSpinner: ["PROCESSING", "ONGOING"].includes(order.status)
+                        },
+                        {
+                          label: "Shipping",
+                          status: order.status === "SHIPPED" ? "current" :
+                            ["DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending",
+                          isActive: ["SHIPPED", "DELIVERED", "COMPLETED"].includes(order.status)
+                        },
+                        {
+                          label: "Delivered",
+                          status: ["DELIVERED", "COMPLETED"].includes(order.status) ? "completed" : "pending",
+                          isActive: ["DELIVERED", "COMPLETED"].includes(order.status)
+                        }
+                      ].map((step, index) => (
+                        <div key={index} className="flex flex-col items-center bg-white px-1">
+                          {/* Step indicator - just colored dots */}
+                          <div
+                            className={`w-3 h-3 rounded-full mb-3 transition-all duration-300 ${step.status === "completed"
+                              ? "bg-green-500"
+                              : step.isActive
+                                ? "bg-yellow-500"
+                                : "bg-gray-300"
+                              }`}
+                          />
+
+
+                          {/* Step label */}
+                          <span
+                            className={`text-xs text-center font-medium max-w-20 leading-tight ${step.isActive || step.status === "completed"
+                              ? "text-gray-800"
+                              : "text-gray-400"
+                              }`}
+                          >
+                            {step.label}
+                          </span>
                         </div>
-                        <span className="text-xs mt-2 text-center max-w-16">{step.label}</span>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-500 mt-4 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Estimated delivery: {(() => {
-                      const date = new Date(order.createdAt);
-                      date.setDate(date.getDate() + 7);
-                      return formatDate(date.toISOString());
-                    })()}
+
+                  {/* Bottom section with delivery info and tracking */}
+                  <div className="flex justify-between items-center mt-8">
+                    <div className="text-sm text-gray-500 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Estimated delivery: {(() => {
+                        const date = new Date(order.createdAt);
+                        date.setDate(date.getDate() + 7);
+                        return formatDate(date.toISOString());
+                      })()}
+                    </div>
+                    <div>
+                      <Button
+                        variant="outline"
+                        onClick={handleOpenTrackingModal}
+                        className="flex items-center gap-2 bg-[#FFBF3B] font-semibold"
+                      >
+                        <Truck className="w-4 h-4" />
+                        Track order
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
                 {/* Payment and Schedule Information */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-medium text-blue-900 mb-3">Payment & Schedule Information</h4>
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-bold mb-3">Payment & Schedule Information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-blue-700">Payment Method:</span>
-                      <p className="font-medium text-blue-900">{paymentInfo.method}</p>
+                      <span className="font-bold">Payment Method:</span>
+                      <p className="font-medium">{paymentInfo.method}</p>
                     </div>
                     <div>
-                      <span className="text-blue-700">Order Type:</span>
-                      <p className="font-medium text-blue-900">{paymentInfo.orderType}</p>
+                      <span className="font-bold">Order Type:</span>
+                      <p className="font-medium">{paymentInfo.orderType}</p>
                     </div>
                     <div>
-                      <span className="text-blue-700">Payment Status:</span>
+                      <span className="font-bold">Payment Status:</span>
                       <Badge variant={order.paymentStatus === 'PAID' ? 'default' : 'secondary'} className="ml-2">
                         {order.paymentStatus}
                       </Badge>
                     </div>
                     <div>
-                      <span className="text-blue-700">Schedule Type:</span>
+                      <span className="font-bold">Schedule Type:</span>
                       <Badge variant={paymentInfo.isScheduled ? 'secondary' : 'default'} className="ml-2">
                         {paymentInfo.isScheduled ? 'Scheduled' : 'Immediate'}
                       </Badge>
@@ -864,7 +934,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                       </Badge>
                     )}
                     {paymentInfo.isPayOnDelivery && (
-                      <Badge className="bg-blue-100 text-blue-800 text-xs">
+                      <Badge className="bg-yellow-50 text-black text-xs">
                         💰 Pay on Delivery
                       </Badge>
                     )}
@@ -884,9 +954,9 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             </Card>
 
             {/* Order Timeline */}
-            <Card>
+            <Card className="rounded-xl">
               <CardHeader>
-                <CardTitle>Order Timeline</CardTitle>
+                <CardTitle className="text-2xl">Order Timeline</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -898,7 +968,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-medium">{event?.action?.replace?.(/_/g, ' ') || 'Order Update'}</h4>
+                            <h4 className="font-medium text-xl lowercase">{event?.action?.replace?.(/_/g, ' ') || 'Order Update'}</h4>
                             <span className="text-sm text-gray-500">
                               {formatDateTime(event?.createdAt || order.createdAt)}
                             </span>
@@ -927,7 +997,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             </Card>
 
             {/* Product Table */}
-            <Card>
+            <Card className="rounded-xl">
               <CardHeader>
                 <CardTitle>Products ({order.items?.length || 0} items)</CardTitle>
               </CardHeader>
@@ -949,10 +1019,10 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                           <tr key={index} className="border-b">
                             <td className="py-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                                {/* <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
                                   {item.product?.image ? (
                                     <Image
-                                      src={item.product.image}
+                                      src={item.order?.product.image}
                                       alt={item.product?.name || 'Product'}
                                       width={48}
                                       height={48}
@@ -964,17 +1034,13 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                                   ) : (
                                     <Package className="w-6 h-6 text-gray-400" />
                                   )}
-                                </div>
+                                </div> */}
                                 <div>
                                   <p className="font-medium">{item.product?.name || 'Unknown Product'}</p>
                                   <p className="text-sm text-gray-500">
                                     {item.product?.category?.name || 'No Category'}
                                   </p>
-                                  {item.status && item.status !== order.status && (
-                                    <Badge variant="outline" className="text-xs mt-1">
-                                      {item.status}
-                                    </Badge>
-                                  )}
+
                                 </div>
                               </div>
                             </td>
@@ -1007,7 +1073,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
             </Card>
 
             {/* Admin Alerts (if any) */}
-            {order.adminAlerts && order.adminAlerts.length > 0 && (
+            {/* {order.adminAlerts && order.adminAlerts.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1037,52 +1103,44 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                   </div>
                 </CardContent>
               </Card>
-            )}
+            )} */}
           </div>
 
           {/* Right Column - Customer & Summary */}
           <div className="space-y-6">
             {/* Customer Info */}
-            <Card>
-              <CardHeader className="text-center">
-                <div className="w-16 h-16 rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center">
-                  {profile?.profileImage ? (
-                    <Image
-                      src={profile.profileImage}
-                      alt="Customer"
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover rounded-full"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <User className="w-8 h-8 text-gray-400" />
-                  )}
-                </div>
-                <CardTitle>{profile?.fullName || profile?.businessName || customer?.email || 'Unknown Customer'}</CardTitle>
-                <p className="text-sm text-gray-500">{customer?.type || "Customer"}</p>
-                <Badge className="bg-green-100 text-green-800">ACTIVE</Badge>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <span>{customer?.email || 'No email'}</span>
+            <Card className="rounded-xl">
+              <div className="flex items-center pt-6">
+                <CardHeader className="text-center">
+                  <div className="w-[100px] h-[100px] rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center">
+                    {profile?.profileImage ? (
+                      <Image
+                        src={profile.profileImage}
+                        alt="Customer"
+                        width={64}
+                        height={64}
+                        className="w-full h-full object-cover rounded-full"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    ) : (
+                      <User className="w-8 h-8 text-gray-400" />
+                    )}
                   </div>
-                  {profile?.phoneNumber && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span>{profile.phoneNumber}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Shipping Address */}
-            <Card>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2">
+                  <CardTitle>{profile?.fullName || profile?.businessName || customer?.email || 'Unknown Customer'}</CardTitle>
+                  <p className="text-sm normalize text-gray-500">{customer?.type || "Customer"}</p>
+                  <div><Badge className="bg-green-100 text-green-800">ACTIVE</Badge></div>
+
+
+
+                </CardContent>
+              </div>
+              <Separator />
+              {/* Shipping Address */}
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5" />
@@ -1091,32 +1149,37 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-500">Primary address</p>
+                  <div className="flex items-center">
+                    <p className="text-sm text-gray-500 w-[150px]">Primary address</p>
                     <p className="font-medium">
                       {shippingAddress?.fullAddress || profile?.address || "Address not available"}
                     </p>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div>
-                      <p className="text-gray-500">City</p>
+                  <div className="grid grid-cols-1 gap-3 text-sm">
+                    <div className="flex items-center">
+                      <p className="text-gray-500 w-[150px]">City:</p>
                       <p className="font-medium">{shippingAddress?.city || "N/A"}</p>
                     </div>
-                    <div>
-                      <p className="text-gray-500">State</p>
+                    <div className="flex items-center">
+                      <p className="text-gray-500 w-[150px]">State</p>
                       <p className="font-medium">{shippingAddress?.stateProvince || "N/A"}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-500">Country</p>
+                    </div >
+                    <div className="flex items-center">
+                      <p className="text-gray-500 w-[150px]">Country</p>
                       <p className="font-medium">{shippingAddress?.country || "Nigeria"}</p>
                     </div>
-                    <div>
-                      <p className="text-gray-500">Post Code</p>
+                    <div className="flex items-center">
+                      <p className="text-gray-500 w-[150px]">Post Code</p>
                       <p className="font-medium">{shippingAddress?.postalCode || "N/A"}</p>
                     </div>
                   </div>
                 </div>
               </CardContent>
+            </Card>
+
+
+            <Card>
+
             </Card>
 
             {/* Order Summary */}

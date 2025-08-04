@@ -10,9 +10,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { apiClient } from "@/app/(admin)/admin/manufacturers/apiClient";
-import { routes } from "@/services/api-routes/index";
-import { ErrorHandler } from "@/services/errorHandler";
+// ✅ FIXED: Use the service hook instead of direct API calls
+import { useCreateProduct } from "@/services/products";
 
 // Product option type updated for new pricing structure
 export type ProductOption = {
@@ -32,7 +31,14 @@ export type ProductOption = {
 export default function AddProductsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"add-product" | "add-pricing" | "pricing">("add-product");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ✅ FIXED: Use the service hook instead of manual state management
+  const { createProduct, isCreating } = useCreateProduct({
+    onSuccess: () => {
+      toast.success("Product created successfully with three-tier pricing!");
+      router.push("/admin/products");
+    }
+  });
 
   // Enhanced form schema with proper price validation
   const formSchema = z.object({
@@ -143,165 +149,19 @@ export default function AddProductsPage() {
     },
   });
 
-  // Upload images to backend
-  const uploadImages = async (files: File[]): Promise<string[]> => {
-    if (!files || files.length === 0) return [];
-
-    try {
-      const formData = new FormData();
-      files.forEach(file => formData.append("images", file));
-      formData.append("folder", "products");
-
-      const response = await apiClient.post("/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      return response.data.urls || [];
-    } catch (error: any) {
-      console.error("Image upload failed:", error);
-      throw new Error(error.response?.data?.error || error.message || "Image upload failed");
-    }
-  };
-
-  const createProduct = async (payload: any) => {
-    try {
-      setIsSubmitting(true);
-      const response = await apiClient.post(routes.createProduct(), payload);
-      return response;
-    } catch (error) {
-      throw error;
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
+  // ✅ FIXED: Use the service hook instead of direct API calls (same as edit)
   const handleFinalSubmit = async (values: FormSchemaType) => {
     try {
-      // Validate pricing logic before submission
-      for (const [index, option] of values.options.entries()) {
-        // Validate stock price vs retail price
-        if (option.stockPrice > 0 && option.stockPrice >= option.price) {
-          toast.error(`Option ${index + 1}: Stock price (₦${option.stockPrice}) must be less than retail price (₦${option.price}) for profitability`);
-          return;
-        }
+      console.log('📤 Submitting product creation via service hook:', values);
 
-        // Validate bulk pricing if enabled
-        if (option.discountType !== "NONE") {
-          if (option.bulkDiscount <= 0) {
-            toast.error(`Option ${index + 1}: Bulk discount value is required when bulk pricing is enabled`);
-            return;
-          }
+      // ✅ Call createProduct with the form values directly (same pattern as edit)
+      await createProduct(values as any);
 
-          if (option.minimumBulkQuantity < 2) {
-            toast.error(`Option ${index + 1}: Minimum bulk quantity must be at least 2`);
-            return;
-          }
+      // Success handling is done in the service hook
 
-          // Calculate bulk price
-          let bulkPrice = option.price;
-          if (option.discountType === "PERCENTAGE") {
-            if (option.bulkDiscount > 100) {
-              toast.error(`Option ${index + 1}: Percentage discount cannot exceed 100%`);
-              return;
-            }
-            bulkPrice = option.price * (1 - option.bulkDiscount / 100);
-          } else if (option.discountType === "FIXED") {
-            if (option.bulkDiscount >= option.price) {
-              toast.error(`Option ${index + 1}: Fixed discount cannot be greater than or equal to retail price`);
-              return;
-            }
-            bulkPrice = option.price - option.bulkDiscount;
-          }
-
-          // Validate bulk price profitability
-          if (option.stockPrice > 0 && bulkPrice <= option.stockPrice) {
-            toast.error(`Option ${index + 1}: Bulk price (₦${bulkPrice.toFixed(2)}) must be greater than stock price (₦${option.stockPrice}) to maintain profitability`);
-            return;
-          }
-        }
-      }
-
-      // Upload images for each option
-      const optionsWithImages = await Promise.all(
-        values.options.map(async (option) => {
-          let images: string[] = [];
-          if (option.imageFiles && option.imageFiles.length > 0) {
-            images = await uploadImages(option.imageFiles);
-          }
-          return {
-            ...option,
-            image: images, // Backend expects 'image' array
-            imageFiles: undefined, // Remove client-only field
-          };
-        })
-      );
-
-      // Create payload matching backend expectations
-      const payload = {
-        name: values.name.trim(), // ✅ Ensure name is properly sent
-        description: values.description.trim(),
-        shortDescription: values.shortDescription?.trim() || '',
-        categoryId: parseInt(values.categoryId),
-        manufacturerId: parseInt(values.manufacturerId),
-        type: "platform",
-        processingTimeDays: values.processingTimeDays,
-        minDeliveryDays: values.minDeliveryDays,
-        maxDeliveryDays: values.maxDeliveryDays,
-        includeSaturdays: values.includeSaturdays,
-        acceptsReturns: values.acceptsReturns,
-        options: optionsWithImages.map(option => ({
-          value: option.value,
-          stockPrice: option.stockPrice,
-          retailPrice: option.price, // ✅ Send as retailPrice to match backend expectations
-          discountType: option.discountType,
-          bulkDiscount: option.bulkDiscount,
-          minimumBulkQuantity: option.minimumBulkQuantity,
-          inventory: option.inventory,
-          weight: option.weight,
-          unit: option.unit,
-          image: option.image,
-        })),
-      };
-
-      console.log('🔍 Final payload being sent:', payload);
-
-      // Create product
-      const response = await createProduct(payload);
-
-      toast.success("Product created successfully with three-tier pricing!");
-      router.push("/admin/products");
-    } catch (error: any) {
-      console.error("Product creation failed:", error);
-
-      // Handle specific error cases
-      if (error.message.includes("name")) {
-        form.setError("name", {
-          type: "manual",
-          message: "A product with this name already exists"
-        });
-        setActiveTab("add-product");
-      } else if (error.message.includes("category")) {
-        form.setError("categoryId", {
-          type: "manual",
-          message: "Invalid category selected"
-        });
-        setActiveTab("add-product");
-      } else if (error.message.includes("manufacturer")) {
-        form.setError("manufacturerId", {
-          type: "manual",
-          message: "Invalid manufacturer selected"
-        });
-        setActiveTab("add-product");
-      } else if (error.message.includes("delivery") || error.message.includes("processing")) {
-        toast.error("Invalid delivery timeline. Min delivery days cannot exceed max delivery days.");
-        setActiveTab("add-pricing");
-      } else if (error.message.includes("bulk") || error.message.includes("discount") || error.message.includes("stock price")) {
-        toast.error("Invalid pricing configuration. Please check your price settings.");
-        setActiveTab("add-pricing");
-      } else {
-        const errorMessage = ErrorHandler(error) || "Failed to create product";
-        toast.error(errorMessage);
-      }
+    } catch (error) {
+      console.error("Create failed:", error);
+      // Error handling is done in the service hook
     }
   };
 
@@ -330,7 +190,7 @@ export default function AddProductsPage() {
       <Form {...form}>
         <form onSubmit={(e) => e.preventDefault()} className="mb-8 mt-6">
           {activeTab === "add-pricing" ? (
-            <AddPricing form={form} isSubmitting={isSubmitting} />
+            <AddPricing form={form} isSubmitting={isCreating} />
           ) : (
             <AddProduct form={form} />
           )}
@@ -343,7 +203,7 @@ export default function AddProductsPage() {
                 className="w-auto py-4 px-[3rem] font-bold text-base"
                 size="xl"
                 onClick={() => setActiveTab("add-product")}
-                disabled={isSubmitting}
+                disabled={isCreating}
               >
                 Back
               </Button>
@@ -354,9 +214,9 @@ export default function AddProductsPage() {
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"
               onClick={onSubmit}
-              disabled={isSubmitting}
+              disabled={isCreating}
             >
-              {isSubmitting ? "Processing..." :
+              {isCreating ? "Processing..." :
                 activeTab === "add-product" ? "Next" : "Create Product"}
             </Button>
           </div>

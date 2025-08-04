@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Eye } from "lucide-react";
+import { ChevronDown, Eye, Package, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import httpService from "@/services/httpService";
@@ -144,16 +144,20 @@ const DataTable: React.FC<DataTableProps> = ({
       return (
         <div className="font-medium flex items-center gap-3">
           <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-            <Image
-              src={profileImage || "/images/placeholder-user.png"}
-              width={36}
-              height={36}
-              alt="Customer avatar"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/images/placeholder-user.png";
-              }}
-            />
+            {customer?.profileImage ? (
+              <Image
+                src={customer.profileImage}
+                alt="Customer"
+                width={64}
+                height={64}
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <User className="w-8 h-8 text-gray-400" />
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-medium text-gray-900 truncate" title={name}>
@@ -207,16 +211,20 @@ const DataTable: React.FC<DataTableProps> = ({
       return (
         <div className="font-medium flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-            <Image
-              src={productImage}
-              width={36}
-              height={36}
-              alt="Product image"
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/images/placeholder-product.png";
-              }}
-            />
+            {item.product?.image ? (
+              <Image
+                src={item.product.image}
+                alt={item.product?.name || 'Product'}
+                width={48}
+                height={48}
+                className="w-full h-full object-cover rounded"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <Package className="w-6 h-6 text-gray-400" />
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-medium text-gray-900 truncate" title={productName}>

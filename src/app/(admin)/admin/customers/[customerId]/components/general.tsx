@@ -1,75 +1,83 @@
 export interface CustomerAddress {
-	id: number;
-	addressLine1: string;
-	addressLine2: string | null;
-	addressType: "SHIPPING" | "BILLING" | string;
-	city: string;
-	stateProvince: string;
-	country: string;
-	postalCode: string;
-	phoneNumber: string;
-	isDefault: boolean;
-	createdAt: string; // ISO string
-	updatedAt: string;
+  id: number;
+  addressLine1: string;
+  addressLine2: string | null;
+  addressType: "SHIPPING" | "BILLING" | string;
+  city: string;
+  stateProvince: string;
+  country: string;
+  postalCode: string;
+  phoneNumber: string;
+  isDefault: boolean;
+  createdAt: string; // ISO string
+  updatedAt: string;
 }
 
 export interface BusinessInfo {
-	businessAddress: string;
-	businessPhone: string;
-	cacNumber: string;
-	storeName: string;
+  businessAddress: string;
+  businessPhone: string;
+  cacNumber: string;
+  storeName: string;
 }
 
 export interface PersonalInfo {
-	fullName: string;
-	email: string;
-	phone: string;
-	gender: string | null;
+  fullName: string;
+  email: string;
+  phone: string;
+  gender: string | null;
 }
 
 export interface ReferralInfo {
-	referralCode: string;
-	referredBy: string | null;
-	hasFreeShipping: boolean;
-	totalReferrals: number;
-	successfulReferrals: number;
-	totalBonuses: number;
-	activeBonuses: number;
-	referralsMade: any[]; // Replace `any` with proper type if known
-	referralsReceived: any[];
-	bonusHistory: any[];
+  referralCode: string;
+  referredBy: string | null;
+  hasFreeShipping: boolean;
+  totalReferrals: number;
+  successfulReferrals: number;
+  totalBonuses: number;
+  activeBonuses: number;
+  referralsMade: any[]; // Replace `any` with proper type if known
+  referralsReceived: any[];
+  bonusHistory: any[];
 }
 
 export interface CustomerData {
-	id: number;
-	email: string;
-	customerType: "business" | "individual" | string;
-	role: string;
-	customerStatus: "ACTIVE" | "INACTIVE" | string;
-	status: string;
-	createdAt: string;
-	complianceStatus: "GOOD" | "BAD" | string;
-	complianceScore: number;
-	howDidYouHear: string;
-	kyc: string;
-	kycStatus: string;
-	addresses: CustomerAddress[];
-	businessInfo: BusinessInfo;
-	personalInfo: PersonalInfo;
-	referralInfo: ReferralInfo;
+  id: number;
+  email: string;
+  customerType: "business" | "individual" | string;
+  role: string;
+  customerStatus: "ACTIVE" | "INACTIVE" | string;
+  status: string;
+  createdAt: string;
+  complianceStatus: "GOOD" | "BAD" | string;
+  complianceScore: number;
+  howDidYouHear: string;
+  kyc: string;
+  kycStatus: string;
+  addresses: CustomerAddress[];
+  businessInfo: BusinessInfo;
+  personalInfo: PersonalInfo;
+  referralInfo: ReferralInfo;
 }
 
 export interface Customer {
-	data: CustomerData;
+  data: CustomerData | null;
 }
 
 const General: React.FC<Customer> = ({ data }) => {
+  // Add null check at the beginning
+  if (!data) {
+    return (
+      <div className="text-center text-gray-500 p-8">
+        No customer data available
+      </div>
+    );
+  }
 
   const address = data?.addresses?.find(addr => addr.isDefault) || data?.addresses?.[0];
 
   return (
     <>
-      {/* Personal Info Section (unchanged) */}
+      {/* Personal Info Section */}
       <div className="border border-[#F1F2F4] rounded-[1rem] p-6 mb-6">
         <h5 className="pb-4 mb-4 border-b border-[#F1F2F4] text-[#111827] font-semibold">
           Personal Info
@@ -79,50 +87,52 @@ const General: React.FC<Customer> = ({ data }) => {
             <div className="flex justify-between mb-4">
               <p className="text-sm text-[#687588]">Full Name</p>
               <p className="text-sm text-[#111827] font-semibold">
-                {data?.personalInfo?.fullName}
+                {data?.personalInfo?.fullName || "----"}
               </p>
             </div>
-						{data?.customerType === "business" && (
-            <div className="flex justify-between mb-4">
-              <p className="text-sm text-[#687588]">Store Name</p>
-              <p className="text-sm text-[#111827] font-semibold">
-                {data?.businessInfo?.storeName}
-              </p>
-            </div>
-						)}
+            {data?.customerType === "business" && (
+              <div className="flex justify-between mb-4">
+                <p className="text-sm text-[#687588]">Store Name</p>
+                <p className="text-sm text-[#111827] font-semibold">
+                  {data?.businessInfo?.storeName || "----"}
+                </p>
+              </div>
+            )}
             <div className="flex justify-between mb-4">
               <p className="text-sm text-[#687588]">Email</p>
               <p className="text-sm text-[#111827] font-semibold">
-                {data?.personalInfo?.email || "----"}
+                {data?.email || "----"}
               </p>
             </div>
           </div>
           <div className="w-full">
             <div className="flex justify-between mb-4">
               <p className="text-sm text-[#687588]">Gender</p>
-              <p className="text-sm text-[#111827] font-semibold">{data?.personalInfo?.gender}</p>
+              <p className="text-sm text-[#111827] font-semibold">
+                {data?.personalInfo?.gender || "----"}
+              </p>
             </div>
             {data?.customerType === "business" && (
-              <div className="flex justify-between mb-4">
-                <p className="text-sm text-[#687588]">CAC Number</p>
-                <p className="text-sm text-[#111827] font-semibold">
-                 {data?.businessInfo?.cacNumber}
-                </p>
-              </div>
+              <>
+                <div className="flex justify-between mb-4">
+                  <p className="text-sm text-[#687588]">CAC Number</p>
+                  <p className="text-sm text-[#111827] font-semibold">
+                    {data?.businessInfo?.cacNumber || "----"}
+                  </p>
+                </div>
+                <div className="flex justify-between mb-4">
+                  <p className="text-sm text-[#687588]">Business Number</p>
+                  <p className="text-sm text-[#111827] font-semibold">
+                    {data?.businessInfo?.businessPhone || "----"}
+                  </p>
+                </div>
+              </>
             )}
-               {data?.customerType === "business" && (
-              <div className="flex justify-between mb-4">
-                <p className="text-sm text-[#687588]">Business Number</p>
-                <p className="text-sm text-[#111827] font-semibold">
-                {data?.businessInfo?.businessPhone}
-                </p>
-              </div>
-            )}
-               {data?.customerType !== "business" && (
+            {data?.customerType !== "business" && (
               <div className="flex justify-between mb-4">
                 <p className="text-sm text-[#687588]">Phone Number</p>
                 <p className="text-sm text-[#111827] font-semibold">
-                  {data?.personalInfo?.phone}
+                  {data?.personalInfo?.phone || "----"}
                 </p>
               </div>
             )}
@@ -130,7 +140,7 @@ const General: React.FC<Customer> = ({ data }) => {
         </div>
       </div>
 
-      {/* Fixed Address Section */}
+      {/* Address Section */}
       <div className="border border-[#F1F2F4] rounded-[1rem] p-6">
         <h5 className="pb-4 mb-4 border-b border-[#F1F2F4] text-[#111827] font-semibold">
           Address
@@ -144,7 +154,7 @@ const General: React.FC<Customer> = ({ data }) => {
             <p className="text-sm text-[#687588] mb-4">Country</p>
             <p className="text-sm text-[#687588] mb-4">Post Code</p>
           </div>
-          
+
           {address ? (
             <div>
               <p className="text-sm text-[#111827] font-semibold mb-4">
@@ -180,3 +190,4 @@ const General: React.FC<Customer> = ({ data }) => {
 };
 
 export default General;
+

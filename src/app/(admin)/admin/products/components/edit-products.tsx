@@ -11,7 +11,10 @@ import { useEffect, useState, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { apiClient } from "@/app/(admin)/admin/manufacturers/apiClient";
+// ✅ FIXED: Use the service hook instead of direct API calls
+import { useUpdateProduct } from "@/services/products";
+import { routes } from "@/services/api-routes";
+import { apiClient } from "@/services/api/client";
 import { Trash, UploadCloud, Copy, Info } from "lucide-react";
 import Image from "next/image";
 import { useDropzone } from "react-dropzone";
@@ -102,9 +105,16 @@ const EditProductForm: React.FC<IProps> = ({
   categories = [],
   setClose
 }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [copiedOption, setCopiedOption] = useState<any>(null);
+
+  // ✅ FIXED: Use the service hook instead of manual state management
+  const { updateProduct, isUpdating } = useUpdateProduct({
+    onSuccess: () => {
+      toast.success("Product updated successfully!");
+      setClose();
+    }
+  });
 
   const form = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -216,7 +226,7 @@ const EditProductForm: React.FC<IProps> = ({
 
     try {
       setIsUploading(true);
-      const response = await apiClient.post("/upload", formData, {
+      const response = await apiClient.post(routes.upload(), formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       return response.data.urls || [];
@@ -247,74 +257,23 @@ const EditProductForm: React.FC<IProps> = ({
     }
   };
 
-  const onSubmit = async (values: ProductFormValues) => {
-    setIsSubmitting(true);
-
+  const onSubmit = async (values: any) => {
     try {
-      const processedOptions = await Promise.all(
-        values.options.map(async (option) => {
-          let uploadedImageUrls: string[] = [];
+      console.log('📤 Submitting product update via service hook:', values);
 
-          if (option.newImages && option.newImages.length > 0) {
-            uploadedImageUrls = await uploadImages(option.newImages);
-          }
+      // ✅ FIXED: Call updateProduct with the correct parameter structure
+      await updateProduct({
+        id: product.id,
+        payload: values
+      } as any);
 
-          const allImages = [...(option.image || []), ...uploadedImageUrls];
+      // Success handling is done in the service hook
 
-          return {
-            value: option.value,
-            stockPrice: option.stockPrice,
-            retailPrice: option.price,
-            discountType: option.discountType,
-            bulkDiscount: option.bulkDiscount,
-            minimumBulkQuantity: option.minimumBulkQuantity,
-            inventory: option.inventory,
-            weight: option.weight,
-            unit: option.unit,
-            image: allImages,
-          };
-        })
-      );
-
-      const updateData = {
-        name: values.name,
-        description: values.description,
-        shortDescription: values.shortDescription,
-        type: values.type,
-        isActive: values.isActive,
-        processingTimeDays: values.processingTimeDays,
-        minDeliveryDays: values.minDeliveryDays,
-        maxDeliveryDays: values.maxDeliveryDays,
-        includeSaturdays: values.includeSaturdays,
-        acceptsReturns: values.acceptsReturns,
-        categoryId: parseInt(values.categoryId),
-        manufacturerId: parseInt(values.manufacturerId),
-        options: processedOptions
-      };
-
-      const response = await apiClient.patch(`/admin/products/${product.id}`, updateData);
-
-      if (response.data.success) {
-        toast.success("Product updated successfully!");
-        setClose();
-      } else {
-        throw new Error(response.data.error || "Failed to update product");
-      }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Update failed:", error);
-
-      if (error.message.includes("stock price") || error.message.includes("Stock price")) {
-        toast.error("Stock price must be less than retail price for profitability");
-      } else if (error.message.includes("bulk") || error.message.includes("Bulk")) {
-        toast.error("Invalid bulk pricing configuration. Check your discount settings.");
-      } else {
-        toast.error(error.message || "Failed to update product");
-      }
-    } finally {
-      setIsSubmitting(false);
+      // Error handling is done in the service hook
     }
   };
-
   return (
     <div className="space-y-6">
       <Form {...form}>
@@ -557,15 +516,15 @@ const EditProductForm: React.FC<IProps> = ({
               type="button"
               variant="outline"
               onClick={setClose}
-              disabled={isSubmitting || isUploading}
+              disabled={isUpdating || isUploading}
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting || isUploading}
+              disabled={isUpdating || isUploading}
             >
-              {isSubmitting ? "Updating..." : "Update Product"}
+              {isUpdating ? "Updating..." : "Update Product"}
             </Button>
           </div>
         </form>
@@ -721,22 +680,6 @@ const OptionFormFields: React.FC<OptionFormFieldsProps> = ({
             )}
           />
         </div>
-
-        {/* Profit Margin Display */}
-        {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="bg-white p-3 rounded border">
-            <div className="text-sm text-gray-600">Retail Profit Margin</div>
-            <div id={`retail-margin-${index}`} className="text-lg font-bold text-gray-800">
-              0%
-            </div>
-          </div>
-          <div className="bg-white p-3 rounded border">
-            <div className="text-sm text-gray-600">Bulk Profit Margin</div>
-            <div id={`bulk-margin-${index}`} className="text-lg font-bold text-gray-800">
-              0%
-            </div>
-          </div>
-        </div> */}
 
         {/* Bulk Pricing Configuration */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

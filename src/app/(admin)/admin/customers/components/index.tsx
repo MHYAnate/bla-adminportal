@@ -12,13 +12,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
-import { ChevronLeft } from "lucide-react";
 import CreateCustomer from "./create-customer";
 import { useGetCustomers } from "@/services/customers";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import DeleteContent from "@/app/(admin)/components/delete-content";
-import DatePickerWithRange from "@/components/ui/date-picker";
 import { useGetAdminRoles } from "@/services/admin";
 import { RoleData } from "@/types";
 import RoleCard from "./roleCard";
@@ -30,6 +28,7 @@ const Customers: React.FC = () => {
     getCustomersIsLoading,
     setCustomersFilter,
   } = useGetCustomers();
+
   const [filter, setFilter] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [type, setType] = useState<string>("");
@@ -38,12 +37,11 @@ const Customers: React.FC = () => {
   const [pageSize, setPageSize] = useState<string>("10");
   const [currentPage, setCurrentPage] = useState(1);
   const [currentTab, setCurrentTab] = useState<string>("delete");
-  const [startDate, setStartDate] = useState<string | null>(null);
-  const [endDate, setEndDate] = useState<string | null>(null);
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
+
   const payload = {
     page: currentPage,
     pageSize,
@@ -57,49 +55,46 @@ const Customers: React.FC = () => {
     setCustomersFilter(payload);
   }, [filter, type, status, pageSize, currentPage, kycStatus]);
 
-  console.log("customers", data)
-
   const customerList = [
-    {
-      text: "All",
-      value: "all",
-    },
-    {
-      text: "Individual",
-      value: "individual",
-    },
-    {
-      text: "business",
-      value: "business",
-    },
+    { text: "All", value: "all" },
+    { text: "Individual", value: "individual" },
+    { text: "Business", value: "business" },
   ];
 
   const kycList = [
-    {
-      text: "All",
-      value: "all",
-    },
-    {
-      text: "Verified",
-      value: "Verified",
-    },
-    {
-      text: "Pending",
-      value: "Not Verified",
-    },
+    { text: "All", value: "all" },
+    { text: "Verified", value: "Verified" },
+    { text: "Pending", value: "Not Verified" },
   ];
 
   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
 
-
-
-
-  // Debug: log to see what rolesData contains
   console.log("rolesData:", rolesData);
+  console.log("customers data:", data);
 
+  // Enhanced data processing for roles with better error handling
+  const processRolesData = () => {
+    if (!rolesData) return [];
 
-  // Ensure rolesData is an array
-  const safeRolesData = Array.isArray(rolesData.data) ? rolesData.data : [];
+    // Handle different possible data structures
+    let roles = [];
+    if (Array.isArray(rolesData)) {
+      roles = rolesData;
+    } else if (rolesData.data && Array.isArray(rolesData.data)) {
+      roles = rolesData.data;
+    } else if (rolesData.roles && Array.isArray(rolesData.roles)) {
+      roles = rolesData.roles;
+    }
+
+    // Filter to only show customer-related roles
+    return roles.filter((role: RoleData) => {
+      const roleName = role.name?.toLowerCase();
+      return roleName === 'business' || roleName === 'individual' ||
+        roleName === 'business_owner' || roleName === 'customer';
+    });
+  };
+
+  const safeRolesData = processRolesData();
 
   return (
     <div>
@@ -119,13 +114,29 @@ const Customers: React.FC = () => {
                 <ExportIcon /> Download
               </Button>
             </div>
+          </div>
 
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
-            {safeRolesData.map((role: RoleData) => (
-              <RoleCard key={role.id} role={role} />
-            ))}
-          </div>
+          {/* Role Cards Section */}
+          {isRolesLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+              <div className="animate-pulse bg-gray-200 h-[200px] rounded-lg"></div>
+              <div className="animate-pulse bg-gray-200 h-[200px] rounded-lg"></div>
+            </div>
+          ) : safeRolesData.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+              {safeRolesData.map((role: RoleData) => (
+                <RoleCard key={role.id} role={role} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+              <div className="text-center text-gray-500 p-8">
+                No customer roles found
+              </div>
+            </div>
+          )}
+
+          {/* Filters Section */}
           <div className="flex items-center gap-4 mb-6">
             <div className="w-1/2 me-auto">
               <InputFilter setQuery={setFilter} />
@@ -140,11 +151,9 @@ const Customers: React.FC = () => {
               list={kycList}
               placeholder="Kyc status"
             />
-            {/* <DatePickerWithRange
-              setFromDate={setStartDate}
-              setToDate={setEndDate}
-            /> */}
           </div>
+
+          {/* Data Table */}
           <DataTable
             data={data?.data || []}
             currentPage={currentPage}
@@ -152,26 +161,20 @@ const Customers: React.FC = () => {
             pageSize={Number(pageSize)}
             totalPages={data?.pagination?.total || 0}
             setPageSize={setPageSize}
-            handleDelete={() => {
-              setIsOpen(true);
-            }}
+            handleDelete={() => setIsOpen(true)}
             isLoading={getCustomersIsLoading}
           />
         </CardContent>
       </Card>
-      <Dialog open={isOpen} onOpenChange={() => setIsOpen(!open)}>
-        <DialogContent
-          className={`${currentTab === "delete"
-            ? "max-w-[33.75rem] left-[50%] translate-x-[-50%]"
-            : "right-0 p-8 max-w-[47.56rem] h-screen overflow-y-scroll"
-            }`}
-        >
+
+      {/* Delete Dialog */}
+      <Dialog open={isOpen} onOpenChange={() => setIsOpen(!isOpen)}>
+        <DialogContent className="max-w-[33.75rem] left-[50%] translate-x-[-50%]">
           <DialogHeader>
             <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
               Delete Customer
             </DialogTitle>
           </DialogHeader>
-          {/* <CreateCustomer setClose={() => setIsOpen(false)} /> */}
           <DeleteContent
             isLoading={getCustomersIsLoading}
             handleClick={() => setIsOpen(false)}

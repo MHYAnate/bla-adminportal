@@ -121,30 +121,54 @@ const httpService = {
   },
 
   // POST request with token
- postData: async (data, endpoint) => {
-  if (endpoint.includes('register')) {
-    const { email, userId, token, signature, timestamp, ...payload } = data;
+  postData: async (data, endpoint) => {
+    if (typeof window !== 'undefined') {
+      console.log('postData called with endpoint:', endpoint, 'data:', data);
+      if (getAuthToken) {
+        const token = getAuthToken();
+        console.log('Token check before POST request:', !!token);
+      }
+    }
+
+    if (endpoint.includes('register')) {
+      const { email, userId, token, signature, timestamp, ...payload } = data;
+      
+      // Construct URL with query params
+      const queryParams = new URLSearchParams({
+        email,
+        userId: userId.toString(),
+        token,
+        signature,
+        timestamp: timestamp.toString(),
+        ...(data.expires && { expires: data.expires.toString() }),
+        noExpiry: data.noExpiry ? 'true' : 'false'
+      });
+      
+      const url = `${endpoint}?${queryParams.toString()}`;
+      const response = await axiosInstance.post(url, payload);
+      return response.data;
+    }
     
-    // Construct URL with query params
-    const queryParams = new URLSearchParams({
-      email,
-      userId: userId.toString(),
-      token,
-      signature,
-      timestamp: timestamp.toString(),
-      ...(data.expires && { expires: data.expires.toString() }),
-      noExpiry: data.noExpiry ? 'true' : 'false'
-    });
+    // Normal POST handling for other endpoints
+    const cleanEndpoint = endpoint.replace(/^\/+/, '');
+    const response = await axiosInstance.post(cleanEndpoint, data);
+    return logResponse(response, endpoint);
+  },
+
+  // ✅ ADD THIS METHOD - Update data (PATCH request with token)
+  updateData: async (data, endpoint) => {
+    if (typeof window !== 'undefined') {
+      console.log('updateData called with endpoint:', endpoint, 'data:', data);
+      if (getAuthToken) {
+        const token = getAuthToken();
+        console.log('Token check before UPDATE request:', !!token);
+      }
+    }
     
-    const url = `${endpoint}?${queryParams.toString()}`;
-    const response = await axiosInstance.post(url, payload);
-    return response.data;
-  }
-  
-  // Normal POST handling for other endpoints
-  const cleanEndpoint = endpoint.replace(/^\/+/, '');
-  return axiosInstance.post(cleanEndpoint, data);
-},
+    const cleanEndpoint = endpoint.replace(/^\/+/, '');
+    const response = await axiosInstance.patch(cleanEndpoint, data);
+    return logResponse(response, endpoint);
+  },
 
   // PUT request with token
   putData: async (data, endpoint) => {
@@ -216,7 +240,6 @@ const httpService = {
     });
     return logResponse(response, endpoint);
   },
-  
 };
 
 export default httpService;
