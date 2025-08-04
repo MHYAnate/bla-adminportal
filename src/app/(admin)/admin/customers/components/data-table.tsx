@@ -29,6 +29,14 @@ const DataTable: React.FC<iProps> = ({
   handleDelete,
   isLoading,
 }) => {
+  console.log('DataTable Debug:', {
+    dataLength: data?.length,
+    currentPage,
+    pageSize,
+    totalPages,
+    actualTotal: totalPages
+  });
+
   const cellRenderers = {
     name: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">
@@ -108,17 +116,23 @@ const DataTable: React.FC<iProps> = ({
     action: "Action",
   };
 
+
+
+
   return (
     <div>
-      < CustomerTableComponent<CustomersData>
+      <CustomerTableComponent<CustomersData>
         tableData={data}
         currentPage={currentPage}
         onPageChange={onPageChange}
-        totalPages={Math.ceil(totalPages / pageSize)}
+        totalPages={Math.ceil(totalPages / pageSize)} // Ensure this calculation is correct
         cellRenderers={cellRenderers}
         columnOrder={columnOrder}
         columnLabels={columnLabels}
-        setFilter={setPageSize}
+        setFilter={(newPageSize) => {
+          console.log('Setting new page size:', newPageSize);
+          setPageSize(newPageSize);
+        }}
         isLoading={isLoading}
       />
     </div>

@@ -12,20 +12,29 @@ export const routes = {
   // Customer routes with improved query handling
   customers: (data) => {
     if (!data || typeof data !== 'object') {
-      return 'admin/customers';
+      // Default to only business and individual customers
+      return 'admin/customers?customerTypes=business,individual&page=1&pageSize=10';
     }
 
     // Filter out undefined, null, and empty string values
     const cleanData = Object.fromEntries(
       Object.entries(data).filter(([key, value]) => {
-        // Keep the value if it's not null, undefined, or empty string
         return value !== null && value !== undefined && value !== '';
       })
     );
 
-    // If no valid parameters, return base route
+    // Ensure default customer types if not specified
+    if (!cleanData.type && !cleanData.customerTypes) {
+      cleanData.customerTypes = 'business,individual';
+    }
+
+    // Ensure pagination defaults
+    if (!cleanData.page) cleanData.page = 1;
+    if (!cleanData.pageSize) cleanData.pageSize = 10;
+
+    // If no valid parameters, return base route with defaults
     if (Object.keys(cleanData).length === 0) {
-      return 'admin/customers';
+      return 'admin/customers?customerTypes=business,individual&page=1&pageSize=10';
     }
 
     const params = new URLSearchParams();
@@ -42,7 +51,7 @@ export const routes = {
     });
 
     const queryString = params.toString();
-    return queryString ? `admin/customers?${queryString}` : 'admin/customers';
+    return queryString ? `admin/customers?${queryString}` : 'admin/customers?customerTypes=business,individual&page=1&pageSize=10';
   },
 
   getCustomerInfo: (id) => `admin/customers/${id}`,

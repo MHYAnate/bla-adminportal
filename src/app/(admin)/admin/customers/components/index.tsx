@@ -31,7 +31,7 @@ const Customers: React.FC = () => {
 
   const [filter, setFilter] = useState<string>("");
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [type, setType] = useState<string>("");
+  const [type, setType] = useState<string>("all"); // Default to 'all' for better UX
   const [status, setStatus] = useState<string>("");
   const [kycStatus, setkycStatus] = useState<string>("");
   const [pageSize, setPageSize] = useState<string>("10");
@@ -44,16 +44,17 @@ const Customers: React.FC = () => {
 
   const payload = {
     page: currentPage,
-    pageSize,
-    type,
+    pageSize: Number(pageSize),
+    type, // This will be converted to customerTypes in the service
     status,
     kycStatus,
     search: filter,
   };
 
   useEffect(() => {
+    console.log("Sending payload:", payload);
     setCustomersFilter(payload);
-  }, [filter, type, status, pageSize, currentPage, kycStatus]);
+  }, [filter, type, status, pageSize, currentPage, kycStatus, setCustomersFilter]);
 
   const customerList = [
     { text: "All", value: "all" },
@@ -145,6 +146,7 @@ const Customers: React.FC = () => {
               setFilter={setType}
               placeholder="Customer type"
               list={customerList}
+              value={type}
             />
             <SelectFilter
               setFilter={setkycStatus}
@@ -153,13 +155,13 @@ const Customers: React.FC = () => {
             />
           </div>
 
-          {/* Data Table */}
+          {/* Data Table - No filtering needed, API handles it */}
           <DataTable
-            data={data?.data || []}
+            data={data?.data || []} // Use data directly from API
             currentPage={currentPage}
             onPageChange={onPageChange}
             pageSize={Number(pageSize)}
-            totalPages={data?.pagination?.total || 0}
+            totalPages={data?.pagination?.total || 0} // Use API pagination
             setPageSize={setPageSize}
             handleDelete={() => setIsOpen(true)}
             isLoading={getCustomersIsLoading}

@@ -8,19 +8,26 @@ export const useGetCustomers = () => {
   const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
     queryKey: ["fetchCustomers"],
     queryFn: (queryParams) => {
-      // Add default filter for customer types if not specified
-      const enhancedParams = {
+      console.log('🚀 Customers API Call with params:', queryParams);
+      
+      // Ensure pageSize is sent as number in API call
+       const processedParams = {
         ...queryParams,
-        // Only fetch business and individual customers by default
-        customerTypes: 'business,individual'
+        pageSize: queryParams?.pageSize ? Number(queryParams.pageSize) : 10,
+        page: queryParams?.page ? Number(queryParams.page) : 1,
+        // Force filter to only business and individual customers at API level
+        customerTypes: 'business,individual' // Add this filter
       };
-      return httpService.getData(routes.customers(enhancedParams));
+      
+      console.log('🚀 Processed params for API:', processedParams);
+      return httpService.getData(routes.customers(processedParams));
     },
     retry: 2,
   });
 
   console.log('🔍 useGetCustomers - Raw data:', data);
 
+  // Process data with multiple fallbacks
   let processedData = [];
   let paginationData = null;
 
@@ -42,13 +49,8 @@ export const useGetCustomers = () => {
     }
   }
 
-  // Additional frontend filtering as backup
-  processedData = processedData.filter((customer) => {
-    const customerType = customer.customerType?.toLowerCase() || customer.type?.toLowerCase();
-    return customerType === 'business' || customerType === 'individual';
-  });
-
   console.log('🔍 useGetCustomers - Processed data:', processedData);
+  console.log('🔍 useGetCustomers - Pagination data:', paginationData);
 
   return {
     getCustomersIsLoading: isLoading,
