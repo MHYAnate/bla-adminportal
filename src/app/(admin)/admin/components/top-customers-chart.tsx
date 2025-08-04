@@ -26,10 +26,13 @@ export function TopCustomersChart({ data }: iProps) {
     0
   );
 
+  const customerColors = ["#9333EA", "#2DD4BF", "#F97316", "#0000FF"]; // purple, aqua green, orange, light grey
+
   const coloredData = data.map((item, index) => ({
     ...item,
-    fill: `hsl(var(--chart-${(index % 5) + 1}))`,
+    fill: customerColors[index] || "#94A3B8", // fallback color if more than 4 items
   }));
+  
 
   const chartConfig = coloredData.reduce((acc, item, index) => {
     acc[`customer_${index + 1}`] = {
@@ -69,12 +72,13 @@ export function TopCustomersChart({ data }: iProps) {
                   textAnchor="middle"
                   className="fill-[#111827] text-sm font-bold"
                 >
-                  <tspan x={cx} y={cy}>
-                    {formatNumber(totalSpent || 0.0)}
-                  </tspan>
-                  <tspan x={cx} y={cy + 24} className="fill-[#A0AEC0] text-xs">
-                    Total Customers
-                  </tspan>
+                <tspan x={cx} y={cy}>
+  {Math.floor(totalSpent || 0)} {/* No decimals */}
+</tspan>
+<tspan x={cx} y={cy + 24} className="fill-[#A0AEC0] text-xs">
+  Total Sales
+</tspan>
+
                 </text>
               )}
             />
@@ -90,11 +94,12 @@ export function TopCustomersChart({ data }: iProps) {
               style={{ backgroundColor: data.fill }}
             ></div>
             <p className="text-[#687588] text-xs font-medium me-auto">
-              {data.orderCount || 0}
+            {data.email.split('@')[0]} 
             </p>
             <h6 className="font-bold text-sm text-[#111827]">
-              {data.totalSpent}
-            </h6>
+  {Math.floor(data.totalSpent)}
+</h6>
+
           </div>
         ))}
       </div>

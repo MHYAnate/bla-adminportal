@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { CustomersData } from "@/types";
 import Image from "next/image";
 import { CustomerTableComponent } from "@/components/custom-table/index2";
-import { DeleteIcon, ViewIcon } from "../../../../../../public/icons";
+import { ViewIcon } from "../../../../../../public/icons";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
 import { capitalizeFirstLetter } from "@/lib/utils";
@@ -64,23 +64,24 @@ const DataTable: React.FC<iProps> = ({
       <div className="font-medium flex items-center gap-3">{item.id}</div>
     ),
     kyc: (item: CustomersData) => (
-      <Badge
-        variant={
-          item?.kyc?.toLowerCase() === "verified"
-            ? "success"
-            : item?.kyc?.toLowerCase() === "pending"
-              ? "tertiary"
-              : item?.kyc?.toLowerCase() === "flagged"
-                ? "destructive"
-                : "warning"
-        }
-        className="py-1 px-[26px] font-bold"
-      >
-        {item?.kyc?.toUpperCase()}
-      </Badge>
+        <div className="font-medium flex items-center gap-3"> {item?.kyc?.toUpperCase()}</div>
+     
     ),
     customerstatus: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3">{item?.status}</div>
+      <Badge
+      variant={
+        item?.status === "ACTIVE"
+          ? "success"
+          : item?.status === "INACTIVE"
+            ? "tertiary"
+            : item?.status === "FLAGGED"
+              ? "destructive"
+              : "warning"
+      }
+      className="py-1 px-[26px] font-bold"
+    >
+      {item?.status}
+    </Badge>
     ),
 
     action: (item: CustomersData) => (
@@ -91,9 +92,6 @@ const DataTable: React.FC<iProps> = ({
         >
           <ViewIcon />
         </Link>
-        <div className="bg-[#E03137] p-2.5 rounded-lg" onClick={handleDelete}>
-          <DeleteIcon />
-        </div>
       </div>
     ),
   };
