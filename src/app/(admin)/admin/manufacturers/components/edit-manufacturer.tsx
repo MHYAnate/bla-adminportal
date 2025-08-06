@@ -18,9 +18,9 @@ import { useDropzone } from "react-dropzone";
 import { UploadIcon } from "../../../../../../public/icons";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import { useUpdateManufacturer } from "@/services/manufacturers";
+import { useUploadImage } from "@/services/upload"; // Import the new upload hook
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "@/services/api/client";
 import { updateSchema, UpdateFormSchemaType } from "./validation-shemas";
 
 interface Manufacturer {
@@ -39,7 +39,6 @@ interface IProps {
 }
 
 const EditManufacturer: React.FC<IProps> = ({ setClose, manufacturer }) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [preview, setPreview] = useState(manufacturer?.logo || null);
     const queryClient = useQueryClient();
 
@@ -49,6 +48,9 @@ const EditManufacturer: React.FC<IProps> = ({ setClose, manufacturer }) => {
             queryClient.invalidateQueries({ queryKey: ['manufacturers'] });
             setClose();
         });
+
+    // Use the upload service hook
+    const { uploadImage, isUploading } = useUploadImage();
 
     const form = useForm<UpdateFormSchemaType>({
         resolver: zodResolver(updateSchema),
@@ -76,31 +78,6 @@ const EditManufacturer: React.FC<IProps> = ({ setClose, manufacturer }) => {
         }
     }, [manufacturer, form]);
 
-    const uploadImageToBackend = async (file: File): Promise<string> => {
-        const formData = new FormData();
-        formData.append("images", file);
-        formData.append("folder", "manufacturers");
-
-        try {
-            const response = await apiClient.post("/upload", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-
-            if (response.data.urls && response.data.urls.length > 0) {
-                return response.data.urls[0];
-            }
-
-            throw new Error("No URL returned from server");
-        } catch (error: any) {
-            console.error("Backend upload failed:", error);
-            const errorMessage = error.response?.data?.error || error.message || "Image upload failed";
-            toast.error(errorMessage);
-            throw error;
-        }
-    };
-
     const onDrop = useCallback(
         (acceptedFiles: File[]) => {
             const file = acceptedFiles[0];
@@ -124,15 +101,29 @@ const EditManufacturer: React.FC<IProps> = ({ setClose, manufacturer }) => {
         });
 
     async function onSubmit(values: UpdateFormSchemaType) {
-        setIsSubmitting(true);
-
         try {
             let logoUrl: string | undefined = values.logo as string | undefined;
 
-            // If a new file is selected, upload to backend
+            // If a new file is selected, upload using service hook
             if (values.logo instanceof File) {
                 toast.info("Uploading logo...");
-                logoUrl = await uploadImageToBackend(values.logo);
+                const uploadResponse = await uploadImage({
+                    file: values.logo,
+                    folder: "manufacturers"
+                } as any);
+
+                console.log("Upload response:", uploadResponse);
+
+                // Handle different possible response structures
+                if (uploadResponse?.urls && uploadResponse.urls.length > 0) {
+                    logoUrl = uploadResponse.urls[0];
+                } else if (uploadResponse?.data?.urls && uploadResponse.data.urls.length > 0) {
+                    logoUrl = uploadResponse.data.urls[0];
+                } else if (uploadResponse?.url) {
+                    logoUrl = uploadResponse.url;
+                } else {
+                    throw new Error("No URL returned from upload service");
+                }
             }
 
             // Prepare payload
@@ -145,8 +136,8 @@ const EditManufacturer: React.FC<IProps> = ({ setClose, manufacturer }) => {
                 logo: logoUrl,
             };
 
-            // Call the update function - adjust this based on your hook structure
-            updateManufacturerPayload({
+            // Call the update function using service hook
+            await updateManufacturerPayload({
                 id: manufacturer.id,
                 payload,
             } as any);
@@ -166,12 +157,10 @@ const EditManufacturer: React.FC<IProps> = ({ setClose, manufacturer }) => {
             } else {
                 toast.error(errorMessage);
             }
-        } finally {
-            setIsSubmitting(false);
         }
     }
 
-    const isLoading = isSubmitting || updateManufacturerIsLoading;
+    const isLoading = isUploading || updateManufacturerIsLoading;
 
     return (
         <div>
@@ -255,7 +244,7 @@ const EditManufacturer: React.FC<IProps> = ({ setClose, manufacturer }) => {
                     <FormField
                         control={form.control}
                         name="logo"
-                        render={({ field }) => (
+                        render={() => (
                             <FormItem>
                                 <FormLabel>Manufacturer Logo</FormLabel>
                                 <FormControl>

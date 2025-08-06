@@ -120,40 +120,72 @@ const httpService = {
     return logResponse(response, endpoint);
   },
 
-  // POST request with token
-  postData: async (data, endpoint) => {
-    if (typeof window !== 'undefined') {
-      console.log('postData called with endpoint:', endpoint, 'data:', data);
-      if (getAuthToken) {
-        const token = getAuthToken();
-        console.log('Token check before POST request:', !!token);
-      }
-    }
+  
 
-    if (endpoint.includes('register')) {
-      const { email, userId, token, signature, timestamp, ...payload } = data;
-      
-      // Construct URL with query params
-      const queryParams = new URLSearchParams({
-        email,
-        userId: userId.toString(),
-        token,
-        signature,
-        timestamp: timestamp.toString(),
-        ...(data.expires && { expires: data.expires.toString() }),
-        noExpiry: data.noExpiry ? 'true' : 'false'
-      });
-      
-      const url = `${endpoint}?${queryParams.toString()}`;
-      const response = await axiosInstance.post(url, payload);
-      return response.data;
-    }
+postData: async (data, endpoint, config = {}) => {
+  if (typeof window !== 'undefined') {
+    console.log('🚀 postData called with endpoint:', endpoint);
+    console.log('🚀 Data type:', typeof data);
+    console.log('🚀 Is FormData:', data instanceof FormData);
     
-    // Normal POST handling for other endpoints
-    const cleanEndpoint = endpoint.replace(/^\/+/, '');
-    const response = await axiosInstance.post(cleanEndpoint, data);
+    if (getAuthToken) {
+      const token = getAuthToken();
+      console.log('🚀 Token exists:', !!token);
+    }
+  }
+
+  // Handle special register endpoint
+  if (endpoint.includes('register')) {
+    const { email, userId, token, signature, timestamp, ...payload } = data;
+    
+    const queryParams = new URLSearchParams({
+      email,
+      userId: userId.toString(),
+      token,
+      signature,
+      timestamp: timestamp.toString(),
+      ...(data.expires && { expires: data.expires.toString() }),
+      noExpiry: data.noExpiry ? 'true' : 'false'
+    });
+    
+    const url = `${endpoint}?${queryParams.toString()}`;
+    const response = await axiosInstance.post(url, payload);
+    return response.data;
+  }
+  
+  const cleanEndpoint = endpoint.replace(/^\/+/, '');
+  
+  let requestConfig = { ...config };
+  
+  // ✅ FIXED: For FormData, let browser set Content-Type with boundary
+  if (data instanceof FormData) {
+    console.log('🔄 Processing FormData - letting browser set Content-Type with boundary');
+    requestConfig = {
+      ...config,
+      headers: {
+        ...config.headers,
+        // Don't set Content-Type at all - let browser handle it
+      }
+    };
+    // Remove any manually set Content-Type
+    delete requestConfig.headers['Content-Type'];
+  }
+  
+  try {
+    console.log('🚀 Making POST request to:', cleanEndpoint);
+    const response = await axiosInstance.post(cleanEndpoint, data, requestConfig);
+    console.log('✅ POST successful:', response.status);
     return logResponse(response, endpoint);
-  },
+  } catch (error) {
+    console.error('❌ POST request failed:', {
+      endpoint: cleanEndpoint,
+      status: error.response?.status,
+      errorData: error.response?.data,
+      message: error.message
+    });
+    throw error;
+  }
+},
 
   // ✅ ADD THIS METHOD - Update data (PATCH request with token)
   updateData: async (data, endpoint) => {

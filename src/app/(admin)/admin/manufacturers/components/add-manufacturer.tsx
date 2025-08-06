@@ -12,7 +12,6 @@ import { UploadIcon } from "../../../../../../public/icons";
 import { CountryDropdown } from "@/components/ui/country-dropdown";
 import { useCreateManufacturer } from "@/services/manufacturers";
 import { toast } from "sonner";
-import { apiClient } from "@/services/api/client";
 import { createSchema, CreateFormSchemaType } from "./validation-shemas";
 
 interface IProps {
@@ -20,13 +19,14 @@ interface IProps {
 }
 
 const AddManufacturer: React.FC<IProps> = ({ setClose }) => {
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [preview, setPreview] = useState<string | null>(null);
 
+    // Use the service hooks
     const { createManufacturerPayload, createManufacturerIsLoading } = useCreateManufacturer(() => {
         toast.success("Manufacturer created successfully!");
         setClose();
     });
+
 
     const form = useForm<CreateFormSchemaType>({
         resolver: zodResolver(createSchema),
@@ -39,31 +39,6 @@ const AddManufacturer: React.FC<IProps> = ({ setClose }) => {
             logo: undefined,
         },
     });
-
-    const uploadImageToBackend = async (file: File): Promise<string> => {
-        const formData = new FormData();
-        formData.append("images", file);
-        formData.append("folder", "manufacturers");
-
-        try {
-            const response = await apiClient.post("/upload", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-
-            if (response.data.urls && response.data.urls.length > 0) {
-                return response.data.urls[0];
-            }
-
-            throw new Error("No URL returned from server");
-        } catch (error: any) {
-            console.error("Backend upload failed:", error);
-            const errorMessage = error.response?.data?.error || error.message || "Image upload failed";
-            toast.error(errorMessage);
-            throw error;
-        }
-    };
 
     const onDrop = useCallback(
         (acceptedFiles: File[]) => {
@@ -84,18 +59,14 @@ const AddManufacturer: React.FC<IProps> = ({ setClose }) => {
     });
 
     async function onSubmit(values: CreateFormSchemaType) {
-        setIsSubmitting(true);
-
         try {
-            toast.info("Uploading logo...");
-            const logoUrl = await uploadImageToBackend(values.logo);
-
+            // ✅ Pass the file directly - let the service handle upload
             const payload = {
                 name: values.name,
                 contactPerson: values.contactPerson,
                 email: values.email,
                 country: values.country,
-                logo: logoUrl,
+                logo: values.logo, // Pass the File object directly
                 phone: values.phone || undefined,
             };
 
@@ -115,12 +86,10 @@ const AddManufacturer: React.FC<IProps> = ({ setClose }) => {
             } else {
                 toast.error(errorMessage);
             }
-        } finally {
-            setIsSubmitting(false);
         }
     }
 
-    const isLoading = isSubmitting || createManufacturerIsLoading;
+    const isLoading = createManufacturerIsLoading;
 
     return (
         <div>

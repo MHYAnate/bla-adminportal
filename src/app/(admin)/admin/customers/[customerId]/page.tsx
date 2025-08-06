@@ -1,17 +1,20 @@
 // pages/customers/[customerId]/page.tsx
 import CustomerDetail from "./components";
 
-export default async function CustomersDetailPage({
-  params,
-}: {
-  params: { customerId: string };
-}) {
-  // Add await for params if using Next.js 15+
-  const resolvedParams = await params;
+interface PageProps {
+  params: Promise<{ customerId: string }>;
+}
 
-  return (
-    <>
-      <CustomerDetail customerId={resolvedParams.customerId} />
-    </>
-  );
+export default async function CustomersDetailPage({ params }: PageProps) {
+  // Handle the params properly
+  const resolvedParams = await params;
+  const customerId = resolvedParams.customerId;
+
+  console.log("🎬 Page Component - Customer ID:", customerId);
+
+  if (!customerId) {
+    return <div>No customer ID provided</div>;
+  }
+
+  return <CustomerDetail customerId={customerId} />;
 }

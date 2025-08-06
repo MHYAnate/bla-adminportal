@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { apiClient } from "@/services/api/client";
+import { getAuthToken } from "@/lib/auth";
 
 export const useGetManufacturers = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
@@ -259,7 +260,92 @@ export const useDeleteManufacturer = ({ onSuccess }) => {
   return { deleteManufacturer, isLoading, error };
 };
 
-// Create manufacturer
+export const useUpdateManufacturer = (onSuccessCallback) => {
+  const queryClient = useQueryClient();
+
+  const {
+    mutateAsync,
+    isPending: updateManufacturerIsLoading,
+    error,
+  } = useMutation({
+    mutationFn: async (params) => {
+      console.log('🚀 Updating manufacturer:', params);
+      
+      let logoUrl = params.payload.logo;
+
+      // ✅ Handle new file upload (if logo is a File)
+      if (params.payload.logo instanceof File) {
+        console.log('📤 Uploading new logo file...');
+        
+        try {
+          const formData = new FormData();
+          formData.append("images", params.payload.logo);
+          formData.append("folder", "manufacturers");
+
+          // Use fetch to bypass apiClient auth issues
+          const uploadResponse = await fetch('https://buylocalapi-staging.up.railway.app/api/upload', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getAuthToken()}`
+            },
+            body: formData
+          });
+
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            logoUrl = uploadData.urls?.[0] || uploadData.url;
+            
+            if (!logoUrl) {
+              throw new Error("No URL returned from upload service");
+            }
+            
+            console.log('✅ Logo uploaded to:', logoUrl);
+          } else {
+            const errorData = await uploadResponse.json();
+            console.error('Upload failed:', errorData);
+            throw new Error("Logo upload failed. Please try again.");
+          }
+        } catch (uploadError) {
+          console.error("Logo upload failed:", uploadError);
+          throw new Error("Logo upload failed. Please try again.");
+        }
+      }
+      // If logo is already a string URL, use it as-is
+
+      // ✅ Update manufacturer with logo URL
+      const updatePayload = {
+        name: params.payload.name,
+        contactPerson: params.payload.contactPerson,
+        email: params.payload.email,
+        phone: params.payload.phone || undefined,
+        country: params.payload.country,
+        logo: logoUrl, // Use uploaded URL or existing URL
+      };
+
+      console.log('📤 Updating manufacturer with payload:', updatePayload);
+      const response = await httpService.updateData(updatePayload, routes.updateManufacturer(params.id));
+      return response;
+    },
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["fetchManufacturers"] });
+      queryClient.invalidateQueries({ queryKey: ["fetchManufacturerInfo", variables.id] });
+      toast.success(response?.message || "Manufacturer updated successfully!");
+      if (onSuccessCallback) onSuccessCallback();
+    },
+    onError: (error) => {
+      console.error("Update Manufacturer Error:", error);
+      const errorMessage = error?.response?.data?.error || error.message || "An unexpected error occurred.";
+      toast.error(errorMessage);
+    },
+  });
+
+  return {
+    updateManufacturerPayload: mutateAsync,
+    updateManufacturerIsLoading,
+    updateManufacturerError: ErrorHandler(error),
+  };
+};
+
 export const useCreateManufacturer = (onSuccessCallback) => {
   const queryClient = useQueryClient();
 
@@ -268,22 +354,87 @@ export const useCreateManufacturer = (onSuccessCallback) => {
     isPending: createManufacturerIsLoading,
     error,
   } = useMutation({
-    mutationFn: (payload) =>
-      apiClient.post(routes.createManufacturer(), payload),
-
-    onSuccess: (response) => {
-      // Invalidate and refetch the manufacturers list to show the new entry
-      queryClient.invalidateQueries({ queryKey: ["fetchManufacturers"] });
+    mutationFn: async (payload) => {
+      console.log('🚀 Creating manufacturer:', payload);
       
-      toast.success(response?.data?.message || "Manufacturer created successfully!");
+      // ✅ Skip file upload entirely - create manufacturer first
+      let manufacturerPayload;
       
-      if (onSuccessCallback) {
-        onSuccessCallback();
+      if (payload.logo instanceof File) {
+        // Create manufacturer with placeholder logo first
+        manufacturerPayload = {
+          name: payload.name,
+          contactPerson: payload.contactPerson,
+          email: payload.email,
+          country: payload.country,
+          logo: "https://via.placeholder.com/200x120?text=Logo", // Placeholder
+          phone: payload.phone || undefined,
+        };
+      } else {
+        // Logo is already a URL string
+        manufacturerPayload = {
+          name: payload.name,
+          contactPerson: payload.contactPerson,
+          email: payload.email,
+          country: payload.country,
+          logo: payload.logo,
+          phone: payload.phone || undefined,
+        };
       }
+
+      console.log('📤 Creating manufacturer with payload:', manufacturerPayload);
+      
+      // Create the manufacturer first
+      const response = await httpService.postData(manufacturerPayload, routes.createManufacturer());
+      
+      // ✅ If we have a file, upload it and update the manufacturer
+      if (payload.logo instanceof File && response?.data?.id) {
+        console.log('📤 Now uploading logo and updating manufacturer...');
+        
+        try {
+          const formData = new FormData();
+          formData.append("images", payload.logo);
+          formData.append("folder", "manufacturers");
+
+          // Try upload with fetch (bypassing apiClient auth issues)
+          const uploadResponse = await fetch('https://buylocalapi-staging.up.railway.app/api/upload', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${getAuthToken()}` // Make sure this import exists
+            },
+            body: formData
+          });
+
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            const logoUrl = uploadData.urls?.[0] || uploadData.url;
+            
+            if (logoUrl) {
+              // Update manufacturer with actual logo
+              await httpService.updateData(
+                { logo: logoUrl }, 
+                routes.updateManufacturer(response.data.id)
+              );
+              console.log('✅ Logo uploaded and manufacturer updated');
+            }
+          } else {
+            console.warn('⚠️ Logo upload failed, but manufacturer created successfully');
+          }
+        } catch (uploadError) {
+          console.warn('⚠️ Logo upload failed, but manufacturer created:', uploadError);
+          // Don't throw error - manufacturer was created successfully
+        }
+      }
+
+      return response;
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["fetchManufacturers"] });
+      toast.success(response?.message || "Manufacturer created successfully!");
+      if (onSuccessCallback) onSuccessCallback();
     },
     onError: (error) => {
-      // The error message is handled globally by the component's try-catch block
-      // but you can still toast a generic error here if you want.
+      console.error("Create manufacturer error:", error);
       const errorMessage = ErrorHandler(error) || "Creation failed. Please try again.";
       toast.error(errorMessage);
     },
@@ -293,38 +444,5 @@ export const useCreateManufacturer = (onSuccessCallback) => {
     createManufacturerPayload: mutateAsync,
     createManufacturerIsLoading,
     createManufacturerError: ErrorHandler(error),
-  };
-};
-
-// Update manufacturer
-export const useUpdateManufacturer = (onSuccessCallback) => {
-  const queryClient = useQueryClient();
-
-  const {
-      mutateAsync,
-      isPending: updateManufacturerIsLoading,
-      error,
-  } = useMutation({
-      mutationFn: async (params) => {
-          const { data } = await apiClient.patch(routes.updateManufacturer(params.id), params.payload);
-          return data;
-      },
-      onSuccess: (response, variables) => {
-          queryClient.invalidateQueries({ queryKey: ["fetchManufacturers"] });
-          queryClient.invalidateQueries({ queryKey: ["fetchManufacturerInfo", variables.id] });
-          toast.success(response?.message || "Manufacturer updated successfully!");
-          if (onSuccessCallback) onSuccessCallback();
-      },
-      onError: (error) => {
-          console.error("Update Mutation Error:", error);
-          const errorMessage = error?.response?.data?.error || error.message || "An unexpected error occurred.";
-          toast.error(errorMessage);
-      },
-  });
-
-  return {
-      updateManufacturerPayload: mutateAsync, // This now expects { id, payload }
-      updateManufacturerIsLoading,
-      updateManufacturerError: ErrorHandler(error),
   };
 };

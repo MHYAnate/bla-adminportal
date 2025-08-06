@@ -59,6 +59,7 @@ export interface CustomerData {
   referralInfo: ReferralInfo;
 }
 
+// Fix the interface and component
 export interface Customer {
   data: CustomerData | null;
 }

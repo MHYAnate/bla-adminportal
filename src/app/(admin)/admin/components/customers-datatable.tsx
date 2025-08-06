@@ -10,6 +10,7 @@ import Link from "next/link";
 import { ViewIcon } from "../../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
 import { capitalizeFirstLetter } from "@/lib/utils";
+
 interface iProps {
   data?: any;
   loading: boolean;
@@ -18,6 +19,7 @@ interface iProps {
 const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
   const pageSize = 10;
   const [currentPage, setCurrentPage] = useState(1);
+
   const onPageChange = (page: number) => {
     setCurrentPage(page);
   };
@@ -29,53 +31,80 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
           src="/images/user-avatar.png"
           width={24}
           height={24}
-          alt="Admin avatar"
+          alt="Customer avatar"
           className="w-6 h-6 rounded-full"
         />
         <div>
-          <p> {item?.name || "----"}</p>
+          {/* ✅ ENHANCED: Handle both 'name' and potential other field names */}
+          <p>{item?.name || item?.fullName || "----"}</p>
           <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
-            {item?.email || "lincoln@unpixel.com"}
+            {item?.email || "No email provided"}
           </p>
         </div>
       </div>
     ),
+
     type: (item: CustomersData) => (
       <span className="font-medium">
-        {capitalizeFirstLetter(item?.type?.toString() || "customer")}
+        {/* ✅ ENHANCED: Handle both customerType and type fields */}
+        {capitalizeFirstLetter(
+          item?.customerType?.toString() ||
+          item?.type?.toString() ||
+          "customer"
+        )}
       </span>
     ),
+
     id: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">{item?.id}</div>
     ),
-    kyc: (item: CustomersData) => (
-      <Badge
-        variant={
-          item.kycStatus.toLowerCase() === "verified"
-            ? "success"
-            : item.kycStatus.toLowerCase() === "pending"
-            ? "tertiary"
-            : item.kycStatus.toLowerCase() === "flagged"
-            ? "destructive"
-            : "warning"
-        }
-        className="py-1 px-[26px] font-bold text-[10px]"
-      >
-        {item?.kycStatus?.toString().toUpperCase()}
-      </Badge>
-    ),
-    status: (item: CustomersData) => (
-      <Badge
-        variant={
-          item?.status?.toString().toLowerCase() === "active"
-            ? "success"
-            : "destructive"
-        }
-        className="py-1 px-[26px] font-bold text-[10px]"
-      >
-        {item.status}
-      </Badge>
-    ),
+
+    kyc: (item: CustomersData) => {
+      // ✅ ENHANCED: Handle multiple KYC field variations
+      const kycStatus = item?.kycStatus || item?.kyc || 'pending';
+      const statusLower = kycStatus.toString().toLowerCase();
+
+      return (
+        <Badge
+          variant={
+            statusLower === "verified"
+              ? "success"
+              : statusLower === "pending" || statusLower === "not verified"
+                ? "tertiary"
+                : statusLower === "flagged"
+                  ? "destructive"
+                  : "warning"
+          }
+          className="py-1 px-[26px] font-bold text-[10px]"
+        >
+          {kycStatus.toString().toUpperCase()}
+        </Badge>
+      );
+    },
+
+    status: (item: CustomersData) => {
+      // ✅ ENHANCED: Handle both customerStatus and status fields
+      const customerStatus = item?.customerStatus || item?.status || 'INACTIVE';
+      const statusLower = customerStatus.toString().toLowerCase();
+
+      return (
+        <Badge
+          variant={
+            statusLower === "active"
+              ? "success"
+              : statusLower === "inactive"
+                ? "tertiary"
+                : statusLower === "suspended"
+                  ? "destructive"
+                  : "warning"
+          }
+          className="py-1 px-[26px] font-bold text-[10px]"
+        >
+          {customerStatus.toString().toUpperCase()}
+        </Badge>
+      );
+    },
+
     action: (item: CustomersData) => (
       <div className="flex gap-2.5">
         <Link
@@ -121,10 +150,10 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
           </Link>
         </div>
         <CustomerTableComponent<CustomersData>
-          tableData={data}
+          tableData={data || []}
           currentPage={currentPage}
           onPageChange={onPageChange}
-          totalPages={Math.ceil(data?.length / pageSize)}
+          totalPages={Math.ceil((data?.length || 0) / pageSize)}
           cellRenderers={cellRenderers}
           columnOrder={columnOrder}
           columnLabels={columnLabels}

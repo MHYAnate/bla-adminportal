@@ -26,7 +26,8 @@ import SupplierManagementCardSkeleton from "@/components/skeletons/supply-manage
 export default function Manufacturers() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [role, setRole] = useState<string>("");
-  const [filter, setFilter] = useState<string>("");
+  const [filter, setFilter] = useState<string>(""); // What user types
+  const [searchQuery, setSearchQuery] = useState<string>(""); // What we actually search for
   const [currentPage, setCurrentPage] = useState<number>(1);
 
   const onPageChange = (page: number) => {
@@ -51,15 +52,25 @@ export default function Manufacturers() {
     },
   ];
 
+  // ✅ Handle Enter key press and clear field
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      setSearchQuery(filter); // Trigger search
+      setCurrentPage(1); // Reset to first page
+      setFilter(""); // Clear the input field
+    }
+  };
+
+  // ✅ Only trigger API call when searchQuery changes
   useEffect(() => {
     const payload = {
-      name: filter,
+      name: searchQuery,
       pageSize: 10,
       page: currentPage,
     };
 
     setManufacturersFilter(payload);
-  }, [filter, currentPage, setManufacturersFilter]);
+  }, [searchQuery, currentPage, setManufacturersFilter]);
 
   console.log(getManufacturersData?.pagination?.totalItems);
 
@@ -84,10 +95,17 @@ export default function Manufacturers() {
 
           {!getManufacturersIsLoading && (
             <div className="flex items-center gap-4 mb-6 w-[50%]">
-              <InputFilter
-                setQuery={setFilter}
-                placeholder="Search manufacturers by name."
-              />
+              {/* ✅ Modified to handle Enter key and clear field */}
+              <div className="w-full">
+                <input
+                  type="text"
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Search manufacturers by name (Press Enter to search)..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
           )}
 

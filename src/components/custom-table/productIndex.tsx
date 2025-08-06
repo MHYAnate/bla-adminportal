@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { ProductData, DataItem, ITableProps,InventoryData } from "@/types";
+import { ProductData, DataItem, ITableProps, InventoryData } from "@/types";
 import { ReactNode } from "react";
 import { Pagination } from "../ui/pagination";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
@@ -19,7 +19,7 @@ import TableSkeleton from "../skeletons/table";
 type CellRenderer<T> = (item: T, column: keyof T) => ReactNode;
 
 export interface EnhancedTableProps<T extends DataItem> extends ITableProps<T> {
-  cellRenderers?:any;
+  cellRenderers?: any;
   columnOrder?: (keyof T)[];
   columnLabels?: Partial<Record<keyof T, string>>;
 }
@@ -46,7 +46,7 @@ export function ProductTableComponent<T extends ProductData>({
         <p className="text-sm">No data available</p>
       </div>
     );
-  const safeOnPageChange = onPageChange ?? (() => {});
+  const safeOnPageChange = onPageChange ?? (() => { });
 
   const formatColumnName = (name: string) => {
     return (

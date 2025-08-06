@@ -1,11 +1,10 @@
-// In services/customers/index.js
+// 1. Update services/customers/index.js - Remove redundant filtering
 "use client";
 
 import { routes } from "../api-routes";
 import { ErrorHandler } from "../errorHandler";
 import httpService from "../httpService";
 import useFetchItem from "../useFetchItem";
-import useMutateItem from "../useMutateItem";
 
 export const useGetCustomers = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
@@ -13,19 +12,12 @@ export const useGetCustomers = () => {
     queryFn: (queryParams) => {
       console.log('🚀 Customers API Call with params:', queryParams);
       
-      // Process parameters to ensure proper types and add customer filter
+      // ✅ SIMPLIFIED: Let backend handle admin exclusion
       const processedParams = {
         ...queryParams,
         pageSize: queryParams?.pageSize ? Number(queryParams.pageSize) : 10,
         page: queryParams?.page ? Number(queryParams.page) : 1,
-        // Force filter to only business and individual customers at API level
-        customerTypes: 'business,individual'
       };
-
-      // Handle type filter from frontend
-      if (queryParams?.type && queryParams.type !== 'all' && queryParams.type !== '') {
-        processedParams.customerTypes = queryParams.type;
-      }
       
       console.log('🚀 Processed params for API:', processedParams);
       return httpService.getData(routes.customers(processedParams));
@@ -63,8 +55,12 @@ export const useGetCustomers = () => {
   return {
     getCustomersIsLoading: isLoading,
     getCustomersData: {
-      data: processedData, // No frontend filtering needed anymore
-      pagination: paginationData
+      data: processedData, // ✅ Backend now excludes admins automatically
+      pagination: paginationData,
+      // Include other response data for stats/analytics
+      currentPageStats: data?.currentPageStats,
+      overallStats: data?.overallStats,
+      appliedFilters: data?.appliedFilters
     },
     getCustomersError: ErrorHandler(error),
     refetchCustomers: refetch,
@@ -72,35 +68,51 @@ export const useGetCustomers = () => {
   };
 };
 
-// Keep your other hooks unchanged
+// Keep other functions unchanged...
 export const useGetCustomerInfo = () => {
   const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
     queryKey: ["fetchCustomerInfo"],
     queryFn: (id) => {
-      console.log("Fetching customer info for ID:", id);
+      console.log("🚀 API Call - Customer ID:", id);
+      console.log("🚀 API Route:", routes.getCustomerInfo(id));
       return httpService.getData(routes.getCustomerInfo(id));
     },
     retry: 2,
-    enabled: false, // Don't auto-fetch until we have an ID
+    enabled: false,
   });
 
-  console.log("useGetCustomerInfo - Raw response:", data);
+  console.log("🔍 useGetCustomerInfo Debug:", {
+    isLoading,
+    error,
+    rawData: data,
+    filter,
+    hasData: !!data,
+    dataStructure: data ? Object.keys(data) : 'no data'
+  });
 
-  // Process the response data with multiple fallbacks
   let processedData = null;
   if (data) {
-    if (data.data) {
+    console.log("📊 Raw API Response:", data);
+    
+    if (data.data?.data) {
+      processedData = data.data.data;
+      console.log("✅ Found customer in data.data.data");
+    } else if (data.data) {
       processedData = data.data;
+      console.log("✅ Found customer in data.data");
     } else if (data.customer) {
       processedData = data.customer;
+      console.log("✅ Found customer in data.customer");
     } else if (data.result) {
       processedData = data.result;
+      console.log("✅ Found customer in data.result");
     } else if (typeof data === 'object' && data.id) {
       processedData = data;
+      console.log("✅ Data is the customer object");
     }
   }
 
-  console.log("useGetCustomerInfo - Processed data:", processedData);
+  console.log("🎯 Final processed customer data:", processedData);
 
   return {
     getCustomerInfoIsLoading: isLoading,
@@ -108,8 +120,10 @@ export const useGetCustomerInfo = () => {
     getCustomerInfoError: ErrorHandler(error),
     refetchCustomerInfo: refetch,
     setCustomerInfoFilter: (customerId) => {
-      console.log("Setting filter with customerId:", customerId);
-      setFilter(customerId);
+      console.log("🔧 Setting filter with customerId:", customerId);
+      if (customerId) {
+        setFilter(customerId);
+      }
     },
   };
 };

@@ -27,19 +27,8 @@ export const routes = {
     if (!cleanData.page) cleanData.page = 1;
     if (!cleanData.pageSize) cleanData.pageSize = 10;
 
-    // Add default customer type filter if not specified
-    if (!cleanData.type && !cleanData.customerTypes) {
-      cleanData.customerTypes = 'business,individual';
-    }
-
-    // If only 'type' is specified, convert to 'customerTypes'
-    if (cleanData.type && cleanData.type !== 'all' && !cleanData.customerTypes) {
-      cleanData.customerTypes = cleanData.type;
-      delete cleanData.type; // Remove the old 'type' parameter
-    }
-
     if (Object.keys(cleanData).length === 0) {
-      return 'admin/customers?page=1&pageSize=10&customerTypes=business,individual';
+      return 'admin/customers?page=1&pageSize=10';
     }
 
     const params = new URLSearchParams();
@@ -59,7 +48,7 @@ export const routes = {
     return queryString ? `admin/customers?${queryString}` : 'admin/customers?page=1&pageSize=10&customerTypes=business,individual';
   },
 
-  getCustomerInfo: (id) => `admin/customers/${id}`,
+  getCustomerInfo: (customerId) => `admin/customers/${customerId}`,
   getCustomerOrderHistory: (id) => `admin/customers/${id}/orders`,
   deleteCustomer: (id) => `admin/customers/${id}`,
   customerStats: () => 'admin/customers/stats',

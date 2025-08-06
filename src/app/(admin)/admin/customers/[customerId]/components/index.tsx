@@ -1,41 +1,113 @@
 "use client";
 
-import Header from "@/app/(admin)/components/header";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import Image from "next/image";
-import {
-  CallIcon,
-  LocationIcon,
-  MailIcon,
-} from "../../../../../../../public/icons";
-
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import General from "./general";
-import Documents from "./documents";
-import OrderHistory from "./order-history";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useHandlePush } from "@/hooks/use-handle-push";
 import { ROUTES } from "@/constant/routes";
 import { useGetCustomerInfo } from "@/services/customers";
-import { useEffect, useState } from "react";
 import { capitalizeFirstLetter, formatDate } from "@/lib/utils";
 
-export default function CustomerDetail({ customerId }: { customerId: string }) {
+// Import your UI components
+import Header from "@/app/(admin)/components/header";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import Image from "next/image";
+import { CallIcon, LocationIcon, MailIcon } from "../../../../../../../public/icons";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import General from "./general";
+import Documents from "./documents";
+import OrderHistory from "./order-history";
+
+interface CustomerDetailProps {
+  customerId: string;
+}
+
+export default function CustomerDetail({ customerId }: CustomerDetailProps) {
+  // ✅ ALL HOOKS MUST BE AT THE TOP - NO CONDITIONAL HOOKS
   const [status, setStatus] = useState("");
   const param = useSearchParams();
-  const tabber = param.get("tab") || "general"; // Add fallback
   const { handlePush } = useHandlePush();
 
   const {
     getCustomerInfoData: data,
     setCustomerInfoFilter,
     getCustomerInfoIsLoading,
+    getCustomerInfoError,
     refetchCustomerInfo,
   } = useGetCustomerInfo();
 
-  console.log("customerDetail data:", data);
-  console.log("customerId:", customerId);
+  // ✅ ALWAYS call useEffect hooks in the same order
+  useEffect(() => {
+    console.log("🎬 CustomerDetail mounted with customerId:", customerId);
+    if (customerId) {
+      setCustomerInfoFilter(customerId);
+    }
+  }, [customerId, setCustomerInfoFilter]);
+
+  useEffect(() => {
+    if (data?.customerStatus) {
+      setStatus(data.customerStatus);
+    }
+  }, [data?.customerStatus]);
+
+  // ✅ Process tab value safely
+  const tabber = param.get("tab") || "general";
+
+  console.log("🔍 CustomerDetail Debug:", {
+    customerId,
+    data,
+    loading: getCustomerInfoIsLoading,
+    error: getCustomerInfoError
+  });
+
+  // ✅ Early returns AFTER all hooks are declared
+  if (getCustomerInfoIsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4">Loading customer information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (getCustomerInfoError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center text-red-600">
+          <p className="text-lg font-semibold">Error loading customer</p>
+          <p className="text-sm">{getCustomerInfoError}</p>
+          <button
+            onClick={() => refetchCustomerInfo()}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data && !getCustomerInfoIsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-lg font-semibold text-gray-600">Customer not found</p>
+          <p className="text-sm text-gray-500">Customer ID: {customerId}</p>
+          <button
+            onClick={() => refetchCustomerInfo()}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Safe data processing
+  const address = data?.addresses?.find((addr: any) => addr.isDefault) || data?.addresses?.[0];
 
   const list = [
     {
@@ -47,42 +119,6 @@ export default function CustomerDetail({ customerId }: { customerId: string }) {
       text: "Order History",
     },
   ];
-
-  useEffect(() => {
-    if (customerId) {
-      console.log("Setting customer filter with customerId:", customerId);
-      setCustomerInfoFilter(customerId);
-    }
-  }, [customerId, setCustomerInfoFilter]);
-
-  useEffect(() => {
-    if (data?.customerStatus) {
-      setStatus(data.customerStatus);
-    }
-  }, [data?.customerStatus]);
-
-  // Add loading state
-  if (getCustomerInfoIsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
-      </div>
-    );
-  }
-
-  // Add error state if no data
-  if (!data && !getCustomerInfoIsLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Customer Not Found</h2>
-          <p className="text-gray-600">Unable to load customer information.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const address = data?.addresses?.find((addr: any) => addr.isDefault) || data?.addresses?.[0];
 
   return (
     <div>
