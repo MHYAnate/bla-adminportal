@@ -354,24 +354,7 @@ export const PermissionsTab: React.FC<PermissionsTabProps> = ({ adminData }) => 
         </div>
       )}
 
-      {/* Debug Info (Development Only) */}
-      {process.env.NODE_ENV === 'development' && (
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardContent className="p-4">
-            <h4 className="font-medium text-yellow-800 mb-2">🐛 Debug Information</h4>
-            <div className="text-xs text-yellow-700 space-y-1">
-              <div>Total Roles: {rolesArray.length}</div>
-              <div>Admin Roles: {adminRoles.length}</div>
-              <div>Total Permissions Available: {allPermissions.length}</div>
-              <div>Admin Permissions: {adminPermissions.size}</div>
-              <div>Roles Loading: {isRolesLoading ? 'Yes' : 'No'}</div>
-              {adminData?.roles && (
-                <div>Raw Admin Roles: {JSON.stringify(adminData.roles.map(r => ({ id: r.id, roleId: r.roleId, name: r.role?.name })))}</div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+
     </div>
   );
 };

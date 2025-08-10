@@ -164,7 +164,6 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
     }, [currentPage, filter, status, pageSize, manufacturerId, setManufacturerProductsFilter]);
 
 
-    // ✅ Also add debugging to see what's happening with the filter
     useEffect(() => {
         console.log('🔧 Filter values changed:', {
             filter,
@@ -176,7 +175,6 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         });
     }, [filter, status, currentPage, pageSize, manufacturerId]);
 
-    // ✅ Add debugging to see the API response
     useEffect(() => {
         console.log('📦 Manufacturer Products API Response:', {
             loading: getManufacturerProductsIsLoading,

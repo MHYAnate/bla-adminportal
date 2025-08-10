@@ -53,7 +53,6 @@ export default function OrderSummary() {
     salesError,
   } = useGetSalesData()
 
-  // Debug logs
   console.log('isSalesLoading:', isSalesLoading)
   console.log('salesData:', salesData)
   console.log('salesError:', salesError)

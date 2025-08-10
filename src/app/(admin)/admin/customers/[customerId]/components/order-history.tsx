@@ -19,13 +19,6 @@ const OrderHistory: React.FC<iProps> = ({ customerId }) => {
     setCustomerOrderHistoryFilter,
   } = useGetCustomerOrderHistory();
 
-  console.log("🛒 OrderHistory Debug:", {
-    customerId,
-    data: getCustomerOrderHistoryData,
-    loading: getCustomerOrderHistoryIsLoading,
-    error: getCustomerOrderHistoryError
-  });
-
   useEffect(() => {
     console.log("🛒 OrderHistory mounted with customerId:", customerId);
     if (customerId) {

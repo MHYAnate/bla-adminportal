@@ -5,33 +5,43 @@ import { useRouter } from "next/navigation";
 import { getAuthToken, setAuthToken, clearAuthTokens, checkAuth } from "@/lib/auth";
 import httpService from "@/services/httpService";
 
-// ✅ NEW: Role change event system
+// ✅ Enhanced role change event system
 const ROLE_CHANGE_EVENT = 'admin-role-changed';
 
-// ✅ NEW: Function to emit role change events
+// ✅ Enhanced function to emit role change events
 export const emitRoleChangeEvent = (adminId: any, newRoles = []) => {
-    console.log(`🔄 Emitting role change event for admin ${adminId}`);
+    console.log(`🔄 Emitting role change event for admin ${adminId}:`, {
+        adminId,
+        rolesCount: Array.isArray(newRoles) ? newRoles.length : 0,
+        timestamp: Date.now()
+    });
+
     window.dispatchEvent(new CustomEvent(ROLE_CHANGE_EVENT, {
-        detail: { adminId, newRoles, timestamp: Date.now() }
+        detail: {
+            adminId: String(adminId),
+            newRoles,
+            timestamp: Date.now(),
+            source: 'adminService'
+        }
     }));
 };
 
-// ✅ FIXED: Enhanced type definitions
-type Permission = {
+// ✅ Enhanced type definitions - EXPORTED for use in window types
+export type Permission = {
     id: number;
     name: string;
     description?: string;
     type?: 'read' | 'write';
 };
 
-type Role = {
+export type Role = {
     id: number;
     name: string;
     description?: string;
     permissions?: Permission[];
 };
 
-type UserRole = {
+export type UserRole = {
     id: number;
     userId: number;
     roleId: number;
@@ -44,7 +54,7 @@ type UserRole = {
     permissions?: Permission[];
 };
 
-type UserData = {
+export type UserData = {
     id: number;
     email: string;
     type: string;
@@ -66,7 +76,8 @@ type AuthContextType = {
     login: (token: string, remember?: boolean, loginResponse?: any) => Promise<void>;
     logout: () => void;
     refreshAuth: () => Promise<void>;
-    forceRefreshUserData: () => Promise<void>; // ✅ NEW
+    forceRefreshUserData: () => Promise<void>;
+    refreshTrigger: number;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,10 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [token, setToken] = useState<string | null>(null);
     const [userData, setUserData] = useState<UserData | null>(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     const router = useRouter();
 
-    // ✅ FIXED: Fetch complete user profile from API with safe logging
+    // ✅ Enhanced: Fetch complete user profile from API with better error handling
     const fetchUserProfile = async (): Promise<UserData | null> => {
         try {
             console.log("📡 Fetching user profile from API...");
@@ -92,7 +104,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     console.log(`🔄 Trying endpoint: ${endpoint}`);
                     response = await httpService.getData(endpoint);
                     if (response && (response.success !== false) && response.data) {
-                        // ✅ FIXED: Safe logging - only log serializable data
                         console.log(`✅ User profile fetched from ${endpoint}:`, {
                             id: response.data.id,
                             email: response.data.email,
@@ -111,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                                 role.role?.type === 'ADMIN' ||
                                 role.name?.includes('ADMIN') ||
                                 role.role?.name?.includes('ADMIN') ||
-                                ['PRODUCT_MANAGER', 'INVENTORY_MANAGER', 'SUPER_ADMIN'].includes(role.role?.name || role.name)
+                                ['PRODUCT_MANAGER', 'INVENTORY_MANAGER', 'SUPER_ADMIN', 'ORDER_MANAGER', 'CUSTOMER_MANAGER', 'SUPPORT_AGENT'].includes(role.role?.name || role.name)
                             )) {
                             userType = 'ADMIN';
                         }
@@ -122,7 +133,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             isAdmin: userType === 'ADMIN'
                         };
                     } else if (response && !response.data && response.id) {
-                        // Sometimes the response itself is the user data
                         console.log(`✅ User profile fetched (direct data) from ${endpoint}:`, {
                             id: response.id,
                             email: response.email,
@@ -138,7 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                                 role.role?.type === 'ADMIN' ||
                                 role.name?.includes('ADMIN') ||
                                 role.role?.name?.includes('ADMIN') ||
-                                ['PRODUCT_MANAGER', 'INVENTORY_MANAGER', 'SUPER_ADMIN'].includes(role.role?.name || role.name)
+                                ['PRODUCT_MANAGER', 'INVENTORY_MANAGER', 'SUPER_ADMIN', 'ORDER_MANAGER', 'CUSTOMER_MANAGER', 'SUPPORT_AGENT'].includes(role.role?.name || role.name)
                             )) {
                             userType = 'ADMIN';
                         }
@@ -162,7 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // ✅ FIXED: Extract user data from login response with safe logging
+    // ✅ Enhanced: Extract user data from login response
     const extractUserDataFromLoginResponse = (loginResponse: any): UserData | null => {
         try {
             if (!loginResponse) return null;
@@ -188,7 +198,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (userData.adminProfile || userData.roles?.some((role: any) =>
                 role.role?.type === 'ADMIN' ||
                 role.name?.includes('ADMIN') ||
-                role.role?.name?.includes('ADMIN')
+                role.role?.name?.includes('ADMIN') ||
+                ['PRODUCT_MANAGER', 'INVENTORY_MANAGER', 'SUPER_ADMIN', 'ORDER_MANAGER', 'CUSTOMER_MANAGER', 'SUPPORT_AGENT'].includes(role.role?.name || role.name)
             )) {
                 userType = 'ADMIN';
             } else if (userData.type) {
@@ -198,7 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             return {
                 id: userData.id,
                 email: userData.email,
-                type: userType, // Set the type field
+                type: userType,
                 fullName: userData.fullName || userData.adminProfile?.fullName || 'N/A',
                 roles: userData.roles || [],
                 isAdmin: userType === 'ADMIN',
@@ -211,7 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // ✅ NEW: Enhanced force refresh function with cache busting
+    // ✅ Enhanced: Force refresh function with comprehensive updates
     const forceRefreshUserData = async () => {
         console.log("🔄 Force refreshing user data...");
         setIsLoading(true);
@@ -219,14 +230,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             const currentToken = token || getAuthToken();
             if (currentToken && checkAuth()) {
-                // Force fresh API call with cache busting
+                // Force fresh API call
                 const profile = await fetchUserProfile();
                 if (profile) {
                     setUserData(profile);
+                    setRefreshTrigger(prev => prev + 1);
                     console.log("✅ User data force refreshed:", {
                         id: profile.id,
                         rolesCount: Array.isArray(profile.roles) ? profile.roles.length : 0,
-                        isAdmin: profile.isAdmin
+                        isAdmin: profile.isAdmin,
+                        refreshTrigger: refreshTrigger + 1
                     });
                 }
             }
@@ -237,7 +250,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // ✅ FIXED: Validate and set auth state with safe logging
+    // ✅ Enhanced: Validate and set auth state
     const setAuthState = async (authToken: string, loginResponse?: any) => {
         try {
             setIsLoading(true);
@@ -269,6 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setToken(authToken);
                 setUserData(profile);
                 setIsAuthenticated(true);
+                setRefreshTrigger(prev => prev + 1);
                 console.log("✅ Auth state set successfully with user data:", {
                     id: profile.id,
                     email: profile.email,
@@ -293,15 +307,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
-    // ✅ NEW: Listen for role change events
+    // ✅ Enhanced: Listen for role change events with improved handling
     useEffect(() => {
         const handleRoleChange = async (event: CustomEvent) => {
-            const { adminId } = event.detail;
+            const { adminId, newRoles, timestamp, source } = event.detail;
+
+            console.log("🔄 Auth context detected role change:", {
+                adminId,
+                currentUserId: userData?.id,
+                rolesCount: Array.isArray(newRoles) ? newRoles.length : 0,
+                timestamp,
+                source
+            });
 
             // Only refresh if the current user's role was changed
-            if (userData && userData.id === adminId) {
-                console.log("🔄 Current user's role changed, refreshing...");
-                await forceRefreshUserData();
+            if (userData && String(userData.id) === String(adminId)) {
+                console.log("🔄 Current user's role changed, refreshing auth data...");
+
+                // Add small delay to ensure backend processing is complete
+                setTimeout(async () => {
+                    try {
+                        await forceRefreshUserData();
+                        console.log("✅ Auth data refreshed after role change");
+                    } catch (error) {
+                        console.error("❌ Failed to refresh auth data after role change:", error);
+                    }
+                }, 150);
             }
         };
 
@@ -312,7 +343,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
     }, [userData?.id]);
 
-    // FIXED: Better initial auth check
+    // ✅ Enhanced: Initial auth check
     useEffect(() => {
         const checkAuthStatus = async () => {
             console.log("🔍 Checking authentication status...");
@@ -383,6 +414,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(null);
         setUserData(null);
         setIsAuthenticated(false);
+        setRefreshTrigger(0);
         router.replace("/login");
     };
 
@@ -403,6 +435,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    // ✅ Enhanced: Make auth context available for debugging (with proper typing)
+    useEffect(() => {
+        if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+            (window as any).auth = {
+                userData,
+                isAuthenticated,
+                forceRefreshUserData,
+                refreshTrigger
+            };
+        }
+    }, [userData, isAuthenticated, refreshTrigger]);
+
     return (
         <AuthContext.Provider
             value={{
@@ -413,7 +457,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 login,
                 logout,
                 refreshAuth,
-                forceRefreshUserData // ✅ NEW: Expose force refresh function
+                forceRefreshUserData,
+                refreshTrigger
             }}
         >
             {children}

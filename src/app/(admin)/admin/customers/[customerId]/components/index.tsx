@@ -51,13 +51,6 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
 
   const tabber = param.get("tab") || "general";
 
-  console.log("🔍 CustomerDetail Debug:", {
-    customerId,
-    data,
-    loading: getCustomerInfoIsLoading,
-    error: getCustomerInfoError
-  });
-
   // Show loading state
   if (getCustomerInfoIsLoading) {
     return (

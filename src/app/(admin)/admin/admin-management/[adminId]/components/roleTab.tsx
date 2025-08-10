@@ -20,12 +20,6 @@ interface RolesTabProps {
 
 const RolesTab: React.FC<RolesTabProps> = ({ adminData, roles }) => {
 
-  console.log('=== ROLES TAB DEBUG ===');
-  console.log('adminData:', adminData);
-  console.log('adminData.roles:', adminData?.roles);
-  console.log('roles prop:', roles);
-  console.log('rolesArray after processing:', roles?.data || roles || []);
-  console.log('========================');
 
   const [expandedRoles, setExpandedRoles] = useState<Set<number>>(new Set());
   const [activeView, setActiveView] = useState<'current' | 'all'>('current');
@@ -163,8 +157,8 @@ const RolesTab: React.FC<RolesTabProps> = ({ adminData, roles }) => {
             <button
               onClick={() => setActiveView('current')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeView === 'current'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
                 }`}
             >
               Current Roles
@@ -172,8 +166,8 @@ const RolesTab: React.FC<RolesTabProps> = ({ adminData, roles }) => {
             <button
               onClick={() => setActiveView('all')}
               className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeView === 'all'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
                 }`}
             >
               All Roles
@@ -313,8 +307,8 @@ const RolesTab: React.FC<RolesTabProps> = ({ adminData, roles }) => {
                                 <div
                                   key={permission.id}
                                   className={`flex items-center space-x-2 p-3 rounded-lg border ${hasPermission
-                                      ? 'bg-green-50 border-green-200'
-                                      : 'bg-gray-50 border-gray-200'
+                                    ? 'bg-green-50 border-green-200'
+                                    : 'bg-gray-50 border-gray-200'
                                     }`}
                                 >
                                   {hasPermission ? (

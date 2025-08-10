@@ -15,7 +15,7 @@ export function InputFilter({
       placeholder={placeholder}
       onChange={async (event: ChangeEvent<HTMLInputElement>) => {
         const value = event.target.value;
-        console.log('⌨️ InputFilter onChange:', value); // ✅ ADD THIS DEBUG LOG
+        console.log('⌨️ InputFilter onChange:', value);
         setQuery(value);
       }}
       pos={true}

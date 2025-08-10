@@ -404,7 +404,6 @@ export default function Orders() {
     }
   }, [statusFilter]);
 
-  // Debug data when it changes
   useEffect(() => {
     if (data) {
       console.log('Orders data received:', {
@@ -444,7 +443,6 @@ export default function Orders() {
     };
   }, []);
 
-  // Debug filter changes
   useEffect(() => {
     console.log('Status filter changed:', {
       status,

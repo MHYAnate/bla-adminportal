@@ -19,7 +19,6 @@ import { ROUTES } from "@/constant/routes";
 import { PermissionsTab } from "./permissions-tab";
 import { useGetAdmins } from "@/services/admin";
 import RolesTab from "./roleTab";
-import DebugAdminStatus from "./debug"
 
 
 interface AdminUserDetailProps {
@@ -65,13 +64,6 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 		},
 	];
 
-	console.log('=== ADMIN USER DETAIL DEBUG ===');
-	console.log('adminId:', adminId);
-	console.log('admin found:', admin);
-	console.log('admin.roles:', admin?.roles);
-	console.log('roles passed as prop:', roles);
-	console.log('adminsData:', adminsData);
-	console.log('================================');
 
 	if (isAdminsLoading) {
 		return (
@@ -120,7 +112,6 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 
 	return (
 		<div>
-			<DebugAdminStatus />
 			<Header title="Administrator Information" showBack={true} />
 			<div className="flex flex-col md:flex-row gap-6 mt-5">
 				<Card className="w-full md:w-[300px]">

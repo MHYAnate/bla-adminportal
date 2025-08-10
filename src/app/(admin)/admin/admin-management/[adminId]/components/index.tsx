@@ -8,8 +8,6 @@ import AdminUserDetail from "./admin-user-detail";
 import { useGetAdminRoles } from "@/services/admin/index"; // Remove useGetAdminInfo
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import DebugAdminStatus from "./debug"
-
 
 export default function AdminDetailPage() {
   const pathname = usePathname();

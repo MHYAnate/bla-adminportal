@@ -12,7 +12,6 @@ interface OrderDetailsPageProps {
 export default function OrderDetailsPage({ params }: OrderDetailsPageProps) {
   const { orderId } = params;
 
-  // ✅ Add debugging and validation
   console.log('🎯 OrderDetailsPage props:', { params, orderId });
 
   // ✅ Ensure orderId is valid before rendering

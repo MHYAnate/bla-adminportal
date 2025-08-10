@@ -8,7 +8,7 @@ import useFetchItem from "../useFetchItem";
 import httpService from "../httpService";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { emitRoleChangeEvent } from '@/context/auth'; // ✅ NEW: Import role change event
+import { emitRoleChangeEvent } from '@/context/auth'; // ✅ Enhanced: Import role change event
 
 // =================== UTILITY FUNCTIONS ===================
 
@@ -319,7 +319,7 @@ export const useAdminRegistration = (onSuccess) => {
     setError(null);
 
     try {
-      // ✅ FIXED: Transform the payload to match backend expectations
+      // ✅ Transform the payload to match backend expectations
       const backendPayload = {
         // Required fields that backend expects
         email: payload.email,
@@ -366,7 +366,7 @@ export const useAdminRegistration = (onSuccess) => {
   return { registerAdmin, isLoading, error, data };
 };
 
-// =================== ROLE MANAGEMENT WITH EVENT EMISSION ===================
+// =================== ENHANCED ROLE MANAGEMENT WITH EVENT EMISSION ===================
 
 export const useGetAdminRoles = ({ enabled = true } = {}) => {
   const { data, isLoading, error, refetch } = useFetchItem({
@@ -384,23 +384,54 @@ export const useGetAdminRoles = ({ enabled = true } = {}) => {
   };
 };
 
-// ✅ ENHANCED: Role update with automatic event emission
+// ✅ ENHANCED: Role update with comprehensive event emission
 export const useUpdateAdminRoles = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const updateRolesPayload = async (adminId, roleIds) => {
+  const updateRolesPayload = async (adminId, rolesData) => {
     setIsLoading(true);
     setError(null);
     try {
-      console.log(`🔄 Updating roles for admin ${adminId}:`, roleIds);
+      console.log(`🔄 Hook: Updating roles for admin ${adminId}:`, rolesData);
       
-      const response = await httpService.putData({ roleIds }, routes.updateAdminRoles(adminId));
+      // Handle both roleIds (numbers) and roleNames (strings)
+      let payload;
+      if (Array.isArray(rolesData)) {
+        if (rolesData.length > 0 && typeof rolesData[0] === 'string') {
+          // roleNames format
+          payload = { roleNames: rolesData };
+        } else if (rolesData.length > 0 && typeof rolesData[0] === 'number') {
+          // roleIds format  
+          payload = { roleIds: rolesData };
+        } else {
+          // Empty array
+          payload = { roleIds: [] };
+        }
+      } else {
+        payload = { roleIds: rolesData || [] };
+      }
+      
+      console.log('🔄 Hook: Sending payload to backend:', payload);
+      
+      const response = await httpService.putData(payload, routes.updateAdminRoles(adminId));
       const extractedData = extractResponseData(response);
       const message = extractMessage(response, 'Roles updated successfully');
       
-      // ✅ NEW: Emit role change event
-      emitRoleChangeEvent(adminId, extractedData?.roles || []);
+      // ✅ ENHANCED: Emit role change event with comprehensive data
+      const responseData = extractedData || response.data || response;
+      const newRoles = responseData?.roles || responseData?.data?.roles || [];
+      
+      console.log(`🔄 Hook: Emitting role change event for admin ${adminId}:`, {
+        adminId,
+        newRoles,
+        rolesCount: Array.isArray(newRoles) ? newRoles.length : 0
+      });
+      
+      // Emit with slight delay to ensure API response is fully processed
+      setTimeout(() => {
+        emitRoleChangeEvent(adminId, newRoles);
+      }, 100);
       
       toast.success(message);
       if (onSuccess) onSuccess(extractedData);
@@ -566,7 +597,7 @@ export const useToggleRolePermission = () => {
   return { toggleRolePermission, isToggling, toggleRolePermissionError: ErrorHandler(error) };
 };
 
-// =================== PERMISSION MANAGEMENT WITH EVENT EMISSION ===================
+// =================== ENHANCED PERMISSION MANAGEMENT WITH EVENT EMISSION ===================
 
 export const useGetAdminPermissions = ({ enabled = true } = {}) => {
   const { data, isLoading, error, refetch } = useFetchItem({
@@ -616,7 +647,7 @@ export const useUpdateAdminPermissions = () => {
     error,
   } = useMutation({
     mutationFn: async ({ adminId, payload }) => {
-      console.log(`🔄 Updating permissions for admin ${adminId}:`, payload);
+      console.log(`🔄 Hook: Updating permissions for admin ${adminId}:`, payload);
       const response = await httpService.putData(payload, routes.updateAdminPermissions(adminId));
       return { response, adminId };
     },
@@ -628,8 +659,11 @@ export const useUpdateAdminPermissions = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-info", adminId] });
       queryClient.invalidateQueries({ queryKey: ["admins"] });
       
-      // ✅ NEW: Emit role change event for permission updates
-      emitRoleChangeEvent(adminId, []);
+      // ✅ ENHANCED: Emit role change event for permission updates
+      console.log(`🔄 Hook: Emitting role change event for permission update - admin ${adminId}`);
+      setTimeout(() => {
+        emitRoleChangeEvent(adminId, []);
+      }, 100);
       
       const message = extractMessage(response, "Permissions updated successfully");
       toast.success(message);
@@ -662,14 +696,20 @@ export const useUpdateAdminRolesPermissions = (onSuccess) => {
     setError(null);
 
     try {
-      console.log(`🔄 Updating role permissions for admin ${adminId}:`, roleIds);
+      console.log(`🔄 Hook: Updating role permissions for admin ${adminId}:`, roleIds);
       
       const response = await httpService.putData({ roleIds }, routes.updateAdminRolesPermissions(adminId));
       const extractedData = extractResponseData(response);
       const message = extractMessage(response, 'Admin roles updated successfully');
       
-      // ✅ NEW: Emit role change event
-      emitRoleChangeEvent(adminId, extractedData?.roles || []);
+      // ✅ ENHANCED: Emit role change event
+      const responseData = extractedData || response.data || response;
+      const newRoles = responseData?.roles || responseData?.data?.roles || [];
+      
+      console.log(`🔄 Hook: Emitting role change event for role permissions update - admin ${adminId}:`, newRoles);
+      setTimeout(() => {
+        emitRoleChangeEvent(adminId, newRoles);
+      }, 100);
       
       toast.success(message);
       if (onSuccess) onSuccess(extractedData);
@@ -699,8 +739,11 @@ export const useToggleAdminPermission = (adminId) => {
       const message = extractMessage(data, "Permission updated successfully");
       toast.success(message);
       
-      // ✅ NEW: Emit role change event for permission toggle
-      emitRoleChangeEvent(adminId, []);
+      // ✅ ENHANCED: Emit role change event for permission toggle
+      console.log(`🔄 Hook: Emitting role change event for permission toggle - admin ${adminId}`);
+      setTimeout(() => {
+        emitRoleChangeEvent(adminId, []);
+      }, 100);
       
       queryClient.invalidateQueries({ queryKey: ['admin-permissions'] });
       queryClient.invalidateQueries({ queryKey: ['admin-specific-permissions', adminId] });
@@ -829,15 +872,19 @@ export const useCanManageRoles = () => {
   return { canManage, isLoading };
 };
 
-// =================== UTILITY FUNCTIONS FOR ROLE CHANGES ===================
+// =================== ENHANCED UTILITY FUNCTIONS FOR ROLE CHANGES ===================
 
-// ✅ NEW: Manual role change trigger for testing
+// ✅ ENHANCED: Manual role change trigger for testing with better logging
 export const triggerRoleChangeEvent = (adminId, newRoles = []) => {
-  console.log(`🧪 Manually triggering role change for admin ${adminId}`);
+  console.log(`🧪 Manually triggering role change for admin ${adminId}:`, {
+    adminId,
+    rolesCount: Array.isArray(newRoles) ? newRoles.length : 0,
+    source: 'manual_trigger'
+  });
   emitRoleChangeEvent(adminId, newRoles);
 };
 
-// ✅ NEW: Bulk role update with event emission
+// ✅ ENHANCED: Bulk role update with comprehensive event emission
 export const useBulkUpdateAdminRoles = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -847,17 +894,26 @@ export const useBulkUpdateAdminRoles = (onSuccess) => {
     setError(null);
     
     try {
+      console.log(`🔄 Bulk updating roles for ${updates.length} admins:`, updates);
+      
       const promises = updates.map(({ adminId, roleIds }) => 
         httpService.putData({ roleIds }, routes.updateAdminRoles(adminId))
       );
       
       const responses = await Promise.all(promises);
       
-      // Emit events for all updated admins
+      // ✅ ENHANCED: Emit events for all updated admins with delay
       updates.forEach(({ adminId }, index) => {
         const response = responses[index];
         const extractedData = extractResponseData(response);
-        emitRoleChangeEvent(adminId, extractedData?.roles || []);
+        const newRoles = extractedData?.roles || extractedData?.data?.roles || [];
+        
+        console.log(`🔄 Bulk update: Emitting role change event for admin ${adminId}:`, newRoles);
+        
+        // Stagger events to prevent overwhelming the event system
+        setTimeout(() => {
+          emitRoleChangeEvent(adminId, newRoles);
+        }, index * 50);
       });
       
       toast.success('Bulk role update completed successfully');
@@ -875,3 +931,55 @@ export const useBulkUpdateAdminRoles = (onSuccess) => {
 
   return { bulkUpdateRoles, isLoading, error };
 };
+
+// =================== ENHANCED DEVELOPMENT UTILITIES ===================
+
+// ✅ ENHANCED: Make testing utilities available in development with better debugging
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+  // Enhanced testing utilities
+  window.adminHooksUtils = {
+    triggerRoleChangeEvent,
+    emitRoleChangeEvent,
+    testRoleUpdate: async (adminId, newRoles) => {
+      console.group('🧪 Testing Role Update Flow');
+      try {
+        console.log('1. Current admin state:', window.auth?.userData);
+        console.log('2. Triggering role change for admin:', adminId, 'with roles:', newRoles);
+        
+        // Trigger the event
+        triggerRoleChangeEvent(adminId, newRoles);
+        
+        console.log('3. Event triggered, waiting for effects...');
+        
+        // Wait and check if auth context responds
+        setTimeout(() => {
+          console.log('4. Auth context after event:', window.auth?.userData);
+          console.log('5. Permission checker after event:', window.permissionChecker?.userData);
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ Test failed:', error);
+      } finally {
+        console.groupEnd();
+      }
+    },
+    forceRefreshAllData: async () => {
+      console.log('🔄 Force refreshing all admin-related data...');
+      
+      if (window.auth?.forceRefreshUserData) {
+        await window.auth.forceRefreshUserData();
+      }
+      
+      if (window.permissionChecker?.forceRefresh) {
+        await window.permissionChecker.forceRefresh();
+      }
+      
+      console.log('✅ All data refresh completed');
+    }
+  };
+  
+  console.log('🧪 Enhanced Admin Hooks Utils available:');
+  console.log('- window.adminHooksUtils.triggerRoleChangeEvent(adminId, roles)');
+  console.log('- window.adminHooksUtils.testRoleUpdate(adminId, roles)');
+  console.log('- window.adminHooksUtils.forceRefreshAllData()');
+}

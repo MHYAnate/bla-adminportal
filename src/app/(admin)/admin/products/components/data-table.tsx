@@ -31,8 +31,7 @@ const ProductDataTable: React.FC<iProps> = ({
   totalPages,
   loading,
 }) => {
-  // ✅ Enhanced debugging
-  console.log('📊 ProductDataTable Debug:', {
+  console.log('📊 ProductDataTable :', {
     data,
     dataType: typeof data,
     isArray: Array.isArray(data),

@@ -243,27 +243,6 @@ const Customers: React.FC = () => {
             )}
           </div>
 
-          {/* ✅ DEBUG: Show the difference between overallStats and currentPageStats */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <h4 className="font-bold mb-2">🔍 Debug: Stats Comparison</h4>
-              <div className="grid grid-cols-2 gap-4 text-xs">
-                <div>
-                  <strong>Overall Stats (for Role Cards):</strong>
-                  <pre className="mt-1 p-2 bg-white rounded overflow-auto max-h-32">
-                    {JSON.stringify(overallStats, null, 2)}
-                  </pre>
-                </div>
-                <div>
-                  <strong>Current Page Stats (for Statistics Cards):</strong>
-                  <pre className="mt-1 p-2 bg-white rounded overflow-auto max-h-32">
-                    {JSON.stringify(currentPageStats, null, 2)}
-                  </pre>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Filters Section */}
           <div className="flex items-center gap-4 mb-6">
             <div className="w-1/2 me-auto">
@@ -300,21 +279,6 @@ const Customers: React.FC = () => {
             handleDelete={() => setIsOpen(true)}
             isLoading={getCustomersIsLoading}
           />
-
-          {/* Pagination Debug Info */}
-          {process.env.NODE_ENV === 'development' && data?.pagination && (
-            <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
-              <strong>🔍 Pagination Debug:</strong>
-              <br />
-              Current Page: {data.pagination.currentPage} of {data.pagination.totalPages}
-              <br />
-              Total Customers: {data.pagination.total}
-              <br />
-              Page Size: {data.pagination.pageSize || pageSize}
-              <br />
-              Customers on this page: {data?.data?.length || 0}
-            </div>
-          )}
         </CardContent>
       </Card>
 

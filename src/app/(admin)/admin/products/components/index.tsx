@@ -101,9 +101,8 @@ export default function Products() {
     setProductsFilter(initialPayload);
   }, [setProductsFilter]);
 
-  // ✅ Debug the data in component
   useEffect(() => {
-    console.log('🔍 Component Debug:', {
+    console.log('🔍 Component :', {
       loading: getProductsIsLoading,
       data: getProductsData,
       dataType: typeof getProductsData,
@@ -199,7 +198,6 @@ export default function Products() {
     }
   };
 
-  // ✅ Render table with comprehensive debugging
   const renderTable = () => {
     if (getProductsIsLoading) {
       return (
@@ -287,21 +285,7 @@ export default function Products() {
             Detailed Product Table
           </h6>
 
-          {/* ✅ Debug info section (remove in production) */}
-          {/* <div className="mb-4 p-4 bg-gray-100 rounded text-xs">
-            <h4 className="font-bold mb-2">Debug Info:</h4>
-            <pre className="overflow-auto max-h-32">
-              {JSON.stringify({
-                loading: getPRoductsIsLoading,
-                hasData: !!getProductsData,
-                dataType: typeof getProductsData,
-                hasDataArray: !!getProductsData?.data,
-                isArray: Array.isArray(getProductsData?.data),
-                dataLength: getProductsData?.data?.length,
-                pagination: getProductsData?.pagination
-              }, null, 2)}
-            </pre>
-          </div> */}
+
 
           <div className="flex items-center gap-4 mb-6">
             <InputFilter
@@ -317,7 +301,6 @@ export default function Products() {
             />
           </div>
 
-          {/* ✅ Use the debug render function */}
           {renderTable()}
         </CardContent>
       </Card>

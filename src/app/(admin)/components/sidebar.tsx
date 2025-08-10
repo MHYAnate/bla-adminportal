@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   DashboardIcon,
   NotificationIcon,
@@ -31,343 +31,181 @@ import {
 import { ROUTES } from "@/constant/routes";
 import LogoutButton from "./logout";
 import { usePermissions } from "@/hooks/usePermissions";
-import { checkSidebarAccess } from "@/utils/sidebarPermissionChecker";
 import React from "react";
 
-// Enhanced permission mapping for each route
-const ROUTE_TO_PERMISSION_MAP: Record<string, string> = {
-  [ROUTES.ADMIN.SIDEBAR.DASHBOARD]: 'DASHBOARD',
-  [ROUTES.ADMIN.SIDEBAR.ADMINS]: 'ADMIN_MANAGEMENT',
-  [ROUTES.ADMIN.SIDEBAR.ROLES]: 'ADMIN_MANAGEMENT',
-  [ROUTES.ADMIN.SIDEBAR.PERMISSIONS]: 'ADMIN_MANAGEMENT',
-  [ROUTES.ADMIN.SIDEBAR.CUSTOMERS]: 'CUSTOMERS',
-  [ROUTES.ADMIN.SIDEBAR.INDIVIDUALS]: 'CUSTOMERS',
-  [ROUTES.ADMIN.SIDEBAR.BUSINNES]: 'CUSTOMERS',
-  [ROUTES.ADMIN.SIDEBAR.PRODUCTS]: 'PRODUCTS',
-  [ROUTES.ADMIN.SIDEBAR.CATEGORIES]: 'PRODUCTS',
-  [ROUTES.ADMIN.SIDEBAR.MANUFACTURERS]: 'MANUFACTURERS',
-  [ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTMANUFACTURERS]: 'MANUFACTURERS',
-  [ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTVENDORS]: 'MANUFACTURERS',
-  [ROUTES.ADMIN.SIDEBAR.ORDERS]: 'ORDERS',
-  [ROUTES.ADMIN.SIDEBAR.CUSTOMERSREPORTS]: 'REPORTS',
-  [ROUTES.ADMIN.SIDEBAR.BUSINNESREPORTS]: 'REPORTS',
-  [ROUTES.ADMIN.SIDEBAR.FINANCIALREPORTS]: 'FINANCIAL_REPORTS',
-  [ROUTES.ADMIN.SIDEBAR.STOREMANAGEMENT]: 'PRODUCTS',
-  [ROUTES.ADMIN.SIDEBAR.INVEMTORYMANAGEMENT]: 'INVENTORY',
-  [ROUTES.ADMIN.SIDEBAR.TRANSACTIONMANAGEMENT]: 'ORDERS',
-  [ROUTES.ADMIN.SIDEBAR.FEEDBACK]: 'SUPPORT_FEEDBACK',
-  [ROUTES.ADMIN.SIDEBAR.SUPPORT]: 'SUPPORT_FEEDBACK',
-  [ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS]: 'DASHBOARD',
-  [ROUTES.ADMIN.SIDEBAR.SETTINGS]: 'DASHBOARD',
+const PERMISSION_MAP: Record<string, string> = {
+  // Admin Management
+  [ROUTES.ADMIN.SIDEBAR.ADMINS]: 'view_users',
+  [ROUTES.ADMIN.SIDEBAR.CUSTOMERS]: 'view_users',
+  [ROUTES.ADMIN.SIDEBAR.INDIVIDUALS]: 'view_users',
+  [ROUTES.ADMIN.SIDEBAR.BUSINNES]: 'view_users',
+
+  // Product Management
+  [ROUTES.ADMIN.SIDEBAR.PRODUCTS]: 'view_products',
+  [ROUTES.ADMIN.SIDEBAR.CATEGORIES]: 'view_categories',
+  [ROUTES.ADMIN.SIDEBAR.STOREMANAGEMENT]: 'view_products',
+  [ROUTES.ADMIN.SIDEBAR.MANUFACTURERS]: 'view_manufacturers',
+  [ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTMANUFACTURERS]: 'view_manufacturers',
+  [ROUTES.ADMIN.SIDEBAR.SUPPLYMANAGEMENTVENDORS]: 'view_manufacturers',
+
+  // Order Management
+  [ROUTES.ADMIN.SIDEBAR.ORDERS]: 'view_orders',
+  [ROUTES.ADMIN.SIDEBAR.TRANSACTIONMANAGEMENT]: 'view_transactions',
+
+  // Inventory
+  [ROUTES.ADMIN.SIDEBAR.INVEMTORYMANAGEMENT]: 'inventory_read',
+
+  // Reports & Analytics
+  [ROUTES.ADMIN.SIDEBAR.CUSTOMERSREPORTS]: 'reports_read',
+  [ROUTES.ADMIN.SIDEBAR.BUSINNESREPORTS]: 'reports_read',
+  [ROUTES.ADMIN.SIDEBAR.FINANCIALREPORTS]: 'reports_read',
+
+  // Support
+  [ROUTES.ADMIN.SIDEBAR.FEEDBACK]: 'view_feedback',
+  [ROUTES.ADMIN.SIDEBAR.SUPPORT]: 'support_read',
+
+  // System
+  [ROUTES.ADMIN.SIDEBAR.DASHBOARD]: 'analytics_read',
+  [ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS]: 'view_notifications',
+  [ROUTES.ADMIN.SIDEBAR.SETTINGS]: 'analytics_read',
 };
 
-// Helper function to safely extract role names
-const getRoleNames = (roles: any[]): string[] => {
-  if (!Array.isArray(roles)) return [];
-  return roles.map(userRole => {
-    return userRole.role?.name || userRole.name || 'Unknown Role';
-  }).filter(Boolean);
-};
-
-// Helper function to safely extract user role for display - IMPROVED
-const getUserRoleDisplay = (userData: any): string => {
-  if (!userData) return 'None';
-
-  console.log('🔍 getUserRoleDisplay - Raw userData:', userData);
-
-  // Check if role is a string (direct property)
-  if (typeof userData.role === 'string') {
-    console.log('✅ Found role as string:', userData.role);
-    return userData.role;
-  }
-
-  // Check if role is an object with name property
-  if (userData.role && typeof userData.role === 'object' && userData.role.name) {
-    console.log('✅ Found role as object.name:', userData.role.name);
-    return userData.role.name;
-  }
-
-  // Check if we have roles array and get the first role name
-  if (Array.isArray(userData.roles) && userData.roles.length > 0) {
-    const firstRole = userData.roles[0];
-    const roleName = firstRole.role?.name || firstRole.name || 'Unknown';
-    console.log('✅ Found role in roles array:', roleName);
-    return roleName;
-  }
-
-  // ✅ NEW: Check if there's a type field (sometimes API returns role in 'type')
-  if (typeof userData.type === 'string' && userData.type !== 'ADMIN') {
-    console.log('✅ Found role in type field:', userData.type);
-    return userData.type;
-  }
-
-  // ✅ NEW: Check adminProfile for role information
-  if (userData.adminProfile?.role) {
-    const adminRole = typeof userData.adminProfile.role === 'string'
-      ? userData.adminProfile.role
-      : userData.adminProfile.role.name;
-    console.log('✅ Found role in adminProfile:', adminRole);
-    return adminRole;
-  }
-
-  // ✅ NEW: Fallback - if user has adminProfile but no explicit role, assume ADMIN
-  if (userData.adminProfile && userData.type === 'ADMIN') {
-    console.log('✅ Fallback: User has adminProfile, assuming ADMIN role');
-    return 'ADMIN';
-  }
-
-  console.log('❌ No role found, defaulting to None');
-  return 'None';
-};
-
-// Enhanced function to check if user can access a specific sidebar item
-const canAccessSidebarItem = (item: any, permissionChecker: any): boolean => {
-  console.log(`🔍 Checking item access for: ${item.sidebar}`, {
-    isSuperAdmin: permissionChecker.isSuperAdmin(),
-    isAdmin: permissionChecker.isAdmin(),
-    userData: permissionChecker.userData
-  });
-
-  // Super admin always has access - with extra debugging
+// ✅ Simple permission check function
+const hasRouteAccess = (route: string, permissionChecker: any): boolean => {
+  // Super admin has access to everything
   if (permissionChecker.isSuperAdmin()) {
-    console.log(`✅ Super admin has access to: ${item.sidebar}`);
     return true;
   }
 
-  // If item has children, check if user has access to any child
-  if (item.child && Array.isArray(item.child)) {
-    const hasChildAccess = item.child.some((child: any) => {
-      const permissionKey = ROUTE_TO_PERMISSION_MAP[child.href];
-      if (!permissionKey) {
-        console.log(`⚠️ No permission key found for child route: ${child.href}`);
-        return false;
-      }
-      const access = checkSidebarAccess(permissionKey, permissionChecker);
-      console.log(`Child ${child.sidebar} (${permissionKey}): ${access ? '✅' : '❌'}`);
-      return access;
-    });
-    console.log(`Parent ${item.sidebar} has child access: ${hasChildAccess}`);
-    return hasChildAccess;
+  // Must be admin
+  if (!permissionChecker.isAdmin()) {
+    return false;
   }
 
-  // For single items, check direct permission
-  if (item.href) {
-    const permissionKey = ROUTE_TO_PERMISSION_MAP[item.href];
-    if (!permissionKey) {
-      console.log(`⚠️ No permission key found for route: ${item.href}`);
+  const requiredPermission = PERMISSION_MAP[route];
+  if (!requiredPermission) {
+    console.warn(`⚠️ No permission mapping found for route: ${route}`);
+    return false;
+  }
+
+  // Check if user has the exact permission
+  const hasAccess = permissionChecker.permissions?.some((p: any) =>
+    p.name === requiredPermission
+  ) || false;
+
+  console.log(`${hasAccess ? '✅' : '❌'} Route access check: ${route} (${requiredPermission})`);
+  return hasAccess;
+};
+
+// ✅ Filter sidebar items based on permissions
+const getFilteredSidebarItems = (sidebarItems: any[], permissionChecker: any) => {
+  if (!permissionChecker.isAuthenticated || !permissionChecker.isAdmin()) {
+    return [];
+  }
+
+  if (permissionChecker.isSuperAdmin()) {
+    return sidebarItems; // Super admin sees everything
+  }
+
+  return sidebarItems.filter(item => {
+    // For items with children
+    if (item.child && Array.isArray(item.child)) {
+      const accessibleChildren = item.child.filter((child: any) =>
+        hasRouteAccess(child.href, permissionChecker)
+      );
+
+      if (accessibleChildren.length > 0) {
+        // Modify the item to only show accessible children
+        item.child = accessibleChildren;
+        return true;
+      }
       return false;
     }
-    const access = checkSidebarAccess(permissionKey, permissionChecker);
-    console.log(`Single item ${item.sidebar} (${permissionKey}): ${access ? '✅' : '❌'}`);
-    return access;
-  }
 
-  console.log(`❌ No access rule found for item: ${item.sidebar}`);
-  return false;
-};
-
-// Enhanced function to filter children based on permissions
-const getFilteredChildren = (children: any[], permissionChecker: any): any[] => {
-  if (!Array.isArray(children)) return [];
-
-  return children.filter(child => {
-    const permissionKey = ROUTE_TO_PERMISSION_MAP[child.href];
-    return permissionKey ? checkSidebarAccess(permissionKey, permissionChecker) : false;
-  });
-};
-
-// Main filtering function with enhanced permission checking
-const getFilteredSidebarList = (permissionChecker: any, refreshKey: number = 0) => {
-  const userRole = getUserRoleDisplay(permissionChecker.userData);
-
-  console.log('🔍 ENHANCED sidebar filtering:', {
-    refreshKey,
-    hasUserData: !!permissionChecker.userData,
-    userId: permissionChecker.userData?.id,
-    userRole: userRole,
-    userType: permissionChecker.userData?.type,
-    isAdmin: permissionChecker.isAdmin(),
-    isSuperAdmin: permissionChecker.isSuperAdmin(),
-    hasAdminProfile: !!permissionChecker.userData?.adminProfile,
-    refreshTrigger: permissionChecker.refreshTrigger
-  });
-
-  // Must have user data
-  if (!permissionChecker.userData) {
-    console.log('❌ No user data - showing no items');
-    return [];
-  }
-
-  // ✅ SUPER ADMIN BYPASS
-  if (permissionChecker.isSuperAdmin() || userRole === 'SUPER_ADMIN') {
-    console.log('✅ SUPER ADMIN DETECTED - Showing all sidebar items');
-    return adminSidebarList;
-  }
-
-  // ✅ ADMIN ACCESS CHECK - More permissive
-  const hasAdminAccess = permissionChecker.isAdmin() ||
-    permissionChecker.userData?.adminProfile ||
-    permissionChecker.userData?.type === 'ADMIN' ||
-    ['ADMIN', 'PRODUCT_MANAGER', 'ORDER_MANAGER', 'CUSTOMER_MANAGER', 'INVENTORY_MANAGER', 'SUPPORT_AGENT'].includes(userRole);
-
-  if (!hasAdminAccess) {
-    console.log('❌ No admin access - showing no items');
-    return [];
-  }
-
-  // ✅ ROLE-BASED FILTERING - Show everything for now, can restrict later
-  console.log(`✅ User ${userRole} has admin access - showing relevant items`);
-
-  // For development/deadline - show all items to admin users, filter later
-  if (userRole === 'None' && permissionChecker.userData?.adminProfile) {
-    console.log('✅ Admin profile detected, showing all items');
-    return adminSidebarList;
-  }
-
-  // Simple role-based filtering
-  const filteredList = adminSidebarList.filter(item => {
-    const itemName = item.sidebar?.toLowerCase() || '';
-
-    switch (userRole) {
-      case 'PRODUCT_MANAGER':
-        return itemName.includes('product') || itemName.includes('manufacturer') ||
-          itemName.includes('report') || itemName.includes('order') ||
-          itemName.includes('inventor'); // Show inventory management
-      case 'ORDER_MANAGER':
-        return itemName.includes('order') || itemName.includes('report') ||
-          itemName.includes('customer') || itemName.includes('transaction');
-      case 'CUSTOMER_MANAGER':
-        return itemName.includes('customer') || itemName.includes('report') ||
-          itemName.includes('support');
-      case 'INVENTORY_MANAGER':
-        return itemName.includes('inventory') || itemName.includes('product') ||
-          itemName.includes('report') || itemName.includes('manufacturer');
-      case 'SUPPORT_AGENT':
-        return itemName.includes('support') || itemName.includes('feedback') ||
-          itemName.includes('customer');
-      case 'ADMIN':
-      case 'None': // Fallback for admin users without clear role
-      default:
-        return true; // Show everything for admin/unknown roles
+    // For single items
+    if (item.href) {
+      return hasRouteAccess(item.href, permissionChecker);
     }
-  });
 
-  console.log(`✅ Role ${userRole} gets ${filteredList.length} sidebar items:`, filteredList.map(item => item.sidebar));
-  return filteredList;
+    return false;
+  });
 };
 
-const AdminSidebar: React.FC = () => {
-  // ✅ ALL HOOKS MUST BE AT THE TOP - BEFORE ANY EARLY RETURNS OR CONDITIONAL LOGIC
+const SimplePermissionSidebar: React.FC = () => {
   const path = usePathname();
-  const router = useRouter();
   const permissionChecker = usePermissions();
   const [openItems, setOpenItems] = React.useState<Record<string, boolean>>({});
-  const [sidebarKey, setSidebarKey] = React.useState(0); // ✅ NEW: Force re-render key
+  const [refreshKey, setRefreshKey] = React.useState(0);
 
-  // ✅ NEW: Listen for role changes and force sidebar refresh
+  // Listen for role changes
   React.useEffect(() => {
-    const handleRoleChange = (event: CustomEvent) => {
-      const { adminId } = event.detail;
-      if (permissionChecker.userData && permissionChecker.userData.id === adminId) {
-        console.log("🔄 Sidebar detected role change, forcing refresh...");
-        setSidebarKey(prev => prev + 1);
+    const handleRoleChange = (event: Event) => {
+      const customEvent = event as CustomEvent<{ adminId: string }>;
+      const { adminId } = customEvent.detail;
+
+      if (permissionChecker.userData && String(permissionChecker.userData.id) === String(adminId)) {
+        console.log("🔄 Role changed - refreshing sidebar");
+        setRefreshKey(prev => prev + 1);
       }
     };
 
     window.addEventListener('admin-role-changed', handleRoleChange as EventListener);
-
-    return () => {
-      window.removeEventListener('admin-role-changed', handleRoleChange as EventListener);
-    };
+    return () => window.removeEventListener('admin-role-changed', handleRoleChange as EventListener);
   }, [permissionChecker.userData?.id]);
 
-  // ✅ UPDATED: Include sidebarKey and refreshTrigger in dependencies to force recalculation
-  const filteredSidebarList = React.useMemo(() => {
-    console.log(`🔄 Recalculating sidebar items (key: ${sidebarKey}, trigger: ${permissionChecker.refreshTrigger})`);
-    return getFilteredSidebarList(permissionChecker, sidebarKey);
+  // Calculate filtered sidebar items
+  const filteredSidebarItems = React.useMemo(() => {
+    console.log('🔄 Filtering sidebar items...');
+    console.log('User permissions:', permissionChecker.permissions?.map((p: any) => p.name) || []);
+
+    const filtered = getFilteredSidebarItems(adminSidebarList, permissionChecker);
+
+    console.log(`✅ Filtered ${filtered.length}/${adminSidebarList.length} sidebar items`);
+    return filtered;
   }, [
     permissionChecker.isAuthenticated,
     permissionChecker.userData,
+    permissionChecker.permissions,
     permissionChecker.isAdmin(),
     permissionChecker.isSuperAdmin(),
-    permissionChecker.refreshTrigger, // ✅ NEW: Include refresh trigger
-    sidebarKey // ✅ NEW: Add sidebar key dependency
-  ]);
-
-  // ✅ UPDATED: Include sidebarKey and refreshTrigger in other permission checks
-  const hasDashboardAccess = React.useMemo(() =>
-    checkSidebarAccess('DASHBOARD', permissionChecker),
-    [permissionChecker.isAuthenticated, permissionChecker.userData, permissionChecker.refreshTrigger, sidebarKey]
-  );
-
-  const hasNotificationAccess = React.useMemo(() =>
-    checkSidebarAccess('DASHBOARD', permissionChecker),
-    [permissionChecker.isAuthenticated, permissionChecker.userData, permissionChecker.refreshTrigger, sidebarKey]
-  );
-
-  const hasSettingsAccess = React.useMemo(() =>
-    checkSidebarAccess('DASHBOARD', permissionChecker),
-    [permissionChecker.isAuthenticated, permissionChecker.userData, permissionChecker.refreshTrigger, sidebarKey]
-  );
-
-  // ✅ ALL useEffect hooks at the top
-  React.useEffect(() => {
-    permissionChecker.debugPermissions();
-  }, [permissionChecker]);
-
-  React.useEffect(() => {
-    console.log('🔄 Auth state changed, sidebar will re-render:', {
-      isAuthenticated: permissionChecker.isAuthenticated,
-      userData: !!permissionChecker.userData,
-      userRole: getUserRoleDisplay(permissionChecker.userData),
-      refreshTrigger: permissionChecker.refreshTrigger,
-      sidebarKey
-    });
-  }, [
-    permissionChecker.isAuthenticated,
-    permissionChecker.userData,
     permissionChecker.refreshTrigger,
-    sidebarKey
+    refreshKey
   ]);
-
-  // ✅ NOW safe to have early returns after all hooks are declared
 
   // Don't show sidebar on register page
   if (path === "/admin/register") {
     return <></>;
   }
 
-  // Show loading state while user data is being determined
+  // Loading state
   if (!permissionChecker.userData) {
-    console.log('🔄 No userData, showing loading...');
     return (
       <Sidebar className="w-[280px]">
         <SidebarContent className={cn("bg-[#fff] py-6 px-8")}>
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
+            <span className="ml-2 text-sm">Loading...</span>
           </div>
         </SidebarContent>
       </Sidebar>
     );
   }
 
-  // ✅ BETTER: Wait for role data to be properly loaded
-  const userRole = getUserRoleDisplay(permissionChecker.userData);
-  if (userRole === 'None' && permissionChecker.userData.type !== 'ADMIN') {
-    console.log('⚠️ User data exists but role not properly loaded, showing loading...');
+  // Access restricted state
+  if (!permissionChecker.isAdmin() && !permissionChecker.isSuperAdmin()) {
     return (
       <Sidebar className="w-[280px]">
         <SidebarContent className={cn("bg-[#fff] py-6 px-8")}>
           <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-600"></div>
-            <span className="ml-2 text-sm">Loading permissions...</span>
+            <div className="text-center">
+              <div className="text-sm text-gray-600">Access Restricted</div>
+              <div className="text-xs text-gray-400 mt-1">Admin privileges required</div>
+            </div>
           </div>
         </SidebarContent>
       </Sidebar>
     );
   }
-
-  console.log('🔍 Final Enhanced Filtered Sidebar List:', filteredSidebarList.length, 'items');
 
   const toggleItem = (itemId: string | number) => {
     const key = String(itemId);
@@ -399,54 +237,40 @@ const AdminSidebar: React.FC = () => {
             </div>
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            {/* Dashboard Menu Item - Show for all admin users */}
-            {permissionChecker.userData && (
-              hasDashboardAccess ||
-              permissionChecker.isAdmin() ||
-              permissionChecker.isSuperAdmin() ||
-              permissionChecker.userData?.adminProfile ||
-              permissionChecker.userData?.type === 'ADMIN'
-            ) && (
-                <SidebarMenu className="mb-6">
-                  <SidebarMenuItem
-                    className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.DASHBOARD)
-                      ? "rounded-lg bg-warning text-[#FFEDEC]"
-                      : "text-[#111827]"
-                      }`}
-                  >
-                    <SidebarMenuButton asChild className="p-0">
-                      <Link
-                        href={ROUTES.ADMIN.SIDEBAR.DASHBOARD}
-                        className="flex w-full items-center justify-between gap-2 py-[17px] px-5"
-                        prefetch={false}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          try {
-                            router.push(ROUTES.ADMIN.SIDEBAR.DASHBOARD);
-                          } catch (error) {
-                            console.error('Router push failed:', error);
-                            window.location.href = ROUTES.ADMIN.SIDEBAR.DASHBOARD;
-                          }
-                        }}
-                      >
-                        <h5 className="text-sm font-bold">Dashboard</h5>
-                        <span
-                          className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.DASHBOARD)
-                            ? "text-[#FFEDEC]"
-                            : "text-[#D0D0D0]"
-                            }`}
-                        >
-                          <DashboardIcon />
-                        </span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              )}
 
-            {/* Enhanced Filtered Menu Items */}
-            {filteredSidebarList.map((item) =>
+
+            {/* Dashboard Menu Item */}
+            {hasRouteAccess(ROUTES.ADMIN.SIDEBAR.DASHBOARD, permissionChecker) && (
+              <SidebarMenu className="mb-6">
+                <SidebarMenuItem
+                  className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.DASHBOARD)
+                    ? "rounded-lg bg-warning text-[#FFEDEC]"
+                    : "text-[#111827]"
+                    }`}
+                >
+                  <SidebarMenuButton asChild className="p-0">
+                    <Link
+                      href={ROUTES.ADMIN.SIDEBAR.DASHBOARD}
+                      className="flex w-full items-center justify-between gap-2 py-[17px] px-5"
+                      prefetch={false}
+                    >
+                      <h5 className="text-sm font-bold">Dashboard</h5>
+                      <span
+                        className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.DASHBOARD)
+                          ? "text-[#FFEDEC]"
+                          : "text-[#D0D0D0]"
+                          }`}
+                      >
+                        <DashboardIcon />
+                      </span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+
+            {/* Filtered Menu Items */}
+            {filteredSidebarItems.map((item) =>
               item.child ? (
                 // Menu items with children (collapsible)
                 <SidebarMenu key={item.id} className="flex flex-col mb-1">
@@ -486,7 +310,7 @@ const AdminSidebar: React.FC = () => {
                       </CollapsibleTrigger>
                       <CollapsibleContent>
                         <SidebarMenuSub className="pl-0 mt-1">
-                          {item.child.map((subItem, subIndex) => (
+                          {item.child.map((subItem: any, subIndex: number) => (
                             <SidebarMenuSubItem key={subIndex}>
                               <Link
                                 href={subItem.href}
@@ -495,16 +319,6 @@ const AdminSidebar: React.FC = () => {
                                   : "text-[#111827] hover:bg-gray-50"
                                   }`}
                                 prefetch={false}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  try {
-                                    router.push(subItem.href);
-                                  } catch (error) {
-                                    console.error('Router push failed:', error);
-                                    window.location.href = subItem.href;
-                                  }
-                                }}
                               >
                                 <span className={cn(
                                   "w-1.5 h-1.5 rounded-full",
@@ -535,18 +349,6 @@ const AdminSidebar: React.FC = () => {
                         href={item.href || '#'}
                         className="flex w-full items-center gap-2 py-[17px] px-5 hover:bg-gray-50 rounded-lg"
                         prefetch={false}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (item.href) {
-                            try {
-                              router.push(item.href);
-                            } catch (error) {
-                              console.error('Router push failed:', error);
-                              window.location.href = item.href;
-                            }
-                          }
-                        }}
                       >
                         <span
                           className={`${path.startsWith(item.href || '')
@@ -564,66 +366,81 @@ const AdminSidebar: React.FC = () => {
               )
             )}
 
-            {/* Notifications and Settings - Show for all admin users */}
-            {permissionChecker.userData && (
-              hasNotificationAccess ||
-              permissionChecker.isAdmin() ||
-              permissionChecker.isSuperAdmin() ||
-              permissionChecker.userData?.adminProfile ||
-              permissionChecker.userData?.type === 'ADMIN'
-            ) && (
-                <>
-                  <SidebarMenu className="mt-10">
-                    <SidebarMenuItem
-                      className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || '')
-                        ? "rounded-lg bg-warning text-[#FFEDEC]"
-                        : "text-[#111827]"
-                        }`}
-                    >
-                      <SidebarMenuButton asChild className="p-0">
-                        <Link
-                          href={ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || "#"}
-                          className="flex w-full items-center gap-2 py-[17px] px-5 hover:bg-gray-50 rounded-lg"
-                          prefetch={false}
-                        >
-                          <span className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || '')
-                            ? "text-[#FFEDEC]"
-                            : "text-[#D0D0D0]"
-                            }`}>
-                            <NotificationIcon />
-                          </span>
-                          <h5 className="text-sm font-bold">Notification</h5>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
+            {/* Show message if no items are available */}
+            {filteredSidebarItems.length === 0 && (
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                <div className="text-yellow-800 font-bold mb-2">No Menu Items Available</div>
+                <div className="text-xs text-yellow-700">
+                  <div>Your current permissions don't allow access to any menu items.</div>
+                  {process.env.NODE_ENV === 'development' && (
+                    <div className="mt-2">
+                      <div>Available permissions:</div>
+                      <div className="bg-yellow-100 p-1 rounded text-xs max-h-20 overflow-y-auto">
+                        {permissionChecker.permissions?.map((p: any, i: number) => (
+                          <div key={i}>{p.name} ({p.type})</div>
+                        )) || 'None'}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
-                  <SidebarMenu>
-                    <SidebarMenuItem
-                      className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.SETTINGS)
-                        ? "rounded-lg bg-warning text-[#FFEDEC]"
-                        : "text-[#111827]"
-                        }`}
+            {/* Notifications */}
+            {hasRouteAccess(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || '', permissionChecker) && (
+              <SidebarMenu className="mt-10">
+                <SidebarMenuItem
+                  className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || '')
+                    ? "rounded-lg bg-warning text-[#FFEDEC]"
+                    : "text-[#111827]"
+                    }`}
+                >
+                  <SidebarMenuButton asChild className="p-0">
+                    <Link
+                      href={ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || "#"}
+                      className="flex w-full items-center gap-2 py-[17px] px-5 hover:bg-gray-50 rounded-lg"
+                      prefetch={false}
                     >
-                      <SidebarMenuButton asChild className="p-0">
-                        <Link
-                          href={`${ROUTES.ADMIN.SIDEBAR.SETTINGS}?tab=general`}
-                          className="flex w-full items-center gap-2 py-[17px] px-5 hover:bg-gray-50 rounded-lg"
-                          prefetch={false}
-                        >
-                          <span className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.SETTINGS)
-                            ? "text-[#FFEDEC]"
-                            : "text-[#D0D0D0]"
-                            }`}>
-                            <SettingsIcon />
-                          </span>
-                          <h5 className="text-sm font-bold">Setting</h5>
-                        </Link>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  </SidebarMenu>
-                </>
-              )}
+                      <span className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS || '')
+                        ? "text-[#FFEDEC]"
+                        : "text-[#D0D0D0]"
+                        }`}>
+                        <NotificationIcon />
+                      </span>
+                      <h5 className="text-sm font-bold">Notification</h5>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
+
+            {/* Settings */}
+            {hasRouteAccess(ROUTES.ADMIN.SIDEBAR.SETTINGS, permissionChecker) && (
+              <SidebarMenu>
+                <SidebarMenuItem
+                  className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.SETTINGS)
+                    ? "rounded-lg bg-warning text-[#FFEDEC]"
+                    : "text-[#111827]"
+                    }`}
+                >
+                  <SidebarMenuButton asChild className="p-0">
+                    <Link
+                      href={`${ROUTES.ADMIN.SIDEBAR.SETTINGS}?tab=general`}
+                      className="flex w-full items-center gap-2 py-[17px] px-5 hover:bg-gray-50 rounded-lg"
+                      prefetch={false}
+                    >
+                      <span className={`${path.startsWith(ROUTES.ADMIN.SIDEBAR.SETTINGS)
+                        ? "text-[#FFEDEC]"
+                        : "text-[#D0D0D0]"
+                        }`}>
+                        <SettingsIcon />
+                      </span>
+                      <h5 className="text-sm font-bold">Setting</h5>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            )}
 
             <LogoutButton />
           </SidebarGroupContent>
@@ -633,4 +450,4 @@ const AdminSidebar: React.FC = () => {
   );
 };
 
-export default AdminSidebar;
+export default SimplePermissionSidebar;

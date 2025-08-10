@@ -40,12 +40,6 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
   });
 
 
-  console.log('🔍 CustomersDataTable Debug:', {
-    originalDataLength: data?.length || 0,
-    filteredDataLength: filteredData.length,
-    customerTypes: filteredData.map((item: CustomersData) => item?.customerType || item?.type)
-  });
-
   const cellRenderers = {
     fullName: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">
@@ -172,13 +166,6 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
           </Link>
         </div>
 
-        {/* ✅ Show filtered data count in development */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-4 p-2 bg-blue-50 rounded text-xs">
-            <strong>🔍 Recent Customers Debug:</strong> Showing {filteredData.length} customers
-            (filtered from {data?.length || 0} total)
-          </div>
-        )}
 
         <CustomerTableComponent<CustomersData>
           tableData={filteredData} // ✅ Use filtered data instead of raw data

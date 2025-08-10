@@ -3,9 +3,8 @@ import { HorizontalDots } from "../../../../../../../public/icons";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft, ShieldCheck, Users, AlertTriangle, Info } from "lucide-react";
-// ✅ FIXED: Remove unused useUpdateAdminRoles import
 import { useGetCurrentAdmin, useGetAdminRoles } from "@/services/admin";
-import { enhancedAdminService } from "@/services/adminService";
+import enhancedAdminService from "@/services/adminService";
 import { useAuth } from "@/context/auth";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -147,6 +146,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
     });
   };
 
+  // ✅ Enhanced handleSubmit with comprehensive role change handling
   const handleSubmit = async () => {
     if (!adminId) {
       console.error("❌ No admin ID provided");
@@ -154,13 +154,12 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
       return;
     }
 
-    // Validate at least one role is selected
     if (selectedRoles.length === 0) {
       toast.error("At least one role must be assigned to maintain access");
       return;
     }
 
-    console.log("🔍 Starting role update:", {
+    console.log("🔍 Starting enhanced role update:", {
       adminId,
       selectedRoles,
       originalRoles: currentRoles,
@@ -175,17 +174,31 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
       console.log(`🔄 Calling enhancedAdminService.updateAdminRoles for admin ${adminId}:`, selectedRoles);
 
       // ✅ CRITICAL: This should automatically emit the role change event
-      await enhancedAdminService.updateAdminRoles(adminId, selectedRoles);
+      const result = await enhancedAdminService.updateAdminRoles(adminId, selectedRoles);
 
-      console.log("✅ Role update API call successful");
+      console.log("✅ Role update API call successful:", result);
 
-      // ✅ If the current user's roles were changed, force refresh auth context
-      if (userData && userData.id === adminId) {
-        console.log("🔄 Current user's roles changed, forcing auth refresh...");
+      // ✅ If current user's roles changed, force immediate auth refresh
+      if (userData && String(userData.id) === String(adminId)) {
+        console.log("🔄 Current user's roles changed, forcing immediate refresh...");
+
+        // Force auth context refresh with multiple attempts
         await forceRefreshUserData();
+
+        // Additional refresh with delay to ensure sidebar processes the change
+        setTimeout(async () => {
+          console.log("🔄 Secondary auth refresh for sidebar update...");
+          await forceRefreshUserData();
+        }, 200);
+
+        // Final refresh to ensure everything is updated
+        setTimeout(async () => {
+          console.log("🔄 Final auth refresh...");
+          await forceRefreshUserData();
+        }, 500);
       }
 
-      toast.success("Admin roles updated successfully - permissions applied immediately");
+      toast.success("Admin roles updated successfully - sidebar will refresh momentarily");
       onClose();
 
     } catch (error: any) {
@@ -269,17 +282,8 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
             </CardContent>
           </Card>
 
-          {/* Debug info for available roles */}
-          {process.env.NODE_ENV === 'development' && (
-            <div className="mb-4 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
-              <strong>Debug:</strong> {availableRoles.length} available roles out of {roles?.length || 0} total
-              {availableRoles.length === 0 && (
-                <div className="mt-1">
-                  All roles: {JSON.stringify(roles?.map((r: any) => ({ name: r.name, type: r.type })) || [])}
-                </div>
-              )}
-            </div>
-          )}
+
+
 
           {availableRoles.length > 0 ? (
             <div className="space-y-4 max-h-80 overflow-y-auto">
@@ -334,12 +338,6 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
                   <p className="text-xs text-amber-700 mt-1">
                     Contact your system administrator to configure admin roles.
                   </p>
-                  {process.env.NODE_ENV === 'development' && (
-                    <div className="mt-2 text-xs text-amber-600">
-                      <p>Debug: Total roles received: {roles?.length || 0}</p>
-                      <p>Role types: {JSON.stringify(roles?.map((r: any) => r.type || 'undefined') || [])}</p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -389,20 +387,26 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { userData } = useAuth();
 
-  // ✅ Use unified hooks + role change detection
+  // ✅ Use unified hooks + enhanced role change detection
   const { currentAdmin, isLoading: isCurrentAdminLoading } = useGetCurrentAdmin();
   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: !roles || roles.length === 0 });
 
-  // ✅ Listen for role changes affecting this admin
+  // ✅ Enhanced: Listen for role changes affecting this admin
   React.useEffect(() => {
     const handleRoleChange = (event: CustomEvent) => {
-      const { adminId } = event.detail;
+      const { adminId, newRoles, timestamp } = event.detail;
+
+      console.log("🔄 GeneralInfo detected role change:", {
+        eventAdminId: adminId,
+        currentAdminId: adminData.id,
+        rolesCount: Array.isArray(newRoles) ? newRoles.length : 0,
+        timestamp
+      });
 
       // If this admin's roles changed, you might want to refresh the data
-      if (adminId === adminData.id) {
-        console.log(`🔄 Detected role change for admin ${adminId}, component may need refresh`);
-        // Note: The parent component should handle data refresh
-        // This is just for logging/debugging
+      if (String(adminId) === String(adminData.id)) {
+        console.log(`🔄 Detected role change for current admin ${adminId}, component may need refresh`);
+
       }
     };
 
@@ -438,7 +442,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
 
   const typedCurrentAdmin = currentAdmin as Admin | null;
 
-  // ✅ Enhanced permission check for role management - ensure boolean return
+  // ✅ Enhanced permission check for role management
   const canEditRoles = useMemo((): boolean => {
     if (!typedCurrentAdmin || isCurrentAdminLoading) return false;
 
@@ -459,7 +463,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
       ) ||
       // Check adminProfile for super admin
       typedCurrentAdmin.adminProfile?.username?.toLowerCase() === 'superadmin' ||
-      // Check if explicitly marked as super admin (with type assertion)
+      // Check if explicitly marked as super admin
       (typedCurrentAdmin as any).isSuperAdmin === true;
 
     console.log('🔍 Super Admin check result:', {
@@ -598,7 +602,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
                   <Badge variant="outline" className="text-xs">
                     {totalPermissions} total permissions
                   </Badge>
-                  {userData && userData.id === adminData.id && (
+                  {userData && String(userData.id) === String(adminData.id) && (
                     <Badge variant="secondary" className="text-xs">
                       Current User
                     </Badge>
@@ -656,7 +660,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
               <ShieldCheck className="h-3 w-3" />
               Permissions are automatically inherited from assigned roles
             </p>
-            {userData && userData.id === adminData.id && (
+            {userData && String(userData.id) === String(adminData.id) && (
               <p className="flex items-center gap-1 mt-1 text-blue-600">
                 <Info className="h-3 w-3" />
                 Role changes will update your sidebar immediately

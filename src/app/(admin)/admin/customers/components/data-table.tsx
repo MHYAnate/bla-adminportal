@@ -30,13 +30,7 @@ const DataTable: React.FC<iProps> = ({
   handleDelete,
   isLoading,
 }) => {
-  console.log('DataTable Debug:', {
-    dataLength: data?.length,
-    currentPage,
-    pageSize,
-    totalPages,
-    actualTotal: totalPages
-  });
+
 
   // ✅ REMOVED: No frontend filtering - let backend handle customer type filtering
   // The backend should already be returning only business and individual customers
@@ -153,22 +147,6 @@ const DataTable: React.FC<iProps> = ({
 
   return (
     <div>
-      {/* ✅ DEBUG: Show data info in development */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
-          <strong>🔍 DataTable Debug:</strong> Showing {data?.length || 0} customers
-          <br />
-          <strong>Customer types found:</strong> {
-            [...new Set(data?.map((item: CustomersData) =>
-              item?.customerType || item?.type
-            ) || [])].join(', ') || 'None'
-          }
-          <br />
-          <strong>Pagination:</strong> Page {currentPage} of {Math.ceil(totalPages / pageSize)}
-          (Total: {totalPages} customers)
-        </div>
-      )}
-
       <CustomerTableComponent<CustomersData>
         tableData={data || []} // ✅ Use raw data - no filtering
         currentPage={currentPage}

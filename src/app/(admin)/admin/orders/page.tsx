@@ -53,16 +53,11 @@ const OrdersLoading = () => (
 );
 
 export default function OrdersPage() {
-  // REMOVED: The problematic global click listener that was interfering with navigation
-  // This was likely preventing sidebar navigation and other click events from working properly
 
-  // FIXED: Only add necessary event listeners for debugging if needed
   useEffect(() => {
-    // Only add debugging in development mode
     if (process.env.NODE_ENV === 'development') {
       console.log('Orders page mounted in development mode');
 
-      // Optional: Add minimal debugging without interfering with navigation
       const handleError = (e: ErrorEvent) => {
         console.error('Orders page error:', e.error);
       };

@@ -47,11 +47,7 @@ const DataTable: React.FC<DataTableProps> = ({
     // Convert to string and clean the ID
     const cleanOrderId = String(orderId).replace('#', '').replace(/^0+/, '') || orderId;
 
-    console.log('🚀 Navigation Debug:', {
-      originalId: orderId,
-      cleanId: cleanOrderId,
-      targetPath: `/admin/orders/${cleanOrderId}`
-    });
+
 
     try {
       const targetUrl = `/admin/orders/${cleanOrderId}`;
@@ -255,7 +251,6 @@ const DataTable: React.FC<DataTableProps> = ({
     actions: (item: any) => {
       const orderId = item?.id || item?.orderId;
 
-      // Debug the ID extraction
       console.log('Actions cell - Order ID extraction:', {
         itemId: item?.id,
         itemOrderId: item?.orderId,
