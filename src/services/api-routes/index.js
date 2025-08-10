@@ -5,7 +5,7 @@ export const routes = {
   logout: () => "auth/logout",
 
   // Forgot password
-  forgotPassword: () => "auth/forgot-password",
+  forgotPassword: () => "auth/reset",
   
   // Reset password
   resetPassword: () => "auth/reset-password",

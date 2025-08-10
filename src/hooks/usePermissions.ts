@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from '@/context/auth';
-import { useMemo } from 'react';
+import { useMemo, useEffect, useState } from 'react';
 
 type Permission = {
   id: number;
@@ -23,10 +23,30 @@ type UserRole = {
 };
 
 export const usePermissions = () => {
-  const { userData, isAuthenticated } = useAuth();
+  const { userData, isAuthenticated, forceRefreshUserData } = useAuth();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Extract all permissions from user roles
+  // ✅ NEW: Listen for role changes and force re-evaluation
+  useEffect(() => {
+    const handleRoleChange = (event: CustomEvent) => {
+      const { adminId } = event.detail;
+      if (userData && userData.id === adminId) {
+        console.log("🔄 Permissions hook detected role change, forcing refresh...");
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('admin-role-changed', handleRoleChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('admin-role-changed', handleRoleChange as EventListener);
+    };
+  }, [userData?.id]);
+
+  // ✅ UPDATED: Include refreshTrigger in dependencies to force re-calculation
   const permissions = useMemo(() => {
+    console.log(`🔄 Recalculating permissions (trigger: ${refreshTrigger})`);
+    
     if (!userData) return [];
     
     // Check if userData has the roles array (new structure)
@@ -43,13 +63,14 @@ export const usePermissions = () => {
         index === self.findIndex(p => p.name === permission.name)
       );
       
+      console.log(`✅ Calculated ${uniquePermissions.length} unique permissions`);
       return uniquePermissions;
     }
     
     return [];
-  }, [userData]);
+  }, [userData, refreshTrigger]); // ✅ Add refreshTrigger dependency
 
-  // Extract all role names
+  // ✅ UPDATED: Include refreshTrigger in roles calculation too
   const roles = useMemo(() => {
     if (!userData) return [];
     
@@ -64,7 +85,7 @@ export const usePermissions = () => {
     }
     
     return [];
-  }, [userData]);
+  }, [userData, refreshTrigger]); // ✅ Add refreshTrigger dependency
 
   // Check if user has a specific permission
   const hasPermission = (permissionName: string, type: 'read' | 'write' = 'read') => {
@@ -179,6 +200,7 @@ export const usePermissions = () => {
     console.log('User Role (single):', userData?.role);
     console.log('User Roles (array):', userData?.roles);
     console.log('Admin Profile:', userData?.adminProfile);
+    console.log('Refresh Trigger:', refreshTrigger);
     console.groupEnd();
   };
 
@@ -200,6 +222,8 @@ export const usePermissions = () => {
     getPermissionLevel,
     
     // Utility
-    debugPermissions
+    debugPermissions,
+    forceRefresh: forceRefreshUserData, // ✅ NEW: Expose refresh function
+    refreshTrigger // ✅ NEW: Expose refresh trigger for debugging
   };
 };

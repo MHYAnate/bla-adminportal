@@ -57,7 +57,7 @@ export default function UpdatePasswordPage() {
       email,
       code: values.code,
     };
-    resetPasswordPayload(payload);
+    resetPasswordPayload(payload as any);
   }
 
   return (

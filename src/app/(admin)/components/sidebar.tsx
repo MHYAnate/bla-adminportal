@@ -57,8 +57,8 @@ const ROUTE_TO_PERMISSION_MAP: Record<string, string> = {
   [ROUTES.ADMIN.SIDEBAR.TRANSACTIONMANAGEMENT]: 'ORDERS',
   [ROUTES.ADMIN.SIDEBAR.FEEDBACK]: 'SUPPORT_FEEDBACK',
   [ROUTES.ADMIN.SIDEBAR.SUPPORT]: 'SUPPORT_FEEDBACK',
-  [ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS]: 'DASHBOARD', // Notifications typically tied to dashboard access
-  [ROUTES.ADMIN.SIDEBAR.SETTINGS]: 'DASHBOARD', // Settings typically available to all admins
+  [ROUTES.ADMIN.SIDEBAR.NOTIFICATIONS]: 'DASHBOARD',
+  [ROUTES.ADMIN.SIDEBAR.SETTINGS]: 'DASHBOARD',
 };
 
 // Helper function to safely extract role names
@@ -177,17 +177,19 @@ const getFilteredChildren = (children: any[], permissionChecker: any): any[] => 
 };
 
 // Main filtering function with enhanced permission checking
-const getFilteredSidebarList = (permissionChecker: any) => {
+const getFilteredSidebarList = (permissionChecker: any, refreshKey: number = 0) => {
   const userRole = getUserRoleDisplay(permissionChecker.userData);
 
-  console.log('🔍 BULLETPROOF sidebar filtering:', {
+  console.log('🔍 ENHANCED sidebar filtering:', {
+    refreshKey,
     hasUserData: !!permissionChecker.userData,
     userId: permissionChecker.userData?.id,
     userRole: userRole,
     userType: permissionChecker.userData?.type,
     isAdmin: permissionChecker.isAdmin(),
     isSuperAdmin: permissionChecker.isSuperAdmin(),
-    hasAdminProfile: !!permissionChecker.userData?.adminProfile
+    hasAdminProfile: !!permissionChecker.userData?.adminProfile,
+    refreshTrigger: permissionChecker.refreshTrigger
   });
 
   // Must have user data
@@ -260,30 +262,52 @@ const AdminSidebar: React.FC = () => {
   const router = useRouter();
   const permissionChecker = usePermissions();
   const [openItems, setOpenItems] = React.useState<Record<string, boolean>>({});
+  const [sidebarKey, setSidebarKey] = React.useState(0); // ✅ NEW: Force re-render key
 
-  // ✅ ALL useMemo hooks at the top
+  // ✅ NEW: Listen for role changes and force sidebar refresh
+  React.useEffect(() => {
+    const handleRoleChange = (event: CustomEvent) => {
+      const { adminId } = event.detail;
+      if (permissionChecker.userData && permissionChecker.userData.id === adminId) {
+        console.log("🔄 Sidebar detected role change, forcing refresh...");
+        setSidebarKey(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('admin-role-changed', handleRoleChange as EventListener);
+
+    return () => {
+      window.removeEventListener('admin-role-changed', handleRoleChange as EventListener);
+    };
+  }, [permissionChecker.userData?.id]);
+
+  // ✅ UPDATED: Include sidebarKey and refreshTrigger in dependencies to force recalculation
   const filteredSidebarList = React.useMemo(() => {
-    return getFilteredSidebarList(permissionChecker);
+    console.log(`🔄 Recalculating sidebar items (key: ${sidebarKey}, trigger: ${permissionChecker.refreshTrigger})`);
+    return getFilteredSidebarList(permissionChecker, sidebarKey);
   }, [
     permissionChecker.isAuthenticated,
     permissionChecker.userData,
     permissionChecker.isAdmin(),
-    permissionChecker.isSuperAdmin()
+    permissionChecker.isSuperAdmin(),
+    permissionChecker.refreshTrigger, // ✅ NEW: Include refresh trigger
+    sidebarKey // ✅ NEW: Add sidebar key dependency
   ]);
 
+  // ✅ UPDATED: Include sidebarKey and refreshTrigger in other permission checks
   const hasDashboardAccess = React.useMemo(() =>
     checkSidebarAccess('DASHBOARD', permissionChecker),
-    [permissionChecker.isAuthenticated, permissionChecker.userData]
+    [permissionChecker.isAuthenticated, permissionChecker.userData, permissionChecker.refreshTrigger, sidebarKey]
   );
 
   const hasNotificationAccess = React.useMemo(() =>
     checkSidebarAccess('DASHBOARD', permissionChecker),
-    [permissionChecker.isAuthenticated, permissionChecker.userData]
+    [permissionChecker.isAuthenticated, permissionChecker.userData, permissionChecker.refreshTrigger, sidebarKey]
   );
 
   const hasSettingsAccess = React.useMemo(() =>
     checkSidebarAccess('DASHBOARD', permissionChecker),
-    [permissionChecker.isAuthenticated, permissionChecker.userData]
+    [permissionChecker.isAuthenticated, permissionChecker.userData, permissionChecker.refreshTrigger, sidebarKey]
   );
 
   // ✅ ALL useEffect hooks at the top
@@ -295,11 +319,15 @@ const AdminSidebar: React.FC = () => {
     console.log('🔄 Auth state changed, sidebar will re-render:', {
       isAuthenticated: permissionChecker.isAuthenticated,
       userData: !!permissionChecker.userData,
-      userRole: getUserRoleDisplay(permissionChecker.userData)
+      userRole: getUserRoleDisplay(permissionChecker.userData),
+      refreshTrigger: permissionChecker.refreshTrigger,
+      sidebarKey
     });
   }, [
     permissionChecker.isAuthenticated,
-    permissionChecker.userData
+    permissionChecker.userData,
+    permissionChecker.refreshTrigger,
+    sidebarKey
   ]);
 
   // ✅ NOW safe to have early returns after all hooks are declared

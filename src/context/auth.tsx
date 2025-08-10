@@ -5,6 +5,17 @@ import { useRouter } from "next/navigation";
 import { getAuthToken, setAuthToken, clearAuthTokens, checkAuth } from "@/lib/auth";
 import httpService from "@/services/httpService";
 
+// ✅ NEW: Role change event system
+const ROLE_CHANGE_EVENT = 'admin-role-changed';
+
+// ✅ NEW: Function to emit role change events
+export const emitRoleChangeEvent = (adminId: any, newRoles = []) => {
+    console.log(`🔄 Emitting role change event for admin ${adminId}`);
+    window.dispatchEvent(new CustomEvent(ROLE_CHANGE_EVENT, {
+        detail: { adminId, newRoles, timestamp: Date.now() }
+    }));
+};
+
 // ✅ FIXED: Enhanced type definitions
 type Permission = {
     id: number;
@@ -55,6 +66,7 @@ type AuthContextType = {
     login: (token: string, remember?: boolean, loginResponse?: any) => Promise<void>;
     logout: () => void;
     refreshAuth: () => Promise<void>;
+    forceRefreshUserData: () => Promise<void>; // ✅ NEW
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -199,6 +211,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    // ✅ NEW: Enhanced force refresh function with cache busting
+    const forceRefreshUserData = async () => {
+        console.log("🔄 Force refreshing user data...");
+        setIsLoading(true);
+
+        try {
+            const currentToken = token || getAuthToken();
+            if (currentToken && checkAuth()) {
+                // Force fresh API call with cache busting
+                const profile = await fetchUserProfile();
+                if (profile) {
+                    setUserData(profile);
+                    console.log("✅ User data force refreshed:", {
+                        id: profile.id,
+                        rolesCount: Array.isArray(profile.roles) ? profile.roles.length : 0,
+                        isAdmin: profile.isAdmin
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("❌ Force refresh failed:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     // ✅ FIXED: Validate and set auth state with safe logging
     const setAuthState = async (authToken: string, loginResponse?: any) => {
         try {
@@ -254,6 +292,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(false);
         }
     };
+
+    // ✅ NEW: Listen for role change events
+    useEffect(() => {
+        const handleRoleChange = async (event: CustomEvent) => {
+            const { adminId } = event.detail;
+
+            // Only refresh if the current user's role was changed
+            if (userData && userData.id === adminId) {
+                console.log("🔄 Current user's role changed, refreshing...");
+                await forceRefreshUserData();
+            }
+        };
+
+        window.addEventListener(ROLE_CHANGE_EVENT, handleRoleChange as unknown as EventListener);
+
+        return () => {
+            window.removeEventListener(ROLE_CHANGE_EVENT, handleRoleChange as unknown as EventListener);
+        };
+    }, [userData?.id]);
 
     // FIXED: Better initial auth check
     useEffect(() => {
@@ -355,7 +412,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 userData,
                 login,
                 logout,
-                refreshAuth
+                refreshAuth,
+                forceRefreshUserData // ✅ NEW: Expose force refresh function
             }}
         >
             {children}

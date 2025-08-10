@@ -56,9 +56,10 @@ interface ForgotPasswordPayload {
 }
 
 interface ResetPasswordPayload {
-  token: string;
-  password: string;
-  confirmPassword: string;
+  email: string;           // Backend expects: email
+  code: string;            // Backend expects: code (not token!)
+  password: string;        // Backend expects: password
+  confirmPassword: string; // Backend expects: confirmPassword
 }
 
 interface VerifyEmailPayload {

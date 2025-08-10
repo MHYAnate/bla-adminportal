@@ -3,8 +3,10 @@ import { HorizontalDots } from "../../../../../../../public/icons";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronLeft, ShieldCheck, Users, AlertTriangle, Info } from "lucide-react";
-// ✅ FIX: Update imports to use unified hooks
-import { useUpdateAdminRoles, useGetCurrentAdmin, useGetAdminRoles } from "@/services/admin";
+// ✅ FIXED: Remove unused useUpdateAdminRoles import
+import { useGetCurrentAdmin, useGetAdminRoles } from "@/services/admin";
+import { enhancedAdminService } from "@/services/adminService";
+import { useAuth } from "@/context/auth";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -71,7 +73,7 @@ interface EditRolesDialogProps {
   adminData: Admin;
   roles: Role[];
   onClose: () => void;
-  canEditRoles: boolean; // ✅ Keep as strict boolean
+  canEditRoles: boolean;
 }
 
 // Helper function to normalize role data structure
@@ -100,6 +102,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
   canEditRoles
 }) => {
   const adminId = adminData.id;
+  const { userData, forceRefreshUserData } = useAuth();
 
   // Get current roles with enhanced role-based validation
   const currentRoles = adminData.roles && Array.isArray(adminData.roles)
@@ -109,14 +112,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
     : [];
 
   const [selectedRoles, setSelectedRoles] = useState<string[]>(currentRoles);
-
-  // ✅ FIX: Use correct property names from unified hook
-  const { updateRolesPayload, updateRolesIsLoading } = useUpdateAdminRoles(
-    (response: UpdateRolesResponse) => {
-      toast.success("Admin roles updated successfully - permissions applied immediately");
-      onClose();
-    }
-  );
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Filter roles to only show admin-appropriate roles with enhanced validation
   const availableRoles = useMemo(() => {
@@ -174,11 +170,26 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
       }
     });
 
+    setIsUpdating(true);
     try {
-      const result = await updateRolesPayload(adminId, selectedRoles);
-      console.log("✅ Role update successful:", result);
+      console.log(`🔄 Calling enhancedAdminService.updateAdminRoles for admin ${adminId}:`, selectedRoles);
+
+      // ✅ CRITICAL: This should automatically emit the role change event
+      await enhancedAdminService.updateAdminRoles(adminId, selectedRoles);
+
+      console.log("✅ Role update API call successful");
+
+      // ✅ If the current user's roles were changed, force refresh auth context
+      if (userData && userData.id === adminId) {
+        console.log("🔄 Current user's roles changed, forcing auth refresh...");
+        await forceRefreshUserData();
+      }
+
+      toast.success("Admin roles updated successfully - permissions applied immediately");
+      onClose();
+
     } catch (error: any) {
-      console.error("❌ Update roles error:", error);
+      console.error("❌ Failed to update admin roles:", error);
 
       if (error && typeof error === 'object' && error.response) {
         if (error.response.status === 403) {
@@ -191,6 +202,8 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
       } else {
         toast.error("Failed to update roles - please try again");
       }
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -250,6 +263,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
                 <div className="text-sm text-blue-800">
                   <p className="font-medium">Role-Based Access Control</p>
                   <p>Selected roles will determine this admin's permissions automatically.</p>
+                  <p className="text-xs mt-1">✨ Changes will be applied immediately to sidebar and permissions</p>
                 </div>
               </div>
             </CardContent>
@@ -282,6 +296,7 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
                       className="h-5 w-5 rounded border-gray-300 mt-0.5"
                       checked={isSelected}
                       onChange={() => handleRoleToggle(role.name)}
+                      disabled={isUpdating}
                     />
                     <div className="flex-1">
                       <label htmlFor={`role-${role.id}`} className="font-medium text-sm text-gray-900 cursor-pointer">
@@ -353,16 +368,16 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
         )}
 
         <div className="flex justify-end gap-4 mt-6">
-          <Button variant="outline" className="px-6" onClick={onClose}>
+          <Button variant="outline" className="px-6" onClick={onClose} disabled={isUpdating}>
             Cancel
           </Button>
           <Button
             variant="warning"
             className="px-6"
             onClick={handleSubmit}
-            disabled={updateRolesIsLoading || selectedRoles.length === 0 || availableRoles.length === 0}
+            disabled={isUpdating || selectedRoles.length === 0 || availableRoles.length === 0}
           >
-            {updateRolesIsLoading ? "Updating..." : "Apply Role Changes"}
+            {isUpdating ? "Updating..." : "Apply Role Changes"}
           </Button>
         </div>
       </DialogContent>
@@ -372,10 +387,31 @@ const EditRolesDialog: React.FC<EditRolesDialogProps> = ({
 
 const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { userData } = useAuth();
 
-  // ✅ FIX: Use unified hooks
+  // ✅ Use unified hooks + role change detection
   const { currentAdmin, isLoading: isCurrentAdminLoading } = useGetCurrentAdmin();
   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: !roles || roles.length === 0 });
+
+  // ✅ Listen for role changes affecting this admin
+  React.useEffect(() => {
+    const handleRoleChange = (event: CustomEvent) => {
+      const { adminId } = event.detail;
+
+      // If this admin's roles changed, you might want to refresh the data
+      if (adminId === adminData.id) {
+        console.log(`🔄 Detected role change for admin ${adminId}, component may need refresh`);
+        // Note: The parent component should handle data refresh
+        // This is just for logging/debugging
+      }
+    };
+
+    window.addEventListener('admin-role-changed', handleRoleChange as EventListener);
+
+    return () => {
+      window.removeEventListener('admin-role-changed', handleRoleChange as EventListener);
+    };
+  }, [adminData.id]);
 
   // Normalize roles - handle both array and object with data property
   const normalizeRoles = (rolesInput: any): Role[] => {
@@ -402,7 +438,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
 
   const typedCurrentAdmin = currentAdmin as Admin | null;
 
-  // ✅ FIX: Enhanced permission check for role management - ensure boolean return
+  // ✅ Enhanced permission check for role management - ensure boolean return
   const canEditRoles = useMemo((): boolean => {
     if (!typedCurrentAdmin || isCurrentAdminLoading) return false;
 
@@ -547,7 +583,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
           </div>
         </div>
 
-        {/* Role Information Summary */}
+        {/* Enhanced role information summary */}
         <div className="mb-4">
           <Card className="border-blue-200 bg-blue-50">
             <CardContent className="p-3">
@@ -558,9 +594,16 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
                     {displayRoles.length} role{displayRoles.length !== 1 ? 's' : ''} assigned
                   </span>
                 </div>
-                <Badge variant="outline" className="text-xs">
-                  {totalPermissions} total permissions
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-xs">
+                    {totalPermissions} total permissions
+                  </Badge>
+                  {userData && userData.id === adminData.id && (
+                    <Badge variant="secondary" className="text-xs">
+                      Current User
+                    </Badge>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -613,11 +656,17 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
               <ShieldCheck className="h-3 w-3" />
               Permissions are automatically inherited from assigned roles
             </p>
+            {userData && userData.id === adminData.id && (
+              <p className="flex items-center gap-1 mt-1 text-blue-600">
+                <Info className="h-3 w-3" />
+                Role changes will update your sidebar immediately
+              </p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ✅ FIX: Pass canEditRoles as strict boolean */}
+      {/* Enhanced dialog */}
       {isEditDialogOpen && (
         <EditRolesDialog
           adminData={adminData}
