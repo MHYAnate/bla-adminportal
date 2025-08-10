@@ -13,10 +13,11 @@ export function InputFilter({
   return (
     <Input
       placeholder={placeholder}
-      onChange={async (event: ChangeEvent<HTMLInputElement>) =>
-        setQuery(event.target.value)
-      }
-      // type="search"
+      onChange={async (event: ChangeEvent<HTMLInputElement>) => {
+        const value = event.target.value;
+        console.log('⌨️ InputFilter onChange:', value); // ✅ ADD THIS DEBUG LOG
+        setQuery(value);
+      }}
       pos={true}
       className="h-11 w-full"
     />

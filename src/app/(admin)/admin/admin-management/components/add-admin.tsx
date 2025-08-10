@@ -21,184 +21,178 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { useInviteAdmin } from "@/services/admin/index";
+import { useInviteAdmin, useGetInvitableRoles } from "@/services/admin";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Users, ShieldCheck } from "lucide-react";
 
 // Types
 interface RoleData {
   id: number;
   name: string;
   description?: string;
+  type: string;
   permissions?: any[];
 }
 
 interface IProps {
   setClose: () => void;
-  roles?: RoleData[];
   setUrl: (data: string) => void;
 }
 
-interface InviteResponse {
-  success: boolean;
-  message: string;
-  data: {
-    userId: number;
-    email: string;
-    type: string;
-    inviteUrl: string;
-    expiresAt?: string | null;
-    expiryHours?: number | null;
-    debug?: {
-      tokenGenerated: boolean;
-      urlContainsToken: boolean;
-      totalParams: number;
-    };
-  };
-}
-
-// Enhanced form validation schema
+// Enhanced form validation schema with role ID validation
 const formSchema = z.object({
   email: z
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email address"),
-  role: z
+  roleId: z
     .string({
       required_error: "Please select a role.",
     })
     .min(1, "Please select a role")
-    .refine((role) => role === "admin", "Only admin role is currently supported"),
+    .transform((val) => parseInt(val, 10))
+    .refine((val) => !isNaN(val) && val > 0, "Please select a valid role"),
 });
 
 type FormSchemaType = z.infer<typeof formSchema>;
 
-const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
+const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Enhanced success callback with detailed validation
-  // In your CreateAdmin component, update the success callback:
+  // ✅ Updated to use unified hooks
+  const { rolesData: invitableRoles, isRolesLoading, rolesError } = useGetInvitableRoles({ enabled: true });
+
+  // ✅ Enhanced success callback with better error handling
   const { inviteAdminPayload, inviteAdminIsLoading, inviteAdminError } = useInviteAdmin(
-    (data: InviteResponse) => {
-      console.log("✅ SUCCESS: Admin invitation callback received:", data);
+    (data: { success: boolean; message: any; }) => {
+      console.log("✅ SUCCESS: Admin invitation sent:", data);
 
-      if (data?.success && data?.data?.inviteUrl) {
-        console.log("✅ Generated URL:", data.data.inviteUrl);
-
-        // ✅ PARSE AND CHECK THE URL
-        try {
-          const url = new URL(data.data.inviteUrl);
-          const params = Object.fromEntries(url.searchParams);
-          console.log("📋 URL Parameters:", params);
-
-          const required = ['email', 'userId', 'token', 'signature', 'timestamp'];
-          const missing = required.filter(param => !params[param]);
-
-          if (missing.length > 0) {
-            console.error('❌ Generated URL missing:', missing);
-            toast.error(`Generated URL is missing: ${missing.join(', ')}`);
-          } else {
-            console.log('✅ All required parameters present in URL');
-            toast.success("Admin invitation sent successfully");
-            setUrl(data.data.inviteUrl);
-            setClose();
-          }
-        } catch (urlError) {
-          console.error("❌ Invalid URL:", urlError);
-          toast.error("Generated URL is invalid");
-        }
+      // ✅ Improved success handling with unified response extraction
+      if (data?.success !== false) {
+        toast.success("Admin invitation sent successfully");
+        setClose();
+      } else {
+        toast.error(data?.message || "Failed to send invitation");
       }
     }
   );
 
-  // Filter to only show admin roles
-  const adminRoles = roles.filter((role: RoleData) =>
-    role.name === "admin" || role.name === "super_admin"
-  );
+  // Process and filter invitable roles with better error handling
+  const availableRoles = React.useMemo(() => {
+    if (!invitableRoles || !Array.isArray(invitableRoles)) return [];
 
-  console.log("Available roles:", roles);
-  console.log("Filtered admin roles:", adminRoles);
+    return invitableRoles.filter((role: RoleData) => {
+      // Only show admin type roles, exclude restricted ones
+      return role.type === 'ADMIN' &&
+        !['SUPER_ADMIN', 'INDIVIDUAL', 'BUSINESS'].includes(role.name);
+    });
+  }, [invitableRoles]);
+
+  console.log("Available invitable roles:", availableRoles);
 
   // Initialize form
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      role: "admin",
+      roleId: undefined,
     },
   });
 
-  // Handle form submission with enhanced error handling
+  // ✅ Enhanced form submission with unified error handling
   async function onSubmit(values: FormSchemaType): Promise<void> {
     console.log("Form submitted with values:", values);
 
     if (isSubmitting || inviteAdminIsLoading) {
-      console.log("Already submitting, preventing duplicate submission");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Enhanced payload with proper validation
+      // Find selected role details for validation
+      const selectedRole = availableRoles.find(role => role.id === values.roleId);
+
+      if (!selectedRole) {
+        toast.error("Selected role is no longer available");
+        return;
+      }
+
       const payload = {
         email: values.email.trim().toLowerCase(),
-        roleNames: [values.role], // Backend expects array
-        expiryHours: 24, // Default 24 hours
-        noExpiry: false
+        roleId: values.roleId, // Send role ID as required by backend
       };
 
-      console.log("Sending payload:", payload);
+      console.log("Sending invitation payload:", payload);
 
+      // ✅ The unified hook now handles response extraction automatically
       const response = await inviteAdminPayload(payload);
-      console.log("API Response:", response);
 
-      // Additional success handling
-      if (response?.success) {
-        console.log("✅ Invitation sent successfully");
-      }
+      // ✅ If we get here, the invitation was successful
+      console.log("Invitation sent successfully:", response);
 
     } catch (error: any) {
       console.error("Form submission error:", error);
 
-      // Handle different types of errors with better messaging
-      let errorMessage = "Failed to send admin invitation";
-
-      if (error?.response?.data?.error) {
-        errorMessage = error.response.data.error;
-      } else if (error?.message) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-
-      // Show user-friendly error messages
-      if (errorMessage.includes('already exists')) {
-        toast.error("An admin with this email already exists");
-      } else if (errorMessage.includes('configuration')) {
-        toast.error("Server configuration error. Please contact administrator.");
-      } else if (errorMessage.includes('token')) {
-        toast.error("Failed to generate secure invitation link");
-      } else {
-        toast.error(errorMessage);
-      }
+      // ✅ Error handling is now done in the hook, but we can add specific UI feedback
+      // The hook already shows toast.error, so we just log here
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  // Show loading state if roles are still loading
-  if (!roles || roles.length === 0) {
+  // ✅ Enhanced loading state with error handling
+  if (isRolesLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <Loader2 className="h-6 w-6 animate-spin mr-2" />
-        <span>Loading roles...</span>
+        <span>Loading available roles...</span>
+      </div>
+    );
+  }
+
+  // ✅ Show error state if roles failed to load
+  if (rolesError) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+        <h3 className="text-lg font-semibold mb-2">Failed to Load Roles</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          Unable to load available admin roles.
+        </p>
+        <p className="text-xs text-red-500">{rolesError}</p>
+      </div>
+    );
+  }
+
+  // No roles available
+  if (!availableRoles || availableRoles.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <AlertCircle className="h-12 w-12 text-amber-500 mb-4" />
+        <h3 className="text-lg font-semibold mb-2">No Invitable Roles Available</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          There are no admin roles available for invitation at this time.
+        </p>
+        <p className="text-xs text-gray-500">
+          Please ensure admin roles are properly configured before sending invitations.
+        </p>
       </div>
     );
   }
 
   return (
     <div>
+      <div className="mb-6">
+        <div className="flex items-center mb-2">
+          <ShieldCheck className="h-5 w-5 text-blue-600 mr-2" />
+          <h2 className="text-xl font-semibold">Invite New Administrator</h2>
+        </div>
+        <p className="text-sm text-gray-600">
+          Select a specific role to determine the new admin's permissions and access levels.
+        </p>
+      </div>
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -219,10 +213,6 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                       placeholder="Enter admin email address"
                       className="h-14"
                       {...field}
-                      onChange={(e) => {
-                        field.onChange(e);
-                        console.log("Email changed:", e.target.value);
-                      }}
                       disabled={isSubmitting || inviteAdminIsLoading}
                     />
                   </FormControl>
@@ -233,18 +223,18 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
 
             <FormField
               control={form.control}
-              name="role"
+              name="roleId"
               render={({ field }) => (
                 <FormItem className="w-full">
                   <FormLabel className="text-[#111827] font-medium text-base">
-                    Role <span className="text-[#E03137]">*</span>
+                    Admin Role <span className="text-[#E03137]">*</span>
                   </FormLabel>
                   <Select
                     onValueChange={(value: string) => {
                       field.onChange(value);
-                      console.log("Role changed:", value);
+                      console.log("Role selected:", value);
                     }}
-                    value={field.value}
+                    value={field.value?.toString()}
                     disabled={isSubmitting || inviteAdminIsLoading}
                   >
                     <FormControl>
@@ -253,31 +243,48 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {adminRoles.length > 0 ? (
-                        adminRoles.map((role: RoleData) => (
-                          <SelectItem key={role.id} value={role.name}>
-                            {role.name.replace(/_/g, " ").toUpperCase()}
-                            {role.description && (
-                              <span className="text-sm text-gray-500 ml-2">
-                                - {role.description}
+                      {availableRoles.map((role: RoleData) => (
+                        <SelectItem key={role.id} value={role.id.toString()}>
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 mr-2 text-blue-600" />
+                            <div>
+                              <span className="font-medium">
+                                {role.name.replace(/_/g, " ").toUpperCase()}
                               </span>
-                            )}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="admin">
-                          Admin (Default)
+                              {role.description && (
+                                <span className="text-sm text-gray-500 ml-2">
+                                  - {role.description}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </SelectItem>
-                      )}
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                  {field.value && (
+                    <div className="text-xs text-blue-600 mt-1">
+                      ✓ Role-based permissions will be automatically applied
+                    </div>
+                  )}
                 </FormItem>
               )}
             />
           </div>
 
-          {/* Show any invite errors */}
+          {/* Role-based invitation info */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-start">
+              <ShieldCheck className="h-4 w-4 text-blue-600 mr-2 mt-0.5" />
+              <div className="text-xs text-blue-800">
+                <p className="font-medium">Role-Based Access Control</p>
+                <p>The invited admin will inherit all permissions assigned to the selected role.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ✅ Show any invite errors from unified hook */}
           {inviteAdminError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
               <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
@@ -293,7 +300,6 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
               type="button"
               onClick={(e) => {
                 e.preventDefault();
-                console.log("Cancel clicked");
                 setClose();
               }}
               disabled={isSubmitting || inviteAdminIsLoading}
@@ -301,7 +307,7 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
               Cancel
             </Button>
             <Button
-              disabled={isSubmitting || inviteAdminIsLoading}
+              disabled={isSubmitting || inviteAdminIsLoading || !availableRoles.length}
               variant="warning"
               className="w-auto px-[3rem] py-4 font-bold text-base"
               size="xl"
@@ -315,7 +321,7 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl, roles = [] }) => {
               ) : (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />
-                  Send Invitation
+                  Send Role-Based Invitation
                 </>
               )}
             </Button>

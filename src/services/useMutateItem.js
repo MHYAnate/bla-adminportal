@@ -1,3 +1,4 @@
+// useMutateItem.js
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function useMutateItem({
@@ -10,14 +11,26 @@ export default function useMutateItem({
 
   const mutation = useMutation({
     mutationFn: (payload) => mutationFn(payload),
-    onSuccess: (res) => {
-      onSuccess?.(res);
-      queryKeys?.map((query) =>
-        queryClient.invalidateQueries({ queryKey: [query] })
-      );
+    onSuccess: (res, variables) => {
+      if (onSuccess) onSuccess(res, variables);
+      if (queryKeys) {
+        queryKeys.forEach((query) =>
+          queryClient.invalidateQueries({ queryKey: [query] })
+        );
+      }
     },
-    onError: onError,
+    onError: (error, variables) => {
+      if (onError) onError(error, variables);
+    },
   });
 
-  return mutation;
+  return {
+    data: mutation.data,
+    error: mutation.error,
+    isPending: mutation.isPending,
+    mutateAsync: mutation.mutateAsync,
+    mutate: mutation.mutate,
+    isSuccess: mutation.isSuccess,
+    isError: mutation.isError,
+  };
 }

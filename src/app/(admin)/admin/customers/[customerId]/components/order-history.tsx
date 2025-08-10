@@ -15,18 +15,65 @@ const OrderHistory: React.FC<iProps> = ({ customerId }) => {
   const {
     getCustomerOrderHistoryIsLoading,
     getCustomerOrderHistoryData,
+    getCustomerOrderHistoryError,
     setCustomerOrderHistoryFilter,
   } = useGetCustomerOrderHistory();
-  console.log("orderHistory", getCustomerOrderHistoryData)
+
+  console.log("🛒 OrderHistory Debug:", {
+    customerId,
+    data: getCustomerOrderHistoryData,
+    loading: getCustomerOrderHistoryIsLoading,
+    error: getCustomerOrderHistoryError
+  });
 
   useEffect(() => {
+    console.log("🛒 OrderHistory mounted with customerId:", customerId);
     if (customerId) {
+      // ✅ Ensure we're passing the right type
       setCustomerOrderHistoryFilter(customerId);
     }
-  }, [customerId]);
+  }, [customerId, setCustomerOrderHistoryFilter]);
 
+  // Show loading state
+  if (getCustomerOrderHistoryIsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-sm">Loading order history...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (getCustomerOrderHistoryError) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="text-center text-red-600">
+          <p className="text-sm">Error loading order history</p>
+          <p className="text-xs">{getCustomerOrderHistoryError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Access data correctly based on your API response structure
   const summary = getCustomerOrderHistoryData?.summary;
   const orders = getCustomerOrderHistoryData?.orders ?? [];
+
+  console.log("📊 Processed order data:", { summary, orders: orders.length });
+
+  // If no data, show empty state
+  if (!getCustomerOrderHistoryData || (!summary && orders.length === 0)) {
+    return (
+      <div className="flex items-center justify-center min-h-[200px]">
+        <div className="text-center text-gray-500">
+          <p>No order history found</p>
+        </div>
+      </div>
+    );
+  }
 
   const deliveredCount = summary?.orderCounts?.DELIVERED || 0;
   const cancelledCount = summary?.orderCounts?.CANCELLED || 0;
@@ -87,23 +134,28 @@ const OrderHistory: React.FC<iProps> = ({ customerId }) => {
 
       {/* Orders List */}
       <div className="flex flex-col gap-6">
-        {orders.map((order: any) => {
-          const product = order.items?.[0];
+        {orders.length > 0 ? (
+          orders.map((order: any) => {
+            const product = order.items?.[0];
 
-          const item = {
-            id: order.id,
-            name: product?.productName || "Unnamed Product",
-            price: order.totalPrice.toLocaleString(),
-            orderid: order.orderReference,
-            date: format(new Date(order.createdAt), "dd/MM/yy"),
-            status: mapStatusToLabel(order.status),
-            url: product?.image || "/images/logo.png", // fallback handled in component
-            quantity: order.items[0]?.quantity
-              .toLocaleString(),
-          };
+            const item = {
+              id: order.id,
+              name: product?.productName || "Unnamed Product",
+              price: order.totalPrice?.toLocaleString() || "0",
+              orderid: order.orderReference,
+              date: format(new Date(order.createdAt), "dd/MM/yy"),
+              status: mapStatusToLabel(order.status),
+              url: product?.image || "/images/logo.png",
+              quantity: product?.quantity?.toLocaleString() || "1",
+            };
 
-          return <OrderDetailsCard key={order.id} item={item} />;
-        })}
+            return <OrderDetailsCard key={order.id} item={item} />;
+          })
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <p>No orders found for this customer</p>
+          </div>
+        )}
       </div>
     </>
   );
@@ -113,11 +165,10 @@ export default OrderHistory;
 
 // Helper to convert API status to "badge category"
 function mapStatusToLabel(status: string) {
-  const s = status.toUpperCase();
+  const s = status?.toUpperCase() || "";
   if (s === "DELIVERED") return "Delivered";
   if (["PENDING", "PROCESSING", "SCHEDULED", "SHIPPED"].includes(s))
     return "Ongoing";
   if (s === "CANCELLED") return "Cancelled";
   return "Unknown";
 }
-

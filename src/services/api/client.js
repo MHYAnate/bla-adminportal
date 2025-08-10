@@ -75,7 +75,7 @@ apiClient.interceptors.response.use(
         
         // Redirect to login if available
         if (typeof window !== 'undefined') {
-          window.location.href = '/admin/login';
+          window.location.href = '/login';
         }
         return Promise.reject(refreshError);
       }

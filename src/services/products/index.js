@@ -3,14 +3,13 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { apiClient } from "@/services/api/client";
 import { routes } from "@/services/api-routes";
 import { ErrorHandler } from "@/services/errorHandler";
 import useFetchItem from "@/services/useFetchItem";
 import httpService from "@/services/httpService";
 import { useState, useMemo } from "react";
 
-// ✅ Get all products (unchanged)
+// =================== GET PRODUCTS ===================
 export const useGetProducts = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchProducts"],
@@ -67,7 +66,7 @@ export const useGetProducts = () => {
   }, [data]);
 
   return {
-    getPRoductsIsLoading: isLoading,
+    getProductsIsLoading: isLoading,
     getProductsData: {
       data: extractedData,
       pagination: extractedPagination
@@ -78,6 +77,7 @@ export const useGetProducts = () => {
   };
 };
 
+// =================== CREATE PRODUCT ===================
 export const useCreateProduct = ({ onSuccess }) => {
   const queryClient = useQueryClient();
 
@@ -104,11 +104,9 @@ export const useCreateProduct = ({ onSuccess }) => {
             formData.append("folder", "products");
 
             try {
-              // Keep using apiClient for file uploads (this works)
-              const uploadResponse = await apiClient.post(routes.upload(), formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-              });
-              uploadedImageUrls = uploadResponse.data.urls || [];
+              // ✅ FIXED: Use httpService for uploads
+              const uploadResponse = await httpService.postData(formData, routes.upload());
+              uploadedImageUrls = uploadResponse.urls || [];
             } catch (error) {
               console.error("Image upload failed:", error);
               throw new Error("Image upload failed. Please try again.");
@@ -145,9 +143,8 @@ export const useCreateProduct = ({ onSuccess }) => {
         options: processedOptions
       };
 
-      // ✅ FIXED: Use httpService instead of direct apiClient
       const response = await httpService.postData(productPayload, routes.createProduct());
-      return response.data;
+      return response;
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ["fetchProducts"] });
@@ -176,7 +173,7 @@ export const useCreateProduct = ({ onSuccess }) => {
   };
 };
 
-// ✅ FIXED: Update Product - Now uses httpService and expects { id, payload }
+// =================== UPDATE PRODUCT ===================
 export const useUpdateProduct = ({ onSuccess }) => {
   const queryClient = useQueryClient();
 
@@ -200,10 +197,9 @@ export const useUpdateProduct = ({ onSuccess }) => {
             formData.append("folder", "products");
 
             try {
-              const uploadResponse = await apiClient.post(routes.upload(), formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-              });
-              uploadedImageUrls = uploadResponse.data.urls || [];
+              // ✅ FIXED: Use httpService for uploads
+              const uploadResponse = await httpService.postData(formData, routes.upload());
+              uploadedImageUrls = uploadResponse.urls || [];
             } catch (error) {
               console.error("Image upload failed:", error);
               throw new Error("Image upload failed. Please try again.");
@@ -243,9 +239,8 @@ export const useUpdateProduct = ({ onSuccess }) => {
         options: processedOptions
       };
 
-      // ✅ FIXED: Use httpService instead of direct apiClient
       const response = await httpService.updateData(updateData, routes.updateProduct(id));
-      return response.data;
+      return response;
     },
     onSuccess: (response, variables) => {
       queryClient.invalidateQueries({ queryKey: ["fetchProducts"] });
@@ -277,7 +272,7 @@ export const useUpdateProduct = ({ onSuccess }) => {
   };
 };
 
-// Rest of your existing hooks (deleteProduct, getProductInfo, etc.) remain the same...
+// =================== DELETE PRODUCT ===================
 export const useDeleteProduct = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -291,18 +286,18 @@ export const useDeleteProduct = (onSuccess) => {
     try {
       const response = await httpService.deleteData(`admin/products/${productId}`);
       
-      setData(response.data);
+      setData(response);
       
       queryClient.invalidateQueries({ queryKey: ["fetchProducts"] });
       queryClient.invalidateQueries({ queryKey: ["fetchManufacturerProducts"] });
       
-      toast.success(response?.data?.message || "Product deleted successfully!");
+      toast.success(response?.message || "Product deleted successfully!");
       
       if (onSuccess) {
         onSuccess();
       }
       
-      return response.data;
+      return response;
     } catch (error) {
       console.error('Product deletion failed:', error);
       const errorMessage = error?.response?.data?.error || 
@@ -324,28 +319,30 @@ export const useDeleteProduct = (onSuccess) => {
   };
 };
 
+// =================== GET PRODUCT INFO ===================
 export const useGetProductInfo = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchProductInfo"],
-    queryFn: (id) => httpService.getData(routes.getProductInfo(id)),
+    queryFn: (id) => httpService.getData(routes.getProductDetails(id)),
     retry: 2,
   });
 
   return {
     getProductInfoIsLoading: isLoading,
-    getProductInfoData: data?.data?.data || {},
+    getProductInfoData: data?.data || {},
     getProductInfoError: ErrorHandler(error),
     refetchProductInfo: refetch,
     setProductInfoFilter: setFilter,
   };
 };
 
+// =================== GET MANUFACTURER PRODUCTS ===================
 export const useGetManufacturerProducts = () => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
     queryKey: ["fetchManufacturerProducts"],
     queryFn: ({ manufacturerId, data }) =>
       httpService.getData(
-        routes.manufacturerProducts({ manufacturerId, data })
+        routes.getProductsByManufacturer(manufacturerId)
       ),
     retry: 2,
   });
@@ -356,38 +353,5 @@ export const useGetManufacturerProducts = () => {
     getManufacturerProductsError: ErrorHandler(error),
     refetchManufacturerProducts: refetch,
     setManufacturerProductsFilter: setFilter,
-  };
-};
-
-export const useGetAllCategories = () => {
-  const {
-    isLoading,
-    error,
-    data,
-    refetch,
-    setFilter
-  } = useFetchItem({
-    queryKey: ["fetchAllCategories"],
-    queryFn: (queryParams) => httpService.getData(routes.categories(queryParams)),
-    retry: 2,
-  });
-
-  const categories = data?.data?.categories ?? [];
-  const pagination = data?.data?.pagination ?? {
-    total: 0,
-    page: 1,
-    limit: 10,
-    totalPages: 0,
-  };
-
-  return {
-    getAllCategoriesIsLoading: isLoading,
-    getAllCategoriesData: {
-      categories,
-      pagination,
-    },
-    getAllCategoriesError: ErrorHandler(error),
-    refetchAllCategories: refetch,
-    setAllCategoriesFilter: setFilter,
   };
 };

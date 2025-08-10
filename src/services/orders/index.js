@@ -1,11 +1,15 @@
-import { routes } from "../api-routes"; // Import your existing routes
+// services/orders/index.js
+"use client";
+
+import { routes } from "../api-routes";
 import { ErrorHandler } from "../errorHandler";
 import httpService from "../httpService";
 import useFetchItem from "../useFetchItem";
-import { useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { useQueryClient, useMutation } from '@tanstack/react-query';
+import { toast } from "sonner";
 
-
+// =================== GET ORDERS ===================
 export const useGetOrders = ({
   enabled = true,
   filter = {},
@@ -26,7 +30,6 @@ export const useGetOrders = ({
   } = useFetchItem({
     queryKey: ['orders'],
     queryFn: (params) => {
-      // Use your existing routes.orders function which handles query parameters properly
       return httpService.getData(routes.orders(params));
     },
     enabled,
@@ -58,13 +61,13 @@ export const useGetOrders = ({
   };
 };
 
+// =================== GET ORDER INFO ===================
 export const useGetOrderInfo = ({
   enabled = true,
   orderId,
 } = {}) => {
   console.log('useGetOrderInfo called with:', { enabled, orderId });
 
-  // Validate orderId before making any requests
   const isValidOrderId = Boolean(orderId && String(orderId).trim());
   
   const {
@@ -85,26 +88,20 @@ export const useGetOrderInfo = ({
         throw error;
       }
       
-      // Clean the orderId before making the API call
       const cleanOrderId = String(orderId).replace('#', '').trim();
       
       try {
         console.log('Fetching order details for clean ID:', cleanOrderId);
         
-        // Add timeout to prevent hanging requests
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         
-        const response = await httpService.getData(
-          routes.getOrderInfo(cleanOrderId),
-          { signal: controller.signal }
-        );
+        const response = await httpService.getData(routes.getOrderDetails(cleanOrderId));
         
         clearTimeout(timeoutId);
         
         console.log('Raw API response for order details:', response);
         
-        // Handle the response structure from your controller
         if (response?.success && response?.data) {
           console.log('✅ Extracted order data from success wrapper');
           return response.data;
@@ -115,7 +112,6 @@ export const useGetOrderInfo = ({
           return response;
         }
         
-        // Handle empty or null responses
         if (!response || (typeof response === 'object' && Object.keys(response).length === 0)) {
           throw new Error(`Order ${cleanOrderId} not found`);
         }
@@ -126,7 +122,6 @@ export const useGetOrderInfo = ({
       } catch (error) {
         console.error('❌ API call failed:', error);
         
-        // Handle specific error types
         if (error.name === 'AbortError') {
           throw new Error('Request timed out. Please try again.');
         }
@@ -148,7 +143,6 @@ export const useGetOrderInfo = ({
     },
     enabled: enabled && isValidOrderId,
     retry: (failureCount, error) => {
-      // Don't retry on 404, 403, or timeout errors
       if (error?.response?.status === 404 || 
           error?.response?.status === 403 || 
           error?.message?.includes('timeout')) {
@@ -161,7 +155,6 @@ export const useGetOrderInfo = ({
     staleTime: 30 * 1000,
   });
 
-  // Memoize the processed data to prevent unnecessary re-renders
   const processedData = useMemo(() => {
     if (!data) {
       console.log('No order data to process');
@@ -170,23 +163,19 @@ export const useGetOrderInfo = ({
     
     console.log('Processing order data:', data);
     
-    // Process the data according to your controller's response structure
     const processed = {
       ...data,
-      // Ensure arrays are properly initialized (from your controller structure)
       items: Array.isArray(data.items) ? data.items : [],
       timeline: Array.isArray(data.timeline) ? data.timeline : [],
       transactions: Array.isArray(data.transactions) ? data.transactions : [],
       adminAlerts: Array.isArray(data.adminAlerts) ? data.adminAlerts : [],
       notes: Array.isArray(data.notes) ? data.notes : [],
       
-      // Ensure nested objects exist
       user: data.user || {},
       breakdown: data.breakdown || {},
       shipping: data.shipping || null,
       summary: data.summary || {},
       
-      // Ensure we have the basic order info with proper fallbacks
       id: data.id || orderId,
       orderId: data.orderId || `#${String(data.id || orderId).padStart(6, '0')}`,
       status: data.status || 'PENDING',
@@ -196,7 +185,6 @@ export const useGetOrderInfo = ({
       paymentStatus: data.paymentStatus || 'PENDING',
       orderType: data.orderType || 'IMMEDIATE',
       
-      // Payment fields (handle both direct properties and nested in breakdown)
       amountPaid: data.amountPaid || data.breakdown?.amountPaid || 0,
       amountDue: data.amountDue || data.breakdown?.amountDue || 0,
     };
@@ -205,18 +193,6 @@ export const useGetOrderInfo = ({
     return processed;
   }, [data, orderId]);
 
-  // Debug state changes
-  useEffect(() => {
-    console.log('useGetOrderInfo state changed:', {
-      orderId,
-      isValidOrderId,
-      loading: isLoading,
-      hasData: !!processedData,
-      error: error?.message || error,
-      dataKeys: processedData ? Object.keys(processedData) : []
-    });
-  }, [orderId, isValidOrderId, isLoading, processedData, error]);
-
   return {
     getOrderInfoData: processedData,
     getOrderInfoIsLoading: isLoading,
@@ -224,13 +200,13 @@ export const useGetOrderInfo = ({
     refetchOrderInfo: refetch,
     setOrderInfoFilter: setFilter,
     isFetchingOrderInfo: isFetching,
-    // Additional debugging info
     rawData: data,
     hasOrderId: isValidOrderId,
     isValidRequest: enabled && isValidOrderId,
   };
 };
 
+// =================== GET ORDERS SUMMARY ===================
 export const useGetOrdersSummary = ({
   enabled = true,
   filter = {},
@@ -245,14 +221,13 @@ export const useGetOrdersSummary = ({
     setFilter,
   } = useFetchItem({
     queryKey: ["ordersSummary"],
-    queryFn: (params) => httpService.getData(routes.ordersSummary(), { params }),
+    queryFn: (params) => httpService.getData(routes.getOrderSummary(), { params }),
     enabled,
     retry: 2,
     initialFilter: filter,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 
-  // Memoize the processed data
   const processedData = useMemo(() => {
     if (!data) return null;
     
@@ -272,6 +247,7 @@ export const useGetOrdersSummary = ({
   };
 };
 
+// =================== GET ORDER SUMMARY CHART ===================
 export const useGetOrderSummaryChart = ({
   enabled = true,
   timeframe = '5m',
@@ -288,15 +264,14 @@ export const useGetOrderSummaryChart = ({
     queryKey: ["orderSummaryChart", timeframe],
     queryFn: (params) => {
       const tf = params?.timeframe || timeframe;
-      return httpService.getData(routes.orderSummaryChart(tf));
+      return httpService.getData(routes.getOrderSummaryChart(tf));
     },
     enabled,
     retry: 2,
     initialFilter: { timeframe, ...filter },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Memoize the processed data to ensure consistent structure
   const processedData = useMemo(() => {
     if (!data) return null;
     
@@ -319,6 +294,7 @@ export const useGetOrderSummaryChart = ({
   };
 };
 
+// =================== GET ORDERS ANALYTICS ===================
 export const useGetOrdersAnalytics = ({
   enabled = true,
   filter = {},
@@ -332,14 +308,13 @@ export const useGetOrdersAnalytics = ({
     setFilter,
   } = useFetchItem({
     queryKey: ["ordersAnalytics"],
-    queryFn: (params) => httpService.getData(routes.ordersAnalytics(params)),
+    queryFn: (params) => httpService.getData(routes.getOrderAnalytics(params)),
     enabled,
     retry: 2,
     initialFilter: filter,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Memoize the processed data
   const processedData = useMemo(() => {
     if (!data) return null;
     
@@ -359,6 +334,7 @@ export const useGetOrdersAnalytics = ({
   };
 };
 
+// =================== GET SALES DATA ===================
 export const useGetSalesData = ({
   enabled = true,
   year,
@@ -378,16 +354,15 @@ export const useGetSalesData = ({
   } = useFetchItem({
     queryKey: ['salesData'],
     queryFn: (params) => {
-      const routeWithParams = routes.salesData(params?.year || year);
+      const routeWithParams = routes.getSalesData(params?.year || year);
       return httpService.getData(routeWithParams);
     },
     enabled,
     retry: 2,
     initialFilter: { year: year || new Date().getFullYear(), ...initialFilter },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
-  // Memoize the processed data
   const processedData = useMemo(() => {
     if (!data) return null;
     
@@ -409,40 +384,330 @@ export const useGetSalesData = ({
     salesError: ErrorHandler(error),
     refetchSales: refetch,
     setSalesFilter: setFilter,
-    // Additional utilities
     currentFilters: initialFilter,
     hasData: Boolean(processedData?.data?.length),
   };
 };
 
-// Placeholder mutation hooks (implement these after getting basic functionality working)
+// =================== ORDER MUTATIONS ===================
+
+// Update Order Status
 export const useUpdateOrderStatus = () => {
-  return {
-    mutateAsync: async ({ orderId, status, notes }) => {
-      console.log('Update order status:', { orderId, status, notes });
-      // For now, just show a toast message
-      throw new Error('Order status update not yet implemented');
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, status, notes, trackingNumber, carrier }) => {
+      return httpService.patchData({
+        status,
+        notes,
+        trackingNumber,
+        carrier
+      }, routes.updateOrderStatus(orderId));
     },
-    isLoading: false,
-    error: null,
-  };
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orderInfo', variables.orderId] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+      
+      toast.success(response?.message || 'Order status updated successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to update order status';
+      toast.error(errorMessage);
+    }
+  });
 };
 
+// Bulk Update Order Status
+export const useBulkUpdateOrderStatus = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderIds, status, notes }) => {
+      return httpService.patchData({
+        orderIds,
+        status,
+        notes
+      }, routes.bulkUpdateOrderStatus());
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+      
+      toast.success(response?.message || 'Orders updated successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to update orders';
+      toast.error(errorMessage);
+    }
+  });
+};
+
+// Cancel Order
+export const useCancelOrder = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, reason }) => {
+      return httpService.postData({ reason }, routes.cancelOrder(orderId));
+    },
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orderInfo', variables.orderId] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+      
+      toast.success(response?.message || 'Order cancelled successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to cancel order';
+      toast.error(errorMessage);
+    }
+  });
+};
+
+// Ship Order
+export const useShipOrder = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, trackingNumber, carrier }) => {
+      return httpService.postData({
+        trackingNumber,
+        carrier
+      }, routes.shipOrder(orderId));
+    },
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orderInfo', variables.orderId] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+      
+      toast.success(response?.message || 'Order shipped successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to ship order';
+      toast.error(errorMessage);
+    }
+  });
+};
+
+// Process Refund
 export const useProcessRefund = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ orderId, amount, reason, refundType }) => {
-      const response = await httpService.postData(
-        routes.processRefund(orderId),
-        { amount, reason, refundType }
-      );
-      return response;
+    mutationFn: async ({ orderId, amount, reason }) => {
+      return httpService.postData({
+        amount,
+        reason
+      }, routes.processRefund(orderId));
     },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries(['orderInfo', variables.orderId]);
-      queryClient.invalidateQueries(['orders']);
-      queryClient.invalidateQueries(['ordersSummary']);
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['orderInfo', variables.orderId] });
+      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
+      
+      toast.success(response?.message || 'Refund processed successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to process refund';
+      toast.error(errorMessage);
     }
   });
-}; 
+};
+
+// =================== ORDER NOTES ===================
+
+// Get Order Notes
+export const useGetOrderNotes = (orderId, options = {}) => {
+  const { includeInternal = false, enabled = true } = options;
+  
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ['orderNotes', orderId, { includeInternal }],
+    queryFn: () => httpService.getData(routes.getOrderNotes(orderId), {
+      params: { includeInternal }
+    }),
+    enabled: enabled && !!orderId,
+    retry: 2
+  });
+
+  return {
+    orderNotes: data?.data || [],
+    isOrderNotesLoading: isLoading,
+    orderNotesError: ErrorHandler(error),
+    refetchOrderNotes: refetch
+  };
+};
+
+// Add Order Note
+export const useAddOrderNote = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, content, type = 'GENERAL', isInternal = false }) => {
+      return httpService.postData({
+        content,
+        type,
+        isInternal
+      }, routes.addOrderNote(orderId));
+    },
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['orderNotes', variables.orderId] 
+      });
+      
+      toast.success(response?.message || 'Note added successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to add note';
+      toast.error(errorMessage);
+    }
+  });
+};
+
+// =================== ORDER ANALYTICS ===================
+
+// Get Order Status Analytics
+export const useGetOrderStatusAnalytics = (filters = {}) => {
+  const { timeframe = '30d', enabled = true } = filters;
+  
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ['orderStatusAnalytics', { timeframe }],
+    queryFn: () => httpService.getData(routes.getOrderStatusAnalytics({ timeframe })),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    retry: 2
+  });
+
+  return {
+    orderStatusAnalytics: data?.data || {},
+    isOrderStatusAnalyticsLoading: isLoading,
+    orderStatusAnalyticsError: ErrorHandler(error),
+    refetchOrderStatusAnalytics: refetch
+  };
+};
+
+// Get Fulfillment Metrics
+export const useGetFulfillmentMetrics = (filters = {}) => {
+  const { timeframe = '30d', enabled = true } = filters;
+  
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ['fulfillmentMetrics', { timeframe }],
+    queryFn: () => httpService.getData(routes.getFulfillmentMetrics({ timeframe })),
+    enabled,
+    staleTime: 5 * 60 * 1000,
+    retry: 2
+  });
+
+  return {
+    fulfillmentMetrics: data?.data || {},
+    isFulfillmentMetricsLoading: isLoading,
+    fulfillmentMetricsError: ErrorHandler(error),
+    refetchFulfillmentMetrics: refetch
+  };
+};
+
+// Get Order Progress
+export const useGetOrderProgress = (orderId) => {
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ['orderProgress', orderId],
+    queryFn: () => httpService.getData(routes.getOrderProgress(orderId)),
+    enabled: !!orderId,
+    retry: 2
+  });
+
+  return {
+    orderProgress: data?.data || {},
+    isOrderProgressLoading: isLoading,
+    orderProgressError: ErrorHandler(error),
+    refetchOrderProgress: refetch
+  };
+};
+
+// =================== ORDER ARCHIVE ===================
+
+// Get Archived Orders
+export const useGetArchivedOrders = (filters = {}) => {
+  const { page = 1, limit = 10, enabled = true } = filters;
+  
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ['archivedOrders', { page, limit }],
+    queryFn: () => httpService.getData(routes.getArchivedOrders({ page, limit })),
+    enabled,
+    retry: 2
+  });
+
+  return {
+    archivedOrders: data?.data || [],
+    archivedOrdersPagination: data?.pagination || {},
+    isArchivedOrdersLoading: isLoading,
+    archivedOrdersError: ErrorHandler(error),
+    refetchArchivedOrders: refetch
+  };
+};
+
+// Archive Order
+export const useArchiveOrder = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, reason }) => {
+      return httpService.postData({ reason }, routes.archiveOrder(orderId));
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['archivedOrders'] });
+      
+      toast.success(response?.message || 'Order archived successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to archive order';
+      toast.error(errorMessage);
+    }
+  });
+};
+
+// Unarchive Order
+export const useUnarchiveOrder = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ orderId, reason }) => {
+      return httpService.postData({ reason }, routes.unarchiveOrder(orderId));
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['archivedOrders'] });
+      
+      toast.success(response?.message || 'Order unarchived successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to unarchive order';
+      toast.error(errorMessage);
+    }
+  });
+};
+
+// Bulk Archive Orders
+export const useBulkArchiveOrders = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ olderThanDays = 30, reason }) => {
+      return httpService.postData({
+        olderThanDays,
+        reason
+      }, routes.bulkArchiveCompletedOrders());
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['archivedOrders'] });
+      queryClient.invalidateQueries({ queryKey: ['fulfillmentMetrics'] });
+      
+      toast.success(response?.message || 'Orders archived successfully');
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to archive orders';
+      toast.error(errorMessage);
+    }
+  });
+};

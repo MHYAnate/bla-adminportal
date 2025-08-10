@@ -22,10 +22,11 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useAuth } from '@/context/auth';
 import debugAPI from '@/utils/api-debug';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   email: z.string().email("Invalid email provided"),
-  password: z.string(),
+  password: z.string().min(1, "Password is required"),
   remember: z.boolean().default(false).optional(),
 });
 
@@ -33,12 +34,20 @@ type FormSchemaType = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Debug API configuration
   React.useEffect(() => {
     debugAPI();
   }, []);
+
+  // Redirect if already authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      console.log('🔄 User already authenticated, redirecting to admin...');
+      router.replace('/admin');
+    }
+  }, [isAuthenticated, authLoading, router]);
 
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(formSchema),
@@ -49,30 +58,83 @@ export default function LoginPage() {
     },
   });
 
-  const { loginData, loginIsLoading, loginPayload } = useLogin((res: any) => {
-    console.log('Login response received:', res);
+  // FIXED: Enhanced success callback
+  const handleLoginSuccess = async (loginResponse: any) => {
+    console.log('🎯 Login success callback received:', loginResponse);
 
-    // Check multiple possible token locations in the response
-    const token = res?.token || res?.data?.token || res?.accessToken || res?.data?.accessToken;
+    try {
+      // Extract token from various possible locations
+      const token = loginResponse?.token ||
+        loginResponse?.data?.token ||
+        loginResponse?.accessToken ||
+        loginResponse?.data?.accessToken;
 
-    if (token) {
+      if (!token) {
+        console.error('❌ No token found in login response:', loginResponse);
+        const errorMsg = "Login failed. No authentication token received.";
+        showErrorAlert(errorMsg);
+        toast.error(errorMsg);
+        return;
+      }
+
       const rememberMe = form.getValues('remember');
-      console.log('Logging in with remember:', rememberMe);
-      login(token, rememberMe);
-    } else {
-      console.error('No token received in login response:', res);
-      showErrorAlert("Login failed. No authentication token received.");
+      console.log('🔐 Calling auth.login with:', {
+        hasToken: !!token,
+        tokenLength: token.length,
+        remember: rememberMe,
+        hasLoginResponse: !!loginResponse
+      });
+
+      // Pass the full login response as the third parameter
+      await login(token, rememberMe, loginResponse);
+
+      console.log('✅ Login process completed successfully');
+      toast.success("Login successful!");
+    } catch (error: unknown) {
+      console.error('❌ Login process failed:', error);
+      const errorMsg = (error as any)?.message || "Login failed. Please try again.";
+      showErrorAlert(errorMsg);
+      toast.error(errorMsg);
     }
-  });
+  };
+
+  // FIXED: Better error handling for login hook
+  const handleLoginError = (error: any) => {
+    console.error('❌ Login API error:', error);
+    const errorMsg = error?.response?.data?.error ||
+      error?.response?.data?.message ||
+      error?.message ||
+      "Login failed. Please check your credentials.";
+    showErrorAlert(errorMsg);
+    toast.error(errorMsg);
+  };
+
+  const { loginData, loginIsLoading, loginPayload } = useLogin(handleLoginSuccess, handleLoginError);
 
   async function onSubmit(values: FormSchemaType) {
     try {
-      console.log('Submitting login form:', { email: values.email, remember: values.remember });
+      console.log('📝 Submitting login form:', {
+        email: values.email,
+        remember: values.remember
+      });
+
+      // Clear any previous errors
+      form.clearErrors();
+
       await loginPayload(values);
     } catch (error) {
-      console.error('Login error:', error);
-      showErrorAlert("Login failed. Please check your credentials.");
+      console.error('❌ Login submission error:', error);
+      // Error handling is done in the useLogin hook's onError callback
     }
+  }
+
+  // Show loading state if auth is still loading
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
@@ -150,6 +212,7 @@ export default function LoginPage() {
                               autoCapitalize="none"
                               autoComplete="email"
                               autoCorrect="off"
+                              disabled={loginIsLoading}
                               {...field}
                               className="h-14"
                             />
@@ -174,6 +237,8 @@ export default function LoginPage() {
                             <Input
                               type="password"
                               placeholder="Input your password account"
+                              autoComplete="current-password"
+                              disabled={loginIsLoading}
                               {...field}
                               className="h-14"
                             />
@@ -191,6 +256,7 @@ export default function LoginPage() {
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={field.onChange}
+                              disabled={loginIsLoading}
                               className="w-5 h-5 border-[#CBD5E0]"
                             />
                           </FormControl>
@@ -200,7 +266,7 @@ export default function LoginPage() {
                             </FormLabel>
                             <Link
                               href={"/forgot-password"}
-                              className="font-bold text-base leading-[1.5rem] text-[#687588]"
+                              className="font-bold text-base leading-[1.5rem] text-[#687588] hover:text-[#0F3D30] transition-colors"
                             >
                               Forgot Password
                             </Link>
@@ -209,12 +275,20 @@ export default function LoginPage() {
                       )}
                     />
                     <Button
+                      type="submit"
                       variant={"warning"}
                       size={"md"}
-                      className="font-bold text-base leading-[1.5rem]"
+                      className="font-bold text-base leading-[1.5rem] w-full"
                       disabled={loginIsLoading}
                     >
-                      {loginIsLoading ? "Logging in..." : "Submit"}
+                      {loginIsLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Logging in...
+                        </div>
+                      ) : (
+                        "Submit"
+                      )}
                     </Button>
                   </form>
                 </Form>

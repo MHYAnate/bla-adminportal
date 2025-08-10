@@ -1597,7 +1597,7 @@ export const DashboardTotalOrderIcon = () => {
         d="M32.0001 22C32.0001 19.7909 30.2093 18 28.0001 18C25.791 18 24.0001 19.7909 24.0001 22M22.8198 38H33.1804C35.685 38 37.5735 35.7245 37.1119 33.2628L35.6119 25.2628C35.2572 23.371 33.6053 22 31.6804 22H24.3198C22.395 22 20.7431 23.371 20.3883 25.2628L18.8883 33.2628C18.4268 35.7245 20.3153 38 22.8198 38Z"
         stroke="#F7F7F7"
         stroke-width="1.5"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -1654,7 +1654,7 @@ export const ShoppingBagIcon = () => {
         d="M16 6.5C16 4.29086 14.2091 2.5 12 2.5C9.79085 2.5 7.99999 4.29086 7.99999 6.5M6.8197 22.5H17.1803C19.6848 22.5 21.5733 20.2245 21.1118 17.7628L19.6118 9.76285C19.257 7.87095 17.6051 6.5 15.6803 6.5H8.3197C6.39484 6.5 4.74294 7.87096 4.38821 9.76285L2.88821 17.7628C2.42665 20.2245 4.31515 22.5 6.8197 22.5Z"
         stroke="#F7F7F7"
         stroke-width="1.5"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -1973,7 +1973,7 @@ export const DiscountIcon = () => {
         stroke="#CBD5E0"
         stroke-width="1.5"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -1997,69 +1997,69 @@ export const EmptyProductIcon = () => {
         stroke="#F9B52B"
         stroke-width="1.37354"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
       />
       <path
         d="M144.508 39.6562H155.6"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
         d="M144.508 42.8516H155.6"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
         d="M144.508 46.0508H155.6"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
         d="M41.3158 100.373H52.4081"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
         d="M41.3158 103.57H52.4081"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
         d="M41.3158 106.768H52.4081"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
         d="M165.787 123.172H176.88"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
         d="M165.787 126.369H176.88"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
         d="M165.787 129.566H176.88"
         stroke="#A37D30"
         stroke-width="1.03015"
-        stroke-miterlimit="10"
+        strokeMiterlimit="10"
         stroke-linecap="round"
       />
       <path
@@ -2179,7 +2179,7 @@ export const InventoryTotalIcon = () => {
         stroke="#4AD991"
         stroke-width="1.5"
         stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinejoin="round"
       />
       <path
         d="M23.7215 31.1967C24.106 31.3506 24.5425 31.1635 24.6964 30.7789C24.8502 30.3943 24.6631 29.9579 24.2785 29.804L23.7215 31.1967ZM17 27.7004H16.25C16.25 28.0071 16.4367 28.2829 16.7215 28.3967L17 27.7004ZM17.75 19.3004C17.75 18.8862 17.4142 18.5504 17 18.5504C16.5858 18.5504 16.25 18.8862 16.25 19.3004H17.75ZM23.7215 29.804C23.3369 29.9579 23.1498 30.3943 23.3036 30.7789C23.4575 31.1635 23.894 31.3506 24.2785 31.1967L23.7215 29.804ZM31 27.7004L31.2785 28.3967C31.5633 28.2829 31.75 28.0071 31.75 27.7004H31ZM31.75 19.3004C31.75 18.8862 31.4142 18.5504 31 18.5504C30.5858 18.5504 30.25 18.8862 30.25 19.3004H31.75ZM23.25 30.5004C23.25 30.9146 23.5858 31.2504 24 31.2504C24.4142 31.2504 24.75 30.9146 24.75 30.5004H23.25ZM24.75 22.1004C24.75 21.6862 24.4142 21.3504 24 21.3504C23.5858 21.3504 23.25 21.6862 23.25 22.1004H24.75ZM20.7785 17.204C20.394 17.0502 19.9575 17.2373 19.8036 17.6218C19.6498 18.0064 19.8369 18.4429 20.2215 18.5967L20.7785 17.204ZM27.5 20.7004H28.25C28.25 20.3937 28.0633 20.1179 27.7785 20.004L27.5 20.7004ZM26.75 23.0004C26.75 23.4146 27.0858 23.7504 27.5 23.7504C27.9142 23.7504 28.25 23.4146 28.25 23.0004H26.75ZM24.2785 29.804L17.2785 27.004L16.7215 28.3967L23.7215 31.1967L24.2785 29.804ZM17.75 27.7004V19.3004H16.25V27.7004H17.75ZM24.2785 31.1967L31.2785 28.3967L30.7215 27.004L23.7215 29.804L24.2785 31.1967ZM31.75 27.7004V19.3004H30.25V27.7004H31.75ZM24.75 30.5004V22.1004H23.25V30.5004H24.75ZM20.2215 18.5967L27.2215 21.3967L27.7785 20.004L20.7785 17.204L20.2215 18.5967ZM26.75 20.7004V23.0004H28.25V20.7004H26.75Z"

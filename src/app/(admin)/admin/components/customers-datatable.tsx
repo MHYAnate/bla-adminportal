@@ -24,6 +24,28 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
     setCurrentPage(page);
   };
 
+  // ✅ CRITICAL FIX: Filter out admin users - only show business and individual customers
+  const filteredData = (data || []).filter((item: CustomersData) => {
+    const customerType =
+      (item?.customerType !== undefined && item?.customerType !== null
+        ? String(item.customerType)
+        : "") ||
+      (item?.type !== undefined && item?.type !== null
+        ? String(item.type)
+        : "");
+
+    const customerTypeLower = customerType.toLowerCase();
+
+    return customerTypeLower === "business" || customerTypeLower === "individual";
+  });
+
+
+  console.log('🔍 CustomersDataTable Debug:', {
+    originalDataLength: data?.length || 0,
+    filteredDataLength: filteredData.length,
+    customerTypes: filteredData.map((item: CustomersData) => item?.customerType || item?.type)
+  });
+
   const cellRenderers = {
     fullName: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">
@@ -149,11 +171,20 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
             View All
           </Link>
         </div>
+
+        {/* ✅ Show filtered data count in development */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mb-4 p-2 bg-blue-50 rounded text-xs">
+            <strong>🔍 Recent Customers Debug:</strong> Showing {filteredData.length} customers
+            (filtered from {data?.length || 0} total)
+          </div>
+        )}
+
         <CustomerTableComponent<CustomersData>
-          tableData={data || []}
+          tableData={filteredData} // ✅ Use filtered data instead of raw data
           currentPage={currentPage}
           onPageChange={onPageChange}
-          totalPages={Math.ceil((data?.length || 0) / pageSize)}
+          totalPages={Math.ceil(filteredData.length / pageSize)} // ✅ Calculate based on filtered data
           cellRenderers={cellRenderers}
           columnOrder={columnOrder}
           columnLabels={columnLabels}

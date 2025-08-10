@@ -8,6 +8,7 @@ import { ViewIcon } from "../../../../../../public/icons";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
 import { capitalizeFirstLetter } from "@/lib/utils";
+
 interface iProps {
   data?: any;
   currentPage: number;
@@ -37,6 +38,9 @@ const DataTable: React.FC<iProps> = ({
     actualTotal: totalPages
   });
 
+  // ✅ REMOVED: No frontend filtering - let backend handle customer type filtering
+  // The backend should already be returning only business and individual customers
+
   const cellRenderers = {
     name: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">
@@ -44,45 +48,77 @@ const DataTable: React.FC<iProps> = ({
           src="/images/user-avatar.png"
           width={24}
           height={24}
-          alt="Admin avatar"
+          alt="Customer avatar"
           className="w-6 h-6 rounded-full"
         />
         <div>
-          <p> {item?.name || "----"}</p>
+          <p>{item?.name || "----"}</p>
           <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
-            {item?.email || "lincoln@unpixel.com"}
+            {item?.email || "No email provided"}
           </p>
         </div>
       </div>
     ),
-    customertype: (item: CustomersData) => (
-      <span className="font-medium">
-        {capitalizeFirstLetter(item?.customerType.toString() || "")}
-      </span>
-    ),
-    id: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3">{item.id}</div>
-    ),
-    kyc: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3"> {item?.kyc?.toUpperCase()}</div>
 
+    // ✅ FIXED: Handle both customerType and type fields consistently
+    customerType: (item: CustomersData) => {
+      const customerType = item?.customerType || item?.type || "customer";
+      return (
+        <span className="font-medium">
+          {capitalizeFirstLetter(customerType.toString())}
+        </span>
+      );
+    },
+
+    id: (item: CustomersData) => (
+      <div className="font-medium flex items-center gap-3">{item?.id}</div>
     ),
-    customerstatus: (item: CustomersData) => (
-      <Badge
-        variant={
-          item?.status === "ACTIVE"
-            ? "success"
-            : item?.status === "INACTIVE"
-              ? "tertiary"
-              : item?.status === "FLAGGED"
-                ? "destructive"
-                : "warning"
-        }
-        className="py-1 px-[26px] font-bold"
-      >
-        {item?.status}
-      </Badge>
-    ),
+
+    // ✅ FIXED: Improved KYC status handling
+    kyc: (item: CustomersData) => {
+      const kycStatus = item?.kycStatus || item?.kyc || 'pending';
+      const statusLower = kycStatus.toString().toLowerCase();
+
+      return (
+        <Badge
+          variant={
+            statusLower === "verified"
+              ? "success"
+              : statusLower === "pending" || statusLower === "not verified"
+                ? "tertiary"
+                : statusLower === "flagged"
+                  ? "destructive"
+                  : "warning"
+          }
+          className="py-1 px-[26px] font-bold text-[10px]"
+        >
+          {kycStatus.toString().toUpperCase()}
+        </Badge>
+      );
+    },
+
+    // ✅ FIXED: Better customer status handling
+    customerStatus: (item: CustomersData) => {
+      const customerStatus = item?.customerStatus || item?.status || 'INACTIVE';
+      const statusLower = customerStatus.toString().toLowerCase();
+
+      return (
+        <Badge
+          variant={
+            statusLower === "active"
+              ? "success"
+              : statusLower === "inactive"
+                ? "tertiary"
+                : statusLower === "suspended"
+                  ? "destructive"
+                  : "warning"
+          }
+          className="py-1 px-[26px] font-bold text-[10px]"
+        >
+          {customerStatus.toString().toUpperCase()}
+        </Badge>
+      );
+    },
 
     action: (item: CustomersData) => (
       <div className="flex gap-2.5">
@@ -96,11 +132,12 @@ const DataTable: React.FC<iProps> = ({
     ),
   };
 
+  // ✅ FIXED: Corrected column order to match your cellRenderers
   const columnOrder: (keyof CustomersData)[] = [
     "name",
     "customerType",
     "id",
-    "customerstatus",
+    "customerStatus",
     "kyc",
     "action",
   ];
@@ -109,21 +146,34 @@ const DataTable: React.FC<iProps> = ({
     name: "Name",
     customerType: "Customer Type",
     id: "Customer ID",
-    customerstatus: "Customer Status",
+    customerStatus: "Customer Status",
     kyc: "KYC",
     action: "Action",
   };
 
-
-
-
   return (
     <div>
+      {/* ✅ DEBUG: Show data info in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
+          <strong>🔍 DataTable Debug:</strong> Showing {data?.length || 0} customers
+          <br />
+          <strong>Customer types found:</strong> {
+            [...new Set(data?.map((item: CustomersData) =>
+              item?.customerType || item?.type
+            ) || [])].join(', ') || 'None'
+          }
+          <br />
+          <strong>Pagination:</strong> Page {currentPage} of {Math.ceil(totalPages / pageSize)}
+          (Total: {totalPages} customers)
+        </div>
+      )}
+
       <CustomerTableComponent<CustomersData>
-        tableData={data}
+        tableData={data || []} // ✅ Use raw data - no filtering
         currentPage={currentPage}
         onPageChange={onPageChange}
-        totalPages={Math.ceil(totalPages / pageSize)} // Ensure this calculation is correct
+        totalPages={Math.ceil(totalPages / pageSize)}
         cellRenderers={cellRenderers}
         columnOrder={columnOrder}
         columnLabels={columnLabels}

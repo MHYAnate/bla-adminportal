@@ -19,6 +19,8 @@ import { ROUTES } from "@/constant/routes";
 import { PermissionsTab } from "./permissions-tab";
 import { useGetAdmins } from "@/services/admin";
 import RolesTab from "./roleTab";
+import DebugAdminStatus from "./debug"
+
 
 interface AdminUserDetailProps {
 	adminId: string;
@@ -118,6 +120,7 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 
 	return (
 		<div>
+			<DebugAdminStatus />
 			<Header title="Administrator Information" showBack={true} />
 			<div className="flex flex-col md:flex-row gap-6 mt-5">
 				<Card className="w-full md:w-[300px]">

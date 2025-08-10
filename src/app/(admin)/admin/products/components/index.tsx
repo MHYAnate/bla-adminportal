@@ -19,11 +19,16 @@ import DeleteContent from "@/app/(admin)/components/delete-content";
 import { Card, CardContent } from "@/components/ui/card";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
-import { useDeleteProduct, useGetAllCategories, useGetProducts } from "@/services/products";
 import DatePickerWithRange from "@/components/ui/date-picker";
-import { productFilterList, productTypeList } from "@/constant";
-import { useGetManufacturers } from "@/services/manufacturers";
 import { capitalizeFirstLetter } from "@/lib/utils";
+
+// ✅ CORRECT SERVICE IMPORTS
+import { useDeleteProduct, useGetProducts } from "@/services/products";
+import { useGetAllCategories } from "@/services/categories";
+import { useGetManufacturers } from "@/services/manufacturers";
+
+// ✅ CORRECT CONSTANTS IMPORT
+import { productFilterList, productTypeList } from "@/constant";
 
 export default function Products() {
   const [filter, setFilter] = useState<string>("");
@@ -48,7 +53,7 @@ export default function Products() {
   } = useGetManufacturers();
 
   const {
-    getPRoductsIsLoading,
+    getProductsIsLoading,
     getProductsData,
     setProductsFilter,
     refetchProducts,
@@ -99,7 +104,7 @@ export default function Products() {
   // ✅ Debug the data in component
   useEffect(() => {
     console.log('🔍 Component Debug:', {
-      loading: getPRoductsIsLoading,
+      loading: getProductsIsLoading,
       data: getProductsData,
       dataType: typeof getProductsData,
       hasData: !!getProductsData?.data,
@@ -108,7 +113,7 @@ export default function Products() {
       firstItem: getProductsData?.data?.[0],
       pagination: getProductsData?.pagination
     });
-  }, [getPRoductsIsLoading, getProductsData]);
+  }, [getProductsIsLoading, getProductsData]);
 
   // ✅ API test effect
   useEffect(() => {
@@ -196,7 +201,7 @@ export default function Products() {
 
   // ✅ Render table with comprehensive debugging
   const renderTable = () => {
-    if (getPRoductsIsLoading) {
+    if (getProductsIsLoading) {
       return (
         <div className="text-center py-8">
           <p>Loading products...</p>
@@ -246,7 +251,7 @@ export default function Products() {
           onPageChange={onPageChange}
           pageSize={Number(pageSize)}
           totalPages={getProductsData.pagination?.totalPages || 1}
-          loading={getPRoductsIsLoading}
+          loading={getProductsIsLoading}
         />
       </div>
     );

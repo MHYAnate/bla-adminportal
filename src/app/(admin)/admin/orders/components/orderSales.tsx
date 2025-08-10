@@ -67,30 +67,32 @@ export default function SalesChart() {
   const chartRef = useRef<HTMLDivElement>(null)
   const [timeframe, setTimeframe] = useState<"3m" | "6m" | "12m">("6m")
 
-  // Type the hook response based on its actual return values
+  // ✅ FIXED: Use setSalesFilter instead of salesYear to avoid infinite loops
   const {
     isSalesLoading,
     isFetchingSales,
     salesData: rawData,
-    salesYear,
     salesError,
     refetchSales: refetchSalesData,
     setSalesFilter,
-  } = useGetSalesData() as UseSalesDataReturn
+  } = useGetSalesData({
+    enabled: true,
+    initialFilter: { timeframe, year: new Date().getFullYear() }
+  }) as UseSalesDataReturn
 
   // Type assertion for the sales data with proper null checking
   const data = useMemo(() => rawData as SalesDataResponse, [rawData])
 
-  // Memoize the data fetching effect
+  // ✅ FIXED: Use setSalesFilter with proper dependencies
   useEffect(() => {
-    if (salesYear) {
-      try {
-        salesYear({ timeframe })
-      } catch (error) {
-        console.error("Error fetching sales data:", error)
-      }
+    if (setSalesFilter) {
+      setSalesFilter((prevFilter: any) => ({
+        ...prevFilter,
+        timeframe,
+        year: new Date().getFullYear(),
+      }));
     }
-  }, [timeframe, salesYear])
+  }, [timeframe]); // ✅ Remove setSalesFilter from dependencies
 
   // Transform data with proper typing and error handling - memoized
   const transformData = useCallback((data: SalesDataItem[] = []): TransformedDataItem[] => {
@@ -145,6 +147,11 @@ export default function SalesChart() {
     }
   }, [refetchSalesData]);
 
+  // ✅ ADDED: Timeframe change handler
+  const handleTimeframeChange = useCallback((newTimeframe: "3m" | "6m" | "12m") => {
+    setTimeframe(newTimeframe);
+  }, []);
+
   // Loading state
   if (isSalesLoading || isFetchingSales) {
     return (
@@ -163,6 +170,20 @@ export default function SalesChart() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-light text-gray-800">Sales Analytics</h1>
           <div className="flex items-center gap-2">
+            {/* ✅ ADDED: Timeframe selector */}
+            <div className="flex gap-1 mr-4">
+              {(['3m', '6m', '12m'] as const).map((tf) => (
+                <Button
+                  key={tf}
+                  variant={timeframe === tf ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleTimeframeChange(tf)}
+                  className="px-3 py-1 text-xs"
+                >
+                  {tf.toUpperCase()}
+                </Button>
+              ))}
+            </div>
             <Button
               onClick={exportChart}
               variant="ghost"

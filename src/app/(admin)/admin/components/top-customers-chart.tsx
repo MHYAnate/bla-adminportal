@@ -32,7 +32,7 @@ export function TopCustomersChart({ data }: iProps) {
     ...item,
     fill: customerColors[index] || "#94A3B8", // fallback color if more than 4 items
   }));
-  
+
 
   const chartConfig = coloredData.reduce((acc, item, index) => {
     acc[`customer_${index + 1}`] = {
@@ -72,12 +72,12 @@ export function TopCustomersChart({ data }: iProps) {
                   textAnchor="middle"
                   className="fill-[#111827] text-sm font-bold"
                 >
-                <tspan x={cx} y={cy}>
-  {Math.floor(totalSpent || 0)} {/* No decimals */}
-</tspan>
-<tspan x={cx} y={cy + 24} className="fill-[#A0AEC0] text-xs">
-  Total Sales
-</tspan>
+                  <tspan x={cx} y={cy}>
+                    {Math.floor(totalSpent || 0)} {/* No decimals */}
+                  </tspan>
+                  <tspan x={cx} y={cy + 24} className="fill-[#A0AEC0] text-xs">
+                    Total Sales
+                  </tspan>
 
                 </text>
               )}
@@ -94,11 +94,11 @@ export function TopCustomersChart({ data }: iProps) {
               style={{ backgroundColor: data.fill }}
             ></div>
             <p className="text-[#687588] text-xs font-medium me-auto">
-            {data.email.split('@')[0]} 
+              {data.email.split('@')[0]}
             </p>
             <h6 className="font-bold text-sm text-[#111827]">
-  {Math.floor(data.totalSpent)}
-</h6>
+              {Math.floor(data.totalSpent)}
+            </h6>
 
           </div>
         ))}

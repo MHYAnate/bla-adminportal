@@ -17,6 +17,7 @@ type FormErrors = {
   confirmPassword?: string;
 };
 
+
 interface InviteParams {
   email: string;
   userId: number;
@@ -26,8 +27,27 @@ interface InviteParams {
   expires?: number;
   noExpiry: boolean;
   isValid: boolean;
+  // ✅ Add the missing optional properties
+  roleId?: number;
+  invitationId?: string;
 }
 
+// Also update the state interface to match
+interface InviteParamsState {
+  email: string | null;
+  userId: number | null;
+  expires: number | null;
+  signature: string | null;
+  token: string | null;
+  timestamp: number | null;
+  noExpiry: boolean;
+  isLoading: boolean;
+  error: string | null;
+  isValid: boolean;
+  // ✅ Add the missing optional properties
+  roleId?: number | null;
+  invitationId?: string | null;
+}
 interface Props {
   inviteParams: InviteParams;
 }
@@ -105,25 +125,36 @@ export default function SubAdminRegistrationForm({ inviteParams }: Props) {
       return;
     }
 
+    // ✅ Validate invitation parameters before submission
+    if (!inviteParams.email || !inviteParams.userId || !inviteParams.token || !inviteParams.signature || !inviteParams.timestamp) {
+      toast.error("Invalid invitation parameters. Please use a valid invitation link.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      // ✅ Prepare secure registration payload
+      // ✅ FIXED: Prepare complete registration payload
       const registrationData = {
+        // Form data
         fullName: `${firstName.trim()} ${lastName.trim()}`,
         username: username.trim() || undefined,
         phone: phone.trim() || undefined,
         gender: gender || undefined,
         password: password,
-        // Include invitation verification data
+
+        // ✅ ALL required invitation verification data
         email: inviteParams.email,
         userId: inviteParams.userId,
         token: inviteParams.token,
         signature: inviteParams.signature,
         timestamp: inviteParams.timestamp,
-        // Optional expiry data
+
+        // ✅ Optional invitation data - include ALL available parameters
         ...(inviteParams.expires && { expires: inviteParams.expires }),
-        noExpiry: inviteParams.noExpiry
+        noExpiry: inviteParams.noExpiry || false,
+        ...(inviteParams.roleId && { roleId: inviteParams.roleId }),
+        ...(inviteParams.invitationId && { invitationId: inviteParams.invitationId })
       };
 
       console.log('🔐 Complete registration payload:', {
@@ -133,6 +164,17 @@ export default function SubAdminRegistrationForm({ inviteParams }: Props) {
         signature: '[HIDDEN]'
       });
 
+      console.log('🔐 Invitation params being sent:', {
+        email: inviteParams.email,
+        userId: inviteParams.userId,
+        hasToken: !!inviteParams.token,
+        hasSignature: !!inviteParams.signature,
+        timestamp: inviteParams.timestamp,
+        expires: inviteParams.expires,
+        noExpiry: inviteParams.noExpiry,
+        roleId: inviteParams.roleId,
+        invitationId: inviteParams.invitationId
+      });
 
       // ✅ The registration hook will handle URL parameter verification
       const result = await registerAdmin(registrationData);
@@ -166,6 +208,8 @@ export default function SubAdminRegistrationForm({ inviteParams }: Props) {
         toast.error("Username is already taken. Please choose a different one.");
       } else if (errorMessage.includes('Email mismatch')) {
         toast.error("There's a mismatch with your invitation. Please use the correct invitation link.");
+      } else if (errorMessage.includes('All fields are required')) {
+        toast.error("Missing required registration information. Please check your invitation link.");
       } else {
         toast.error(errorMessage);
       }
@@ -198,7 +242,7 @@ export default function SubAdminRegistrationForm({ inviteParams }: Props) {
             Your admin account has been successfully created and activated. You can now log in to access your dashboard.
           </p>
           <button
-            onClick={() => router.push('/admin/login')}
+            onClick={() => router.push('/login')}
             className="w-full bg-[#0F3D30] text-white py-3 px-4 rounded-md hover:bg-[#1b5d49] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F3D30] transition-colors"
           >
             Proceed to Login

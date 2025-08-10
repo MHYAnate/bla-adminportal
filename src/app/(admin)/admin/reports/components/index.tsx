@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Header from "@/app/(admin)/components/header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -108,14 +108,12 @@ const calculateSummaryStats = (customers: DataTableCustomer[]) => {
 };
 
 export default function Reports() {
+	// ✅ ALL HOOKS AT THE TOP
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [url, setUrl] = useState("");
 
 	// API hooks
 	const { rolesData: rawRolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
-	const rolesData = rawRolesData as RolesData;
-	const safeRolesData = Array.isArray(rolesData?.data) ? rolesData.data : [];
-
 	const {
 		isDashboardInfoLoading,
 		isFetchingDashboardInfo,
@@ -123,8 +121,44 @@ export default function Reports() {
 		refetchDashboardData,
 	} = useGetDashboardInfo({ enabled: true });
 
-	const data = rawData as DashboardData;
+	// ✅ Process data with useMemo
+	const rolesData = useMemo(() => rawRolesData as RolesData, [rawRolesData]);
+	const safeRolesData = useMemo(() => Array.isArray(rolesData?.data) ? rolesData.data : [], [rolesData]);
+	const data = useMemo(() => rawData as DashboardData, [rawData]);
 
+	// ✅ Calculate monthly performance stats with proper useMemo
+	const monthlyPerformanceStats = useMemo(() => {
+		const salesData = data?.charts?.salesPerformance || [];
+
+		if (!salesData || salesData.length === 0) {
+			return { totalSales: 0, totalOrders: 0, avgMonthlySales: 0 };
+		}
+
+		const totalSales = salesData.reduce((acc, curr) => acc + (curr.total_sales || 0), 0);
+		const totalOrders = salesData.reduce((acc, curr) => acc + (curr.orders_count || 0), 0);
+		const avgMonthlySales = totalSales / salesData.length;
+
+		return { totalSales, totalOrders, avgMonthlySales };
+	}, [data?.charts?.salesPerformance]);
+
+	// ✅ Process other data after hooks
+	const topCustomers: DataTableCustomer[] = useMemo(() =>
+		(data?.topPerformers?.customers || []).map((customer, index) => ({
+			userId: customer?.userId || customer?.id || index + 1,
+			email: customer?.email || "",
+			totalSpent: customer?.totalSpent || 0,
+			orderCount: customer?.orderCount || 0,
+			status: customer?.status || "active",
+		}))
+		, [data?.topPerformers?.customers]);
+
+	const newCustomers = useMemo(() => data?.recentActivity?.newCustomers || [], [data?.recentActivity?.newCustomers]);
+	const salesData = useMemo(() => data?.charts?.salesPerformance || [], [data?.charts?.salesPerformance]);
+
+	// Calculate summary statistics for top performers
+	const topPerformerStats = useMemo(() => calculateSummaryStats(topCustomers), [topCustomers]);
+
+	// ✅ NOW safe for early returns after all hooks
 	if (!data || isDashboardInfoLoading) {
 		return (
 			<div className="flex justify-center items-center h-96">
@@ -132,24 +166,6 @@ export default function Reports() {
 			</div>
 		);
 	}
-
-	// Transform and prepare data
-	const topCustomers: DataTableCustomer[] = (data?.topPerformers?.customers || []).map((customer, index) => ({
-		userId: customer?.userId || customer?.id || index + 1,
-		email: customer?.email || "",
-		totalSpent: customer?.totalSpent || 0,
-		orderCount: customer?.orderCount || 0,
-		status: customer?.status || "active",
-	}));
-
-	const newCustomers = data?.recentActivity?.newCustomers || [];
-	const salesData = data?.charts?.salesPerformance || [];
-
-	// Calculate summary statistics for top performers
-	const topPerformerStats = calculateSummaryStats(topCustomers);
-
-	// Calculate line graph total for comparison
-	const lineGraphTotal = salesData.reduce((acc, curr) => acc + curr.total_sales, 0);
 
 	// Main business metrics (overall stats)
 	const reportlist: IReportCard[] = [
@@ -214,18 +230,6 @@ export default function Reports() {
 		fill: ["#FE964A", "#2DD4BF", "#8C62FF", "#E03137"][index % 4],
 	}));
 
-	const monthlyPerformanceStats = React.useMemo(() => {
-		if (!salesData || salesData.length === 0) {
-			return { totalSales: 0, totalOrders: 0, avgMonthlySales: 0 };
-		}
-
-		const totalSales = salesData.reduce((acc, curr) => acc + (curr.total_sales || 0), 0);
-		const totalOrders = salesData.reduce((acc, curr) => acc + (curr.orders_count || 0), 0);
-		const avgMonthlySales = totalSales / salesData.length;
-
-		return { totalSales, totalOrders, avgMonthlySales };
-	}, [salesData]);
-
 	return (
 		<section>
 			{/* Header */}
@@ -282,56 +286,22 @@ export default function Reports() {
 				</div>
 			</div>
 
-			{/* Charts Section */}
+			Charts Section
 			<div className="mb-6">
 				<h3 className="text-lg font-semibold text-gray-800 mb-4">Performance Analytics</h3>
 				<div className="flex gap-4">
 					<div className="flex-1">
 						<MultiLineGraphComponent salesData={salesData} />
 						{/* CORRECTED Line Graph Summary - uses ONLY monthly data */}
-						<Card className="mt-4 bg-blue-50">
-							<CardContent className="p-4">
-								<h6 className="font-semibold text-blue-800 mb-3">Monthly Performance Summary</h6>
-								<div className="grid grid-cols-3 gap-4">
-									<div className="text-center">
-										<p className="text-sm text-blue-600">Period Total Sales</p>
-										<p className="text-xl font-bold text-blue-900">
-											₦{monthlyPerformanceStats.totalSales.toLocaleString()}
-										</p>
-										<p className="text-xs text-blue-600 mt-1">
-											({salesData.length} months)
-										</p>
-									</div>
-									<div className="text-center">
-										<p className="text-sm text-blue-600">Period Total Orders</p>
-										<p className="text-xl font-bold text-blue-900">
-											{monthlyPerformanceStats.totalOrders.toLocaleString()}
-										</p>
-									</div>
-									<div className="text-center">
-										<p className="text-sm text-blue-600">Monthly Average</p>
-										<p className="text-xl font-bold text-blue-900">
-											₦{monthlyPerformanceStats.avgMonthlySales.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-										</p>
-									</div>
-								</div>
 
-								{/* Add comparison note */}
-								<div className="mt-3 pt-3 border-t border-blue-200">
-									<p className="text-xs text-blue-700 text-center">
-										* This shows performance for the {salesData.length} month{salesData.length !== 1 ? 's' : ''} in the chart period
-									</p>
-								</div>
-							</CardContent>
-						</Card>
 					</div>
-					<div className="w-[339px]">
+					{/* <div className="w-[339px]">
 						<PieChartComponent
 							title="Top Customer Distribution"
 							value={topPerformerStats.customerCount}
 							chartData={chartData}
 						/>
-					</div>
+					</div> */}
 				</div>
 			</div>
 

@@ -90,31 +90,31 @@ const ManufacturerProductTable: React.FC<ManufacturerProductTableProps> = ({
                 </Badge>
             );
         },
-        action: (item: any) => (
-            <div className="flex gap-2">
-                <button
-                    onClick={() => handleView(item)}
-                    className="bg-green-600 p-2 rounded-lg hover:bg-green-700 transition-colors"
-                    title="View Product"
-                >
-                    <ViewIcon />
-                </button>
-                <button
-                    onClick={() => handleEdit(item)}
-                    className="bg-blue-600 p-2 rounded-lg hover:bg-blue-700 transition-colors"
-                    title="Edit Product"
-                >
-                    <EditIcon />
-                </button>
-                <button
-                    onClick={() => handleDelete(item)}
-                    className="bg-red-600 p-2 rounded-lg hover:bg-red-700 transition-colors"
-                    title="Delete Product"
-                >
-                    <DeleteIcon />
-                </button>
-            </div>
-        ),
+        // action: (item: any) => (
+        //     <div className="flex gap-2">
+        //         {/* <button
+        //             onClick={() => handleView(item)}
+        //             className="bg-green-600 p-2 rounded-lg hover:bg-green-700 transition-colors"
+        //             title="View Product"
+        //         >
+        //             <ViewIcon />
+        //         </button> */}
+        //         <button
+        //             onClick={() => handleEdit(item)}
+        //             className="bg-blue-600 p-2 rounded-lg hover:bg-blue-700 transition-colors"
+        //             title="Edit Product"
+        //         >
+        //             <EditIcon />
+        //         </button>
+        //         <button
+        //             onClick={() => handleDelete(item)}
+        //             className="bg-red-600 p-2 rounded-lg hover:bg-red-700 transition-colors"
+        //             title="Delete Product"
+        //         >
+        //             <DeleteIcon />
+        //         </button>
+        //     </div>
+        // ),
     };
 
     const columnOrder = [
@@ -124,7 +124,7 @@ const ManufacturerProductTable: React.FC<ManufacturerProductTableProps> = ({
         "stockPrice",
         "retailPrice",
         "status",
-        "action",
+        // "action",
     ];
 
     const columnLabels = {
@@ -134,21 +134,23 @@ const ManufacturerProductTable: React.FC<ManufacturerProductTableProps> = ({
         stockPrice: "Stock Price",
         retailPrice: "Retail Price",
         status: "Status",
-        action: "Action",
+        // action: "Action",
     };
 
     return (
-        <ProductTableComponent
-            tableData={data}
-            currentPage={currentPage}
-            onPageChange={onPageChange}
-            totalPages={totalPages}
-            cellRenderers={cellRenderers}
-            columnOrder={columnOrder}
-            columnLabels={columnLabels}
-            setFilter={setPageSize}
-            isLoading={loading}
-        />
+        <>
+            <ProductTableComponent
+                tableData={data}
+                currentPage={currentPage}
+                onPageChange={onPageChange}
+                totalPages={totalPages}
+                cellRenderers={cellRenderers}
+                columnOrder={columnOrder}
+                columnLabels={columnLabels}
+                setFilter={setPageSize}
+                isLoading={loading}
+            />
+        </>
     );
 };
 

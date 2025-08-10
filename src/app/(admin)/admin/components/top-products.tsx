@@ -92,7 +92,6 @@ export function TopProductsChart({ data }: iProps) {
 							style={{ backgroundColor: data.fill }}
 						></div>
 						<p className="text-[#687588] text-xs font-medium me-auto">
-							{/* {formatString(data?.name, 15) || ""} */}
 							{data?.name || ""}
 						</p>
 						<h6 className="font-bold text-sm text-[#111827]">{data?.sales}</h6>

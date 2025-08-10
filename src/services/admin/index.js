@@ -1,336 +1,60 @@
-"use client"
+// services/admin/unified-admin-hooks.js
+"use client";
 
+import React, { useState, useEffect } from "react";
 import { routes } from "../api-routes";
 import { ErrorHandler } from "../errorHandler";
 import useFetchItem from "../useFetchItem";
 import httpService from "../httpService";
-import useMutateItem from "../useMutateItem";
-import { useState, useEffect } from "react";
-import { toast } from "sonner"; // ✅ Import toast
+import { toast } from "sonner";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-// useGetAdminInfo.js
-export const useGetAdminInfo = (adminId) => {
-  const [adminData, setAdminData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+// =================== UTILITY FUNCTIONS ===================
 
-  const fetchAdminInfo = async () => {
-    setIsLoading(true);
-    try {
-      const response = await httpService.getData(routes.getAdminInfo(adminId));
-      setAdminData(response.data);
+const extractResponseData = (response) => {
+  try {
+    if (response?.data?.success && response?.data?.data) {
+      return response.data.data;
+    }
+    if (response?.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+      if (response.data.success !== undefined) {
+        return response.data.data || response.data;
+      }
       return response.data;
-    } catch (err) {
-      setError(err);
-      console.error("Error fetching admin info:", ErrorHandler(err));
-      return null;
-    } finally {
-      setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (adminId) {
-      fetchAdminInfo();
+    if (response?.success !== undefined) {
+      return response.data || response;
     }
-  }, [adminId]);
-
-  const refetchAdminInfo = () => {
-    return fetchAdminInfo();
-  };
-
-  return {
-    adminData,
-    isLoading,
-    error: ErrorHandler(error),
-    refetchAdminInfo
-  };
+    return response;
+  } catch (error) {
+    console.error('Error extracting response data:', error);
+    return response;
+  }
 };
 
+const extractMessage = (response, defaultMessage = '') => {
+  if (response?.data?.message) return response.data.message;
+  if (response?.message) return response.message;
+  return defaultMessage;
+};
 
+// =================== ADMIN INVITATION SYSTEM ===================
 
-// useGetAdminRoles.js
-export const useGetAdminRoles = ({ enabled = true } = {}) => {
-  const { 
-    data, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useFetchItem({
-    queryKey: ["admin-roles"],
-    queryFn: () => httpService.getData(routes.adminRoles()),
+export const useGetInvitableRoles = ({ enabled = true } = {}) => {
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ["invitable-roles"],
+    queryFn: () => httpService.getData(routes.getInvitableRoles()),
     enabled,
     retry: 2
   });
 
   return {
-    rolesData: data?.data || [],
+    rolesData: extractResponseData(data) || [],
     isRolesLoading: isLoading,
     rolesError: ErrorHandler(error),
     refetchRoles: refetch
   };
 };
-
-
-export const useGetAdminPermissions = ({ enabled = true }) => {
-  const { 
-    isLoading, 
-    error, 
-    data, 
-    refetch, 
-    isFetching 
-  } = useFetchItem({
-    queryKey: ["admin-permissions"],
-    queryFn: () => {
-      return httpService.getData(routes.adminPermissions());
-    },
-    enabled,
-    retry: 2
-  });
-
-  return {
-    isFetchingPermissions: isFetching,
-    isPermissionsLoading: isLoading,
-    permissionsData: data?.data?.data || data?.data || [], // Handle nested data structure
-    permissionsError: ErrorHandler(error),
-    refetchPermissions: refetch
-  };
-};
-
-// ✅ FIXED: Single, clean useCreateAdminRole function
-export const useCreateAdminRole = (handleSuccess) => {
-  const { data, error, isPending, mutateAsync } = useMutateItem({
-    mutationFn: (payload) =>
-      httpService.postData(payload, routes.createAdminRole()),
-    queryKeys: ["create-admin-role"],
-    onSuccess: (response) => {
-      const resData = response?.data || {};
-      if (handleSuccess) handleSuccess(resData);
-      toast.success(resData?.message || "Role created successfully");
-    },
-    onError: (err) => {
-      const errorMessage = err?.response?.data?.error || "Failed to create role";
-      toast.error(errorMessage);
-    },
-  });
-
-  return {
-    createRoleData: data,
-    createRoleError: ErrorHandler(error) || "An error occurred",
-    createRoleIsLoading: isPending,
-    createRolePayload: async (payload) => {
-      await mutateAsync(payload);
-    },
-  };
-};
-
-export const useGetCurrentAdmin = () => {
-  const [currentAdmin, setCurrentAdmin] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const getCurrentAdmin = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      console.log("🔍 Fetching current admin from:", routes.getCurrentAdmin());
-      const response = await httpService.getData(routes.getCurrentAdmin());
-      
-      console.log("📡 Raw API Response:", response);
-      
-      if (!response || !response.data) {
-        throw new Error("No admin data received from server");
-      }
-      
-      // Ensure roles exists even if empty
-      const adminData = {
-        ...response.data,
-        roles: response.data.roles || []
-      };
-      
-      console.log("✅ Current admin fetched successfully:", {
-        id: adminData.id,
-        email: adminData.email,
-        roles: adminData.roles,
-        roleCount: adminData.roles?.length,
-        fullData: adminData
-      });
-      
-      setCurrentAdmin(adminData);
-      return adminData;
-    } catch (error) {
-      console.error("❌ Error fetching current admin:", error);
-      const errorMessage = ErrorHandler(error);
-      setError(errorMessage);
-      
-      // If it's a 401/403, the user might not be logged in or not an admin
-      if (error.response?.status === 401) {
-        console.log("🚫 Unauthorized - user not logged in");
-      } else if (error.response?.status === 403) {
-        console.log("🚫 Forbidden - user not an admin");
-      } else if (error.response?.status === 404) {
-        console.log("🚫 Not Found - endpoint doesn't exist");
-      }
-      
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Auto-fetch on mount
-  useEffect(() => {
-    getCurrentAdmin();
-  }, []);
-
-  return {
-    currentAdmin,
-    isLoading,
-    error,
-    getCurrentAdmin,
-    refetch: getCurrentAdmin,
-  };
-};
-
-export function useAdminInviteParams() {
-  const [params, setParams] = useState({
-    email: null,
-    userId: null,
-    expires: null,
-    signature: null,
-    isLoading: true,
-    error: null
-  });
-
-  useEffect(() => {
-    // Simulate next.js useSearchParams
-    const searchParams = new URLSearchParams(window.location.search);
-    const email = searchParams.get('email');
-    const userId = searchParams.get('userId');
-    const expires = searchParams.get('expires');
-    const signature = searchParams.get('signature');
-
-    // Validate the invite parameters
-    let error = null;
-    
-    if (!email || !userId || !expires || !signature) {
-      error = 'Invalid invitation link. Missing required parameters.';
-    } else {
-      const expiryTime = parseInt(expires);
-      if (isNaN(expiryTime) || Date.now() > expiryTime) {
-        error = 'This invitation link has expired. Please request a new one.';
-      }
-    }
-
-    setParams({
-      email,
-      userId,
-      expires,
-      signature,
-      isLoading: false,
-      error
-    });
-  }, []);
-
-  return params;
-}
-
-export function useRegistrationForm(props) {
-  const { email, userId, expires, signature } = props;
-  
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    username: email ? email.split('@')[0] : '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    gender: '',
-    role: 'admin'
-  });
-  
-  const [formErrors, setFormErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [isSuccess, setIsSuccess] = useState(false);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Clear errors when field is edited
-    if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const validateForm = () => {
-    const errors = {};
-    
-    if (!formData.firstName) errors.firstName = 'First name is required';
-    if (!formData.lastName) errors.lastName = 'Last name is required';
-    if (!formData.phone) errors.phone = 'Phone number is required';
-    if (!formData.username) errors.username = 'Username is required';
-    
-    if (!formData.password) {
-      errors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    }
-    
-    if (!formData.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
-    
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitError(null);
-    
-    if (!validateForm() || !email || !userId || !expires || !signature) {
-      return;
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      const registrationData = {
-        password: formData.password,
-        fullName: `${formData.firstName} ${formData.lastName}`,
-        username: formData.username,
-        gender: formData.gender || undefined,
-        phone: formData.phone,
-        role: formData.role,
-        email: email,
-        userId: userId,
-        expires: expires,
-        signature: signature
-      };
-
-      await registerAdmin(registrationData);
-      setIsSuccess(true);
-    } catch (error) {
-      setSubmitError(error.message || 'Failed to complete registration. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return {
-    formData,
-    formErrors,
-    handleInputChange,
-    handleSubmit,
-    isSubmitting,
-    submitError,
-    isSuccess
-  };
-}
 
 export const useInviteAdmin = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -342,13 +66,28 @@ export const useInviteAdmin = (onSuccess) => {
     setError(null);
     
     try {
+      if (!payload.email || !payload.roleId) {
+        throw new Error("Email and role ID are required");
+      }
+
+      if (typeof payload.roleId !== 'number' || payload.roleId <= 0) {
+        throw new Error("Invalid role ID provided");
+      }
+
       const response = await httpService.postData(payload, routes.inviteAdmin());
-      setData(response.data);
-      if (onSuccess) onSuccess(response.data);
-      return response.data;
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Admin invitation sent successfully');
+      
+      setData(extractedData);
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
+      
     } catch (error) {
-      setError(error);
-      return error;
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
     } finally {
       setIsLoading(false);
     }
@@ -356,198 +95,145 @@ export const useInviteAdmin = (onSuccess) => {
 
   return {
     inviteAdminIsLoading: isLoading,
-    inviteAdminError: ErrorHandler(error),
+    inviteAdminError: error,
     inviteAdminData: data,
     inviteAdminPayload
   };
 };
 
-export function useRegisterAdmin({ onSuccess } = {}) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
-
-  const registerAdminPayload = async (payload) => {
-    const {
-      email,
-      userId,
-      expires,
-      signature,
-      token,
-      timestamp,
-      noExpiry,
-      firstName,
-      lastName,
-      username,
-      phone,
-      gender,
-      role,
-      password,
-    } = payload;
-
-    console.log('Registration payload received:', {
-      ...payload,
-      password: '[REDACTED]',
-      token: token ? '[PRESENT]' : '[MISSING]'
-    });
-
-    // Client-side validation
-    if (
-      !email || !userId || !expires || !signature ||
-      !firstName || !lastName || !username || !phone ||
-      !gender || !role || !password
-    ) {
-      const missingFields = [];
-      if (!email) missingFields.push('email');
-      if (!userId) missingFields.push('userId');
-      if (!signature) missingFields.push('signature');
-      if (!token) missingFields.push('token');
-      if (!timestamp) missingFields.push('timestamp');
-      if (!firstName) missingFields.push('firstName');
-      if (!lastName) missingFields.push('lastName');
-      if (!username) missingFields.push('username');
-      if (!phone) missingFields.push('phone');
-      if (!gender) missingFields.push('gender');
-      if (!role) missingFields.push('role');
-      if (!password) missingFields.push('password');
-      
-      const errorMsg = `Missing required fields: ${missingFields.join(', ')}`;
-      setError(errorMsg);
-      return Promise.reject(new Error(errorMsg));
-    }
-
-    // Check expiry if not noExpiry
-    if (!noExpiry && expires) {
-      const expiryTime = parseInt(expires);
-      if (isNaN(expiryTime) || Date.now() > expiryTime) {
-        const errorMsg = 'Invitation has expired';
-        setError(errorMsg);
-        return Promise.reject(new Error(errorMsg));
-      }
-    }
-
-    setLoading(true);
-    setError(null);
-
-    // Build signed-url query string
-    const query = new URLSearchParams({ 
-      email, userId, expires, signature, token, timestamp, noExpiry
-    }).toString();
-    const endpoint = `admin/manage/register?${query}`;
-
-    try {
-      const response = await httpService.postData({
-        fullName: `${firstName} ${lastName}`,
-        username,
-        phone,
-        gender,
-        role,
-        password,
-      }, endpoint);
-
-      if (!response.success) {
-        throw new Error(response.error || 'Registration failed');
-      }
-
-      setData(response.data);
-      if (onSuccess) onSuccess(response.data);
-      return response.data;
-    } catch (err) {
-      setError(err.message || 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { registerAdminPayload, loading, error, data };
-}
-
-export const useAdminRegistration = (onSuccess) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
-
-  const registerAdmin = async (payload) => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      // The httpService will now properly handle the invitation params
-      const response = await httpService.postData(
-        payload, 
-        'admin/manage/register'
-      );
-      
-      setData(response);
-      if (onSuccess) onSuccess(response);
-      return response;
-    } catch (error) {
-      const errorMsg = error?.response?.data?.error || 
-                      error?.message || 
-                      "Registration failed";
-      setError(errorMsg);
-      throw errorMsg;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+export const useGetPendingInvitations = ({ enabled = true, filter = {} }) => {
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ["pending-invitations", filter],
+    queryFn: (params) => httpService.getData(routes.getPendingInvitations(params)),
+    enabled,
+    retry: 2,
+    initialFilter: filter,
+    isPaginated: true,
+  });
 
   return {
-    registerAdmin,
-    isLoading,
-    error,
-    data
+    invitationsData: extractResponseData(data) || [],
+    totalInvitations: data?.pagination?.total || 0,
+    isInvitationsLoading: isLoading,
+    invitationsError: ErrorHandler(error),
+    refetchInvitations: refetch
   };
 };
 
-export const useCreateAdmin = (onSuccess = () => {}) => {
+export const useResendAdminInvite = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
 
-  const createAdmin = async (payload) => {
+  const resendInvitePayload = async (invitationId) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await httpService.postData(payload, routes.createAdmin());
-      setData(response.data);
-      onSuccess(response);
-      return response;
+      const response = await httpService.postData({}, routes.resendAdminInvite(invitationId));
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Invitation resent successfully');
+      
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
     } catch (error) {
-      setError(error);
-      throw ErrorHandler(error);
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    createAdmin,
-    isLoading,
-    error: ErrorHandler(error),
-    data
+  return { resendInviteIsLoading: isLoading, resendInviteError: error, resendInvitePayload };
+};
+
+export const useCancelInvitation = (onSuccess) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const cancelInvitationPayload = async (invitationId) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await httpService.deleteData(routes.cancelInvitation(invitationId));
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Invitation cancelled successfully');
+      
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
+    } catch (error) {
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  return { cancelInvitationIsLoading: isLoading, cancelInvitationError: error, cancelInvitationPayload };
+};
+
+// =================== ADMIN MANAGEMENT ===================
+
+export const useGetCurrentAdmin = () => {
+  const [currentAdmin, setCurrentAdmin] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const getCurrentAdmin = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await httpService.getData(routes.getCurrentAdmin());
+      const adminData = extractResponseData(response);
+      
+      if (!adminData) {
+        throw new Error("No admin data received from server");
+      }
+      
+      const enhancedAdminData = {
+        ...adminData,
+        roles: adminData.roles || [],
+        isSuperAdmin: adminData.roles?.some(
+          role => role.role?.name === 'SUPER_ADMIN' || role.name === 'SUPER_ADMIN'
+        ) || false,
+        canInviteAdmins: adminData.roles?.some(
+          role => role.role?.name === 'SUPER_ADMIN' || 
+                  role.name === 'SUPER_ADMIN' ||
+                  role.role?.permissions?.some(p => p.name === 'admin_management')
+        ) || false,
+      };
+      
+      setCurrentAdmin(enhancedAdminData);
+      return enhancedAdminData;
+    } catch (error) {
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getCurrentAdmin();
+  }, []);
+
+  return { currentAdmin, isLoading, error, getCurrentAdmin, refetch: getCurrentAdmin };
 };
 
 export const useGetAdmins = ({ enabled = true, filter = {} }) => {
   const { 
-    isFetched, 
-    isLoading, 
-    error, 
-    data, 
-    refetch, 
-    isFetching, 
-    setFilter,
-    pageNumber,
-    pageSize,
-    setPageNumber,
-    setPageSize
+    isFetched, isLoading, error, data, refetch, isFetching, 
+    setFilter, pageNumber, pageSize, setPageNumber, setPageSize
   } = useFetchItem({
     queryKey: ["admins", filter],
-    queryFn: (params) => {
-      return httpService.getData(routes.admins(params));
-    },
+    queryFn: (params) => httpService.getData(routes.admins(params)),
     enabled,
     retry: 2,
     initialFilter: filter,
@@ -556,11 +242,23 @@ export const useGetAdmins = ({ enabled = true, filter = {} }) => {
     initialPageSize: 10
   });
 
+  const transformedAdmins = React.useMemo(() => {
+    const extractedData = extractResponseData(data);
+    if (!extractedData || !Array.isArray(extractedData)) return [];
+    
+    return extractedData.map((admin) => ({
+      ...admin,
+      roleNames: admin.roles?.map(ur => ur.role?.name || ur.name).filter(Boolean) || [],
+      totalPermissions: admin.permissionCount || 0,
+      isRoleBased: true,
+    }));
+  }, [data]);
+
   return {
     isFetchingAdmins: isFetching,
     isAdminsLoading: isLoading,
-    adminsData: data?.data || [], // ✅ Fixed: removed extra .data
-    totalAdmins: data?.pagination?.total || 0, // ✅ Fixed: direct access to pagination
+    adminsData: transformedAdmins,
+    totalAdmins: data?.pagination?.total || 0,
     totalPages: data?.pagination?.totalPages || 0,
     currentPage: data?.pagination?.currentPage || 1,
     itemsPerPage: data?.pagination?.itemsPerPage || 10,
@@ -568,11 +266,7 @@ export const useGetAdmins = ({ enabled = true, filter = {} }) => {
     hasPreviousPage: data?.pagination?.hasPreviousPage || false,
     adminsError: ErrorHandler(error),
     refetchAdmins: refetch,
-    pageNumber,
-    pageSize,
-    setPageNumber,
-    setPageSize,
-    setFilter
+    pageNumber, pageSize, setPageNumber, setPageSize, setFilter
   };
 };
 
@@ -587,44 +281,79 @@ export const useDeleteAdmin = (onSuccess) => {
 
     try {
       const response = await httpService.deleteData(routes.deleteAdmin(adminId));
-      setData(response.data);
-      if (onSuccess) onSuccess(response.data);
-      return response.data;
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Admin deleted successfully');
+      
+      setData(extractedData);
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
     } catch (error) {
-      setError(error);
-      throw ErrorHandler(error);
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    deleteAdminIsLoading: isLoading,
-    deleteAdminError: ErrorHandler(error),
-    deleteAdminData: data,
-    deleteAdminPayload,
-  };
+  return { deleteAdminIsLoading: isLoading, deleteAdminError: error, deleteAdminData: data, deleteAdminPayload };
 };
 
-// In your services/admin/index.js - Fix this hook
-export const useUpdateAdminRoles = (onSuccess) => {
+export const useAdminRegistration = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
 
-  const updateRolesPayload = async (adminId, roleNames) => {
+  const registerAdmin = async (payload) => {
+    console.log('🔐 Admin registration hook called with:', {
+      ...payload,
+      password: '[HIDDEN]',
+      token: '[HIDDEN]',
+      signature: '[HIDDEN]'
+    });
+
     setIsLoading(true);
     setError(null);
+
     try {
-      const response = await httpService.putData(
-        { roleNames },
-        routes.updateAdminRoles(adminId)
-      );
+      // ✅ FIXED: Transform the payload to match backend expectations
+      const backendPayload = {
+        // Required fields that backend expects
+        email: payload.email,
+        userId: payload.userId,
+        token: payload.token,
+        signature: payload.signature,
+        password: payload.password,
+        name: payload.fullName, // ✅ Backend expects 'name', not 'fullName'
+        
+        // Additional fields for URL verification
+        timestamp: payload.timestamp,
+        ...(payload.expires && { expires: payload.expires }),
+        ...(payload.noExpiry !== undefined && { noExpiry: payload.noExpiry }),
+        ...(payload.roleId && { roleId: payload.roleId }),
+        ...(payload.invitationId && { invitationId: payload.invitationId })
+      };
+
+      console.log('🔐 Sending to backend:', {
+        ...backendPayload,
+        password: '[HIDDEN]',
+        token: '[HIDDEN]',
+        signature: '[HIDDEN]'
+      });
+
+      const response = await httpService.postData(backendPayload, routes.registerInvitedAdmin());
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Admin registration completed successfully');
       
-      toast.success("Roles updated successfully");
-      if (onSuccess) onSuccess(response.data);
-      return response.data;
-    } catch (err) {
-      const errorMsg = err.response?.data?.error || "Failed to update roles";
+      setData(extractedData);
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
+    } catch (error) {
+      console.error('❌ Admin registration hook error:', error);
+      const errorMsg = ErrorHandler(error);
       setError(errorMsg);
       toast.error(errorMsg);
       throw errorMsg;
@@ -633,345 +362,446 @@ export const useUpdateAdminRoles = (onSuccess) => {
     }
   };
 
+  return { registerAdmin, isLoading, error, data };
+};
+
+// =================== ROLE MANAGEMENT ===================
+
+export const useGetAdminRoles = ({ enabled = true } = {}) => {
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ["admin-roles"],
+    queryFn: () => httpService.getData(routes.adminRoles()),
+    enabled,
+    retry: 2
+  });
+
   return {
-    updateRolesIsLoading: isLoading,
-    updateRolesError: error,
-    updateRolesPayload,
+    rolesData: extractResponseData(data) || [],
+    isRolesLoading: isLoading,
+    rolesError: ErrorHandler(error),
+    refetchRoles: refetch
   };
 };
 
-export const useUpdateAdminPermissions = (onSuccess) => {
+export const useUpdateAdminRoles = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
 
-  const updatePermissionsPayload = async (adminId, payload) => {
+  const updateRolesPayload = async (adminId, roleNames) => {
     setIsLoading(true);
     setError(null);
-
     try {
-      console.log('Updating admin permissions:', { adminId, payload });
+      const response = await httpService.putData({ roleNames }, routes.updateAdminRoles(adminId));
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Roles updated successfully');
       
-      const response = await httpService.putData(
-        payload,
-        routes.updateAdminPermissions(adminId)
-      );
-      
-      setData(response.data);
-      if (onSuccess) {
-        onSuccess(response.data);
-      }
-      return response.data;
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
     } catch (err) {
-      const handledError = ErrorHandler(err);
-      setError(handledError);
-      console.error('Error updating admin permissions:', handledError);
-      return Promise.reject(handledError);
+      const errorMsg = ErrorHandler(err);
+      setError(errorMsg);
+      toast.error(errorMsg);
+      throw errorMsg;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    updatePermissionsIsLoading: isLoading,
-    updatePermissionsError: error,
-    updatePermissionsData: data,
-    updatePermissionsPayload,
+  return { updateRolesIsLoading: isLoading, updateRolesError: error, updateRolesPayload };
+};
+
+export const useCreateRole = () => {
+  const queryClient = useQueryClient();
+
+  const {
+    mutateAsync: createRoleMutation,
+    isPending: isCreating,
+    error,
+  } = useMutation({
+    mutationFn: async (roleData) => {
+      const response = await httpService.postData(roleData, routes.createRole());
+      return response;
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-permissions"] });
+      
+      const message = extractMessage(response, "Role created successfully");
+      toast.success(message);
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || "Failed to create role";
+      toast.error(errorMessage);
+    },
+  });
+
+  const createRole = async (roleData) => {
+    try {
+      const response = await createRoleMutation(roleData);
+      return extractResponseData(response);
+    } catch (error) {
+      throw error;
+    }
   };
+
+  return { createRole, isCreating, createRoleError: ErrorHandler(error) };
+};
+
+export const useUpdateRole = (onSuccess) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const updateRolePayload = async (roleId, payload) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await httpService.putData(payload, routes.updateRole(roleId));
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Role updated successfully');
+      
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
+    } catch (error) {
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { updateRoleIsLoading: isLoading, updateRoleError: error, updateRolePayload };
+};
+
+export const useDeleteRole = (onSuccess) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const deleteRolePayload = async (roleId) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await httpService.deleteData(routes.deleteRole(roleId));
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Role deleted successfully');
+      
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
+    } catch (error) {
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return { deleteRoleIsLoading: isLoading, deleteRoleError: error, deleteRolePayload };
+};
+
+export const useGetRolePermissions = (roleId, { enabled = true } = {}) => {
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ["role-permissions", roleId],
+    queryFn: () => httpService.getData(routes.getRolePermissions(roleId)),
+    enabled: enabled && !!roleId,
+    retry: 2
+  });
+
+  return {
+    rolePermissionsData: extractResponseData(data) || [],
+    isRolePermissionsLoading: isLoading,
+    rolePermissionsError: ErrorHandler(error),
+    refetchRolePermissions: refetch
+  };
+};
+
+export const useToggleRolePermission = () => {
+  const queryClient = useQueryClient();
+
+  const {
+    mutateAsync: toggleRolePermissionMutation,
+    isPending: isToggling,
+    error,
+  } = useMutation({
+    mutationFn: async ({ roleId, permissionId }) => {
+      const response = await httpService.putData({}, routes.toggleRolePermission(roleId, permissionId));
+      return response;
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-roles"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-permissions"] });
+      
+      const message = extractMessage(response, "Role permission updated successfully");
+      toast.success(message);
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || "Failed to toggle role permission";
+      toast.error(errorMessage);
+    },
+  });
+
+  const toggleRolePermission = async (roleId, permissionId) => {
+    try {
+      const response = await toggleRolePermissionMutation({ roleId, permissionId });
+      return extractResponseData(response);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return { toggleRolePermission, isToggling, toggleRolePermissionError: ErrorHandler(error) };
+};
+
+// =================== PERMISSION MANAGEMENT ===================
+
+export const useGetAdminPermissions = ({ enabled = true } = {}) => {
+  const { data, isLoading, error, refetch } = useFetchItem({
+    queryKey: ["admin-permissions"],
+    queryFn: () => httpService.getData(routes.adminPermissions()),
+    enabled,
+    retry: 2
+  });
+
+  return {
+    permissionsData: extractResponseData(data) || [],
+    isPermissionsLoading: isLoading,
+    permissionsError: ErrorHandler(error),
+    refetchPermissions: refetch
+  };
+};
+
+export const useGetSpecificAdminPermissions = (adminId, { enabled = true } = {}) => {
+  const { data, isLoading, error, refetch, isFetching } = useFetchItem({
+    queryKey: ["admin-specific-permissions", adminId],
+    queryFn: () => httpService.getData(routes.getSpecificAdminPermissions(adminId)),
+    enabled: enabled && !!adminId,
+    retry: 2,
+    staleTime: 5 * 60 * 1000
+  });
+
+  const specificPermissionsData = React.useMemo(() => {
+    return extractResponseData(data);
+  }, [data]);
+
+  return {
+    isFetchingSpecificPermissions: isFetching,
+    isSpecificPermissionsLoading: isLoading,
+    specificPermissionsData: specificPermissionsData || {},
+    specificPermissionsError: ErrorHandler(error),
+    refetchSpecificPermissions: refetch
+  };
+};
+
+export const useUpdateAdminPermissions = () => {
+  const queryClient = useQueryClient();
+
+  const {
+    mutateAsync: updatePermissionsMutation,
+    isPending: isUpdating,
+    error,
+  } = useMutation({
+    mutationFn: async ({ adminId, payload }) => {
+      const response = await httpService.putData(payload, routes.updateAdminPermissions(adminId));
+      return response;
+    },
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-permissions"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-specific-permissions", variables.adminId] });
+      queryClient.invalidateQueries({ queryKey: ["admin-info", variables.adminId] });
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
+      
+      const message = extractMessage(response, "Permissions updated successfully");
+      toast.success(message);
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.message || "Failed to update permissions";
+      toast.error(errorMessage);
+    },
+  });
+
+  const updatePermissions = async (adminId, payload) => {
+    try {
+      const response = await updatePermissionsMutation({ adminId, payload });
+      return extractResponseData(response);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return { updatePermissions, isUpdating, updatePermissionsError: ErrorHandler(error) };
 };
 
 export const useUpdateAdminRolesPermissions = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
 
   const updateRolesPermissionsPayload = async (adminId, roleIds) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log('Updating admin roles for permissions:', { adminId, roleIds });
+      const response = await httpService.putData({ roleIds }, routes.updateAdminRolesPermissions(adminId));
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Admin roles updated successfully');
       
-      const response = await httpService.putData(
-        { roleIds },
-        routes.updateAdminRolesPermissions(adminId)
-      );
-      
-      setData(response.data);
-      if (onSuccess) {
-        onSuccess(response.data);
-      }
-      return response.data;
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
     } catch (err) {
-      const handledError = ErrorHandler(err);
-      setError(handledError);
-      console.error('Error updating admin roles/permissions:', handledError);
-      return Promise.reject(handledError);
+      const errorMessage = ErrorHandler(err);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    updateRolesPermissionsIsLoading: isLoading,
-    updateRolesPermissionsError: error,
-    updateRolesPermissionsData: data,
-    updateRolesPermissionsPayload,
-  };
-};
+  return { updateRolesPermissionsIsLoading: isLoading, updateRolesPermissionsError: error, updateRolesPermissionsPayload };
+}; 
 
+export const useToggleAdminPermission = (adminId) => {
+  const queryClient = useQueryClient();
 
-
-// ✅ ADD: Helper function to manually set token for testing
-export const setTestToken = (token) => {
-  localStorage.setItem('token', token);
-  console.log('🧪 Token set for testing:', !!token);
-};
-
-// ✅ ADD: Helper function to check current auth state
-export const checkAuthState = () => {
-  const authData = {
-    localStorage: {
-      token: localStorage.getItem('token'),
-      authToken: localStorage.getItem('authToken'), 
-      userEmail: localStorage.getItem('userEmail'),
-      userId: localStorage.getItem('userId')
+  return useMutation({
+    mutationFn: async (permissionId) => {
+      const response = await httpService.putData({ permissionId }, routes.updateAdminPermissions(adminId));
+      return extractResponseData(response);
     },
-    sessionStorage: {
-      token: sessionStorage.getItem('token'),
-      authToken: sessionStorage.getItem('authToken'),
-      userEmail: sessionStorage.getItem('userEmail'),
-      userId: sessionStorage.getItem('userId')
+    onSuccess: (data) => {
+      const message = extractMessage(data, "Permission updated successfully");
+      toast.success(message);
+      
+      queryClient.invalidateQueries({ queryKey: ['admin-permissions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-specific-permissions', adminId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-info', adminId] });
+      queryClient.invalidateQueries({ queryKey: ['admins'] });
+    },
+    onError: (error) => {
+      const errorMessage = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Failed to update permission';
+      toast.error(errorMessage);
     }
-  };
-  
-  console.log('🔍 Current auth state:', authData);
-  return authData;
+  });
 };
 
-export const useCreateRole = (onSuccess) => {
+export const useCreatePermission = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
 
-  const createRolePayload = async (roleData) => {
+  const createPermissionPayload = async (payload) => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      console.log('Creating new role:', roleData);
+      const response = await httpService.postData(payload, routes.createPermission());
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Permission created successfully');
       
-      const response = await httpService.postData(
-        roleData,
-        routes.createRole()
-      );
-      
-      setData(response.data);
-      if (onSuccess) {
-        onSuccess(response.data);
-      }
-      return response.data;
-    } catch (err) {
-      const handledError = ErrorHandler(err);
-      setError(handledError);
-      console.error('Error creating role:', handledError);
-      return Promise.reject(handledError);
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
+    } catch (error) {
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    createRoleIsLoading: isLoading,
-    createRoleError: error,
-    createRoleData: data,
-    createRolePayload,
-  };
+  return { createPermissionIsLoading: isLoading, createPermissionError: error, createPermissionPayload };
 };
 
-export const useGetSpecificAdminPermissions = (adminId, enabled = true) => {
-  const { 
-    isLoading, 
-    error, 
-    data, 
-    refetch, 
-    isFetching 
-  } = useFetchItem({
-    queryKey: ["admin-specific-permissions", adminId],
-    queryFn: () => {
-      return httpService.getData(routes.getSpecificAdminPermissions(adminId));
-    },
-    enabled: enabled && !!adminId,
-    retry: 2
-  });
-
-  return {
-    isFetchingSpecificPermissions: isFetching,
-    isSpecificPermissionsLoading: isLoading,
-    specificPermissionsData: data?.data || null,
-    specificPermissionsError: ErrorHandler(error),
-    refetchSpecificPermissions: refetch
-  };
-};
-
-export const useToggleRolePermission = (onSuccess) => {
+export const useUpdatePermission = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [data, setData] = useState(null);
 
-  const togglePermissionPayload = async (roleId, permissionId) => {
+  const updatePermissionPayload = async (permissionId, payload) => {
     setIsLoading(true);
     setError(null);
-
+    
     try {
-      console.log('Toggling role permission:', { roleId, permissionId });
+      const response = await httpService.putData(payload, routes.updatePermission(permissionId));
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Permission updated successfully');
       
-      const response = await httpService.putData(
-        {},
-        routes.toggleRolePermission(roleId, permissionId)
-      );
-      
-      setData(response.data);
-      if (onSuccess) {
-        onSuccess(response.data);
-      }
-      return response.data;
-    } catch (err) {
-      const handledError = ErrorHandler(err);
-      setError(handledError);
-      console.error('Error toggling role permission:', handledError);
-      return Promise.reject(handledError);
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
+    } catch (error) {
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
     } finally {
       setIsLoading(false);
     }
   };
 
-  return {
-    togglePermissionIsLoading: isLoading,
-    togglePermissionError: error,
-    togglePermissionData: data,
-    togglePermissionPayload,
-  };
+  return { updatePermissionIsLoading: isLoading, updatePermissionError: error, updatePermissionPayload };
 };
 
-// export const useGetAdminInfo = (adminId) => {
-//   const [adminData, setAdminData] = useState(null);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState(null);
+export const useDeletePermission = (onSuccess) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-//   const { adminsData, isAdminsLoading, refetchAdmins } = useGetAdmins({ enabled: true });
+  const deletePermissionPayload = async (permissionId) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await httpService.deleteData(routes.deletePermission(permissionId));
+      const extractedData = extractResponseData(response);
+      const message = extractMessage(response, 'Permission deleted successfully');
+      
+      toast.success(message);
+      if (onSuccess) onSuccess(extractedData);
+      return extractedData;
+    } catch (error) {
+      const errorMessage = ErrorHandler(error);
+      setError(errorMessage);
+      toast.error(errorMessage);
+      throw errorMessage;
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-//   useEffect(() => {
-//     if (!isAdminsLoading && adminsData) {
-//       const admin = adminsData.find((admin) => admin.id.toString() === adminId.toString());
-//       setAdminData(admin || null);
-//       setIsLoading(false);
-//       if (!admin) {
-//         setError(new Error("Admin not found"));
-//       }
-//     }
-//   }, [adminId, adminsData, isAdminsLoading]);
+  return { deletePermissionIsLoading: isLoading, deletePermissionError: error, deletePermissionPayload };
+};
 
-//   const refetchAdminInfo = () => {
-//     return refetchAdmins();
-//   };
+// =================== ACCESS VALIDATION ===================
 
-//   return {
-//     adminData,
-//     isLoading: isAdminsLoading || isLoading,
-//     error,
-//     refetchAdminInfo
-//   };
-// };
-
-export function useEnhancedAdminInviteParams() {
-  const [params, setParams] = useState({
-    email: null,
-    userId: null,
-    expires: null,
-    signature: null,
-    token: null,
-    timestamp: null,
-    noExpiry: false,
-    isLoading: true,
-    error: null,
-    isValid: false
-  });
+export const useCanManageRoles = () => {
+  const [canManage, setCanManage] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const { currentAdmin, isLoading: isCurrentAdminLoading } = useGetCurrentAdmin();
 
   useEffect(() => {
-    try {
-      const searchParams = new URLSearchParams(window.location.search);
-      const email = searchParams.get('email');
-      const userId = searchParams.get('userId');
-      const expires = searchParams.get('expires');
-      const signature = searchParams.get('signature');
-      const token = searchParams.get('token');
-      const timestamp = searchParams.get('timestamp');
-      const noExpiry = searchParams.get('noExpiry') === 'true';
-
-      console.log('Parsing invite params:', { 
-        email, 
-        userId, 
-        expires, 
-        signature, 
-        token: token ? '[PRESENT]' : '[MISSING]', 
-        timestamp,
-        noExpiry 
-      });
-
-      let error = null;
-      let isValid = false;
+    if (!isCurrentAdminLoading && currentAdmin) {
+      const isSuperAdmin = currentAdmin.roles?.some(
+        role => role.role?.name === 'SUPER_ADMIN' || role.name === 'SUPER_ADMIN'
+      );
       
-      if (!email || !userId || !signature || !token || !timestamp) {
-        const missing = [];
-        if (!email) missing.push('email');
-        if (!userId) missing.push('userId');
-        if (!signature) missing.push('signature');
-        if (!token) missing.push('token');
-        if (!timestamp) missing.push('timestamp');
-        
-        error = `Invalid invitation link. Missing required parameters: ${missing.join(', ')}.`;
-      } else if (!noExpiry) {
-        if (!expires) {
-          error = 'Invalid invitation link. Missing expiry information.';
-        } else {
-          const expiryTime = parseInt(expires);
-          if (isNaN(expiryTime)) {
-            error = 'Invalid invitation link. Invalid expiry format.';
-          } else if (Date.now() > expiryTime) {
-            error = 'This invitation link has expired. Please request a new one.';
-          } else {
-            isValid = true;
-          }
-        }
-      } else {
-        isValid = true;
-      }
-
-      setParams({
-        email,
-        userId: userId ? parseInt(userId) : null,
-        expires: expires ? parseInt(expires) : null,
-        signature,
-        token,
-        timestamp: timestamp ? parseInt(timestamp) : null,
-        noExpiry,
-        isLoading: false,
-        error,
-        isValid
-      });
-    } catch (err) {
-      console.error('Error parsing invite params:', err);
-      setParams(prev => ({
-        ...prev,
-        isLoading: false,
-        error: 'Invalid invitation link format.',
-        isValid: false
-      }));
+      const hasRoleManagementPermission = currentAdmin.roles?.some(
+        role => role.role?.permissions?.some(
+          perm => perm.name === 'role_management' || perm.name === 'admin_management'
+        )
+      );
+      
+      setCanManage(isSuperAdmin || hasRoleManagementPermission);
     }
-  }, []);
+    
+    setIsLoading(isCurrentAdminLoading);
+  }, [currentAdmin, isCurrentAdminLoading]);
 
-  return params;
-}
-
-
+  return { canManage, isLoading };
+};

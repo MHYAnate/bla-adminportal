@@ -15,15 +15,17 @@ interface Customer {
 	type: "individual" | "business";
 	totalSpent: number;
 	orderCount?: number;
-  
+	averageOrderValue?: number; // Add this line
+
+
 }
 
 interface CustomerTableProps {
 	data: Customer[];
-  refetch: () => void;
+	refetch: () => void;
 }
 
-const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
+const CustomerTable: React.FC<CustomerTableProps> = ({ data, refetch }) => {
 	const [currentPage, setCurrentPage] = useState(1);
 	const [postsPerPage] = useState(10);
 	const [filters, setFilters] = useState({ name: "", email: "", type: "" });
@@ -31,50 +33,50 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 	const [customerToDelete, setCustomerToDelete] = useState<Customer | null>(
 		null
 	);
-    const [adminToDelete, setAdminToDelete] = useState<null | any>(null);
+	const [adminToDelete, setAdminToDelete] = useState<null | any>(null);
 	const [showFilters, setShowFilters] = useState(false);
 
 	const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 	const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
 		null
 	);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-     const[email, setEmail] = useState("");
-          
-             useEffect(() => {
-              if (typeof window !== "undefined") {
-                const email = localStorage.getItem("userEmail") || 
-                             sessionStorage.getItem("userEmail");
-                // Use the email
-                setEmail(email? email : "")
-              }
-            }, []);
-          
-            const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
-            const admin = adminsData?.find((admin: {email : string }) => admin.email === email);
+	const [email, setEmail] = useState("");
 
-            const { deleteAdminPayload, deleteAdminIsLoading } = useDelete(() => {
-              toast.success("delete successfully");
-              setDeleteDialogOpen(false);
-              refetch();
-            });
-        
-              const handleDeleteAdmin = async () => {
-                if (adminToDelete) {
-                  try {
-                    await deleteAdminPayload(adminToDelete.userId);
-                  } catch (error) {
-                    toast.error("Failed to delete admin");
-                    console.error(error);
-                  }
-                }
-              };
-        
-                const openDeleteDialog = (admin: any) => {
-                  setAdminToDelete(admin);
-                  setDeleteDialogOpen(true);
-                };
+	useEffect(() => {
+		if (typeof window !== "undefined") {
+			const email = localStorage.getItem("userEmail") ||
+				sessionStorage.getItem("userEmail");
+			// Use the email
+			setEmail(email ? email : "")
+		}
+	}, []);
+
+	const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
+	const admin = adminsData?.find((admin: { email: string }) => admin.email === email);
+
+	const { deleteAdminPayload, deleteAdminIsLoading } = useDelete(() => {
+		toast.success("delete successfully");
+		setDeleteDialogOpen(false);
+		refetch();
+	});
+
+	const handleDeleteAdmin = async () => {
+		if (adminToDelete) {
+			try {
+				await deleteAdminPayload(adminToDelete.userId);
+			} catch (error) {
+				toast.error("Failed to delete admin");
+				console.error(error);
+			}
+		}
+	};
+
+	const openDeleteDialog = (admin: any) => {
+		setAdminToDelete(admin);
+		setDeleteDialogOpen(true);
+	};
 
 	const handleFilterChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -84,31 +86,31 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 		setCurrentPage(1);
 	};
 
-  const filteredData = useMemo(() => {
-    return (
-      data &&
-      data?.filter((customer) => {
-        const nameMatch =
-          !filters.name ||
-          (customer?.name?.toLowerCase() ?? "").includes(filters?.name?.toLowerCase());
-  
-        const emailMatch =
-          !filters.email ||
-          customer?.email?.toLowerCase().includes(filters?.email.toLowerCase());
-  
-        const typeMatch =
-          !filters.type || customer.type?.toLowerCase() === filters?.type.toLowerCase();
-  
-        return nameMatch && emailMatch && typeMatch;
-      })
-    );
-  }, [data, filters]);
+	const filteredData = useMemo(() => {
+		return (
+			data &&
+			data?.filter((customer) => {
+				const nameMatch =
+					!filters.name ||
+					(customer?.name?.toLowerCase() ?? "").includes(filters?.name?.toLowerCase());
+
+				const emailMatch =
+					!filters.email ||
+					customer?.email?.toLowerCase().includes(filters?.email.toLowerCase());
+
+				const typeMatch =
+					!filters.type || customer.type?.toLowerCase() === filters?.type.toLowerCase();
+
+				return nameMatch && emailMatch && typeMatch;
+			})
+		);
+	}, [data, filters]);
 
 	const indexOfLastPost = currentPage * postsPerPage;
 	const indexOfFirstPost = indexOfLastPost - postsPerPage;
 	const currentPosts = filteredData?.slice(indexOfFirstPost, indexOfLastPost);
 
-  console.log(filteredData, "dataconFirm", data, "databeforeFilter")
+	console.log(filteredData, "dataconFirm", data, "databeforeFilter")
 
 	const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
@@ -152,7 +154,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 					<p className="text-sm text-gray-600">{customer?.email}</p>
 				</div>
 				<span
-					className={`px-2.5 py-1 text-xs font-medium rounded-full border 	${getTypeBadgeClass(
+					className={`px-2.5 py-1 text-xs font-medium rounded-full border ${getTypeBadgeClass(
 						customer?.type
 					)}`}
 				>
@@ -160,35 +162,42 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 				</span>
 			</div>
 
-			<div className="grid grid-cols-2 gap-2 mb-3">
+			<div className="grid grid-cols-3 gap-2 mb-3"> {/* Changed from grid-cols-2 to grid-cols-3 */}
 				<div>
 					<p className="text-xs text-gray-500">Total Sales</p>
 					<p className="text-sm font-medium">
-							₦{customer?.totalSpent?.toLocaleString()}
+						₦{customer?.totalSpent?.toLocaleString()}
 					</p>
 				</div>
 				<div>
 					<p className="text-xs text-gray-500">Orders</p>
 					<p className="text-sm">{customer?.orderCount ?? "N/A"}</p>
 				</div>
+				<div> {/* Add this new div for AOV */}
+					<p className="text-xs text-gray-500">AOV</p>
+					<p className="text-sm">
+						₦{customer?.averageOrderValue?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "N/A"}
+					</p>
+				</div>
 			</div>
 
+			{/* Rest of the card remains the same */}
 			<div className="flex justify-end space-x-3">
 				<button
 					onClick={() => handleView(customer)}
 					className="text-blue-600 hover:text-blue-800 transition-colors p-1 rounded-full hover:bg-blue-50"
 					aria-label="View customer"
 				>
-				  <ViewIcon />
+					<ViewIcon />
 				</button>
-				<button
-					onClick={() => {openDeleteModal(customer), setAdminToDelete(customer);}}
+				{/* <button
+					onClick={() => { openDeleteModal(customer), setAdminToDelete(customer); }}
 					className="text-red-600 hover:text-red-800 transition-colors p-1 rounded-full hover:bg-red-50"
 					aria-label="Delete customer"
-          disabled={deleteAdminIsLoading ||admin?.roles[0]?.role?.name !=="super_admin"}
+					disabled={deleteAdminIsLoading || admin?.roles[0]?.role?.name !== "super_admin"}
 				>
-					  <DeleteIcon />
-				</button>
+					<DeleteIcon />
+				</button> */}
 			</div>
 		</div>
 	);
@@ -209,9 +218,8 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 
 			{/* Filters - responsive */}
 			<div
-				className={`border-b border-gray-100 	${
-					showFilters ? "block" : "hidden md:block"
-				}`}
+				className={`border-b border-gray-100 	${showFilters ? "block" : "hidden md:block"
+					}`}
 			>
 				<div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
 					<div className="relative">
@@ -298,15 +306,19 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 									Order Count
 								</th>
 								<th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+									AOV {/* Add this new header */}
+								</th>
+								<th className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
 									Actions
 								</th>
 							</tr>
 						</thead>
+
 						<tbody className="divide-y divide-gray-100 bg-white">
 							{currentPosts?.length === 0 ? (
 								<tr>
 									<td
-										colSpan={6}
+										colSpan={7} // Changed from 6 to 7 to account for new AOV column
 										className="px-4 py-8 text-center text-gray-500"
 									>
 										No matching records found.
@@ -326,7 +338,7 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 										</td>
 										<td className="px-4 py-3">
 											<span
-												className={`px-2.5 py-1 text-xs font-medium rounded-full border 	${getTypeBadgeClass(
+												className={`px-2.5 py-1 text-xs font-medium rounded-full border ${getTypeBadgeClass(
 													customer?.type
 												)}`}
 											>
@@ -339,23 +351,26 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 										<td className="px-4 py-3 text-sm text-gray-600">
 											{customer?.orderCount ?? "N/A"}
 										</td>
+										<td className="px-4 py-3 text-sm font-medium text-gray-900"> {/* Add this new AOV cell */}
+											₦{customer?.averageOrderValue?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "N/A"}
+										</td>
 										<td className="px-4 py-3 text-sm">
 											<div className="flex space-x-3">
 												<button
 													onClick={() => handleView(customer)}
-												className="bg-[#27A376] p-2.5 rounded-lg"
+													className="bg-[#27A376] p-2.5 rounded-lg"
 													aria-label="View customer"
 												>
 													<ViewIcon />
 												</button>
-												<button
+												{/* <button
 													onClick={() => openDeleteModal(customer)}
 													className="bg-[#E03137] p-2.5 rounded-lg"
 													aria-label="Delete customer"
-                          disabled={deleteAdminIsLoading ||admin?.roles[0]?.role?.name !=="super_admin"}
+													disabled={deleteAdminIsLoading || admin?.roles[0]?.role?.name !== "super_admin"}
 												>
-												 <DeleteIcon />
-												</button>
+													<DeleteIcon />
+												</button> */}
 											</div>
 										</td>
 									</tr>
@@ -462,6 +477,12 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 									{selectedCustomer?.orderCount ?? "N/A"}
 								</p>
 							</div>
+							<div> {/* Add this new section for AOV */}
+								<p className="text-sm text-gray-500">Average Order Value</p>
+								<p className="text-base font-medium text-gray-900">
+									₦{selectedCustomer?.averageOrderValue?.toLocaleString(undefined, { maximumFractionDigits: 0 }) ?? "N/A"}
+								</p>
+							</div>
 						</div>
 						<div className="mt-6 flex justify-end">
 							<button
@@ -474,33 +495,33 @@ const CustomerTable: React.FC<CustomerTableProps> = ({ data,refetch }) => {
 					</div>
 				</div>
 			)}
-      {deleteDialogOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-    <div className="sm:max-w-[425px] w-full bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-900">Confirm deletion</h2>
-        <p className="text-sm text-slate-600 mt-1">
-          Are you sure you want to delete {adminToDelete?.name}? This action cannot be undone.
-        </p>
-      </div>
-      <div className="mt-6 flex justify-end space-x-3">
-        <button
-          className="px-4 py-2 border rounded-lg text-sm text-slate-700 hover:bg-slate-100"
-          onClick={() => setDeleteDialogOpen(false)}
-        >
-          Cancel
-        </button>
-        <button
-          className="px-4 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
-          onClick={handleDeleteAdmin}
-          disabled={deleteAdminIsLoading || admin?.roles[0]?.role?.name !== "super_admin"}
-        >
-          {deleteAdminIsLoading ? "Deleting..." : "Delete"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+			{deleteDialogOpen && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+					<div className="sm:max-w-[425px] w-full bg-white p-6 rounded-2xl shadow-xl border border-slate-200">
+						<div>
+							<h2 className="text-xl font-semibold text-slate-900">Confirm deletion</h2>
+							<p className="text-sm text-slate-600 mt-1">
+								Are you sure you want to delete {adminToDelete?.name}? This action cannot be undone.
+							</p>
+						</div>
+						<div className="mt-6 flex justify-end space-x-3">
+							<button
+								className="px-4 py-2 border rounded-lg text-sm text-slate-700 hover:bg-slate-100"
+								onClick={() => setDeleteDialogOpen(false)}
+							>
+								Cancel
+							</button>
+							<button
+								className="px-4 py-2 rounded-lg text-sm text-white bg-red-600 hover:bg-red-700 disabled:opacity-50"
+								onClick={handleDeleteAdmin}
+								disabled={deleteAdminIsLoading || admin?.roles[0]?.role?.name !== "super_admin"}
+							>
+								{deleteAdminIsLoading ? "Deleting..." : "Delete"}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 
 		</div>
 	);

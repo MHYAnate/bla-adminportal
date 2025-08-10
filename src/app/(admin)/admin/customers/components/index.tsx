@@ -1,4 +1,3 @@
-// Optional Enhancement: Update your Customers component to show improved stats
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -13,14 +12,31 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
-import CreateCustomer from "./create-customer";
 import { useGetCustomers } from "@/services/customers";
 import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import DeleteContent from "@/app/(admin)/components/delete-content";
-import { useGetAdminRoles } from "@/services/admin";
 import { RoleData } from "@/types";
 import RoleCard from "./roleCard";
+
+// ✅ Create a simple interface that matches what RoleCard expects
+interface CustomerRoleCardData {
+  id: number;
+  name: string;
+  type?: string;
+  description?: string;
+  isSystem?: boolean;
+  _count?: {
+    users: number;
+  };
+  permissions?: any[];
+  // Add any missing properties that RoleData requires
+  email?: string;
+  data?: any;
+  createdAt?: string;
+  updatedAt?: string;
+  toLowerCase?: () => string;
+}
 
 const Customers: React.FC = () => {
   const {
@@ -44,14 +60,15 @@ const Customers: React.FC = () => {
 
   const payload = {
     page: currentPage,
-    pageSize,
-    type,
-    status,
-    kycStatus,
+    pageSize: Number(pageSize),
     search: filter,
+    type: type === "all" ? "" : type,
+    status: status === "all" ? "" : status,
+    kycStatus: kycStatus === "all" ? "" : kycStatus,
   };
 
   useEffect(() => {
+    console.log('🔍 Setting customer filter:', payload);
     setCustomersFilter(payload);
   }, [filter, type, status, pageSize, currentPage, kycStatus]);
 
@@ -61,42 +78,85 @@ const Customers: React.FC = () => {
     { text: "Business", value: "business" },
   ];
 
+  const statusList = [
+    { text: "All", value: "all" },
+    { text: "Active", value: "ACTIVE" },
+    { text: "Inactive", value: "INACTIVE" },
+    { text: "Suspended", value: "SUSPENDED" },
+  ];
+
   const kycList = [
     { text: "All", value: "all" },
     { text: "Verified", value: "Verified" },
-    { text: "Pending", value: "Not Verified" },
+    { text: "Not Verified", value: "Not Verified" },
   ];
 
-  const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
-
-  console.log("rolesData:", rolesData);
   console.log("customers data:", data);
 
-  // Enhanced data processing for roles with better error handling
-  const processRolesData = () => {
-    if (!rolesData) return [];
+  // ✅ CRITICAL: Use overallStats (not currentPageStats) for role cards
+  // overallStats contains the total counts without filters applied
+  const overallStats = data?.overallStats;
+  const currentPageStats = data?.currentPageStats; // Use this for statistics cards
 
-    let roles = [];
-    if (Array.isArray(rolesData)) {
-      roles = rolesData;
-    } else if (rolesData.data && Array.isArray(rolesData.data)) {
-      roles = rolesData.data;
-    } else if (rolesData.roles && Array.isArray(rolesData.roles)) {
-      roles = rolesData.roles;
+  console.log("✅ overallStats for role cards:", overallStats);
+  console.log("📊 currentPageStats for stats cards:", currentPageStats);
+
+  // ✅ FIXED: Create role cards from overallStats (unfiltered totals)
+  const createCustomerRoleCards = (): CustomerRoleCardData[] => {
+    if (!overallStats) {
+      console.log("❌ No overallStats available for role cards");
+      return [];
     }
 
-    // ✅ ENHANCED: Filter to only show customer-related roles (no admin roles)
-    return roles.filter((role: RoleData) => {
-      const roleName = role.name?.toLowerCase();
-      return roleName === 'business' || roleName === 'individual' ||
-        roleName === 'business_owner' || roleName === 'customer';
-    });
+    const roles: CustomerRoleCardData[] = [];
+
+    // Individual customers role card
+    if (overallStats.individualUsers !== undefined) {
+      roles.push({
+        id: 1,
+        name: 'individual',
+        type: 'INDIVIDUAL',
+        description: 'Personal shoppers and consumers',
+        isSystem: true,
+        _count: {
+          users: overallStats.individualUsers || 0
+        },
+        permissions: [],
+        // Add default values for required properties
+        email: '',
+        data: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        toLowerCase: () => 'individual'
+      });
+    }
+
+    // Business customers role card
+    if (overallStats.businessUsers !== undefined) {
+      roles.push({
+        id: 2,
+        name: 'business',
+        type: 'BUSINESS',
+        description: 'Business owners and enterprises',
+        isSystem: true,
+        _count: {
+          users: overallStats.businessUsers || 0
+        },
+        permissions: [],
+        // Add default values for required properties
+        email: '',
+        data: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        toLowerCase: () => 'business'
+      });
+    }
+
+    console.log("✅ Created role cards:", roles);
+    return roles;
   };
 
-  const safeRolesData = processRolesData();
-
-  // ✅ NEW: Display customer statistics from API response
-  const customerStats = data?.overallStats || data?.currentPageStats;
+  const customerRoleCards = createCustomerRoleCards();
 
   return (
     <div>
@@ -118,63 +178,88 @@ const Customers: React.FC = () => {
             </div>
           </div>
 
-          {/* ✅ ENHANCED: Customer Statistics Overview */}
-          {customerStats && (
+          {/* ✅ Statistics Overview Cards - Use currentPageStats (reflects current filters) */}
+          {currentPageStats && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
               <Card>
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-green-600">
-                    {customerStats.totalCustomers || 0}
+                    {currentPageStats.totalCustomers || 0}
                   </div>
-                  <div className="text-sm text-gray-500">Total Customers</div>
+                  <div className="text-sm text-gray-500">Total Customers (Filtered)</div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-blue-600">
-                    {customerStats.individualUsers || 0}
+                    {currentPageStats.individualUsers || 0}
                   </div>
-                  <div className="text-sm text-gray-500">Individual</div>
+                  <div className="text-sm text-gray-500">Individual (Filtered)</div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-purple-600">
-                    {customerStats.businessUsers || 0}
+                    {currentPageStats.businessUsers || 0}
                   </div>
-                  <div className="text-sm text-gray-500">Business</div>
+                  <div className="text-sm text-gray-500">Business (Filtered)</div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardContent className="p-4">
                   <div className="text-2xl font-bold text-orange-600">
-                    {customerStats.verificationRate || 0}%
+                    {currentPageStats.verifiedCustomers || 0}
                   </div>
-                  <div className="text-sm text-gray-500">KYC Verified</div>
+                  <div className="text-sm text-gray-500">KYC Verified (Filtered)</div>
                 </CardContent>
               </Card>
             </div>
           )}
 
-          {/* Role Cards Section */}
-          {isRolesLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
-              <div className="animate-pulse bg-gray-200 h-[200px] rounded-lg"></div>
-              <div className="animate-pulse bg-gray-200 h-[200px] rounded-lg"></div>
-            </div>
-          ) : safeRolesData.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
-              {safeRolesData.map((role: RoleData) => (
-                <RoleCard key={role.id} role={role} />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
-              <div className="text-center text-gray-500 p-8">
-                No customer roles found
+          {/* ✅ Role Cards Section - Use overallStats (total unfiltered counts) */}
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Customer Types Overview</h3>
+            {getCustomersIsLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                <div className="animate-pulse bg-gray-200 h-[200px] rounded-lg"></div>
+                <div className="animate-pulse bg-gray-200 h-[200px] rounded-lg"></div>
+              </div>
+            ) : customerRoleCards.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                {customerRoleCards.map((role: CustomerRoleCardData) => (
+                  <RoleCard key={`role-${role.id}`} role={role as any} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                <div className="text-center text-gray-500 p-8 border rounded-lg">
+                  <p>No customer role data available</p>
+                  <p className="text-sm mt-2">Customer role cards will appear here once data is loaded</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ✅ DEBUG: Show the difference between overallStats and currentPageStats */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h4 className="font-bold mb-2">🔍 Debug: Stats Comparison</h4>
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <strong>Overall Stats (for Role Cards):</strong>
+                  <pre className="mt-1 p-2 bg-white rounded overflow-auto max-h-32">
+                    {JSON.stringify(overallStats, null, 2)}
+                  </pre>
+                </div>
+                <div>
+                  <strong>Current Page Stats (for Statistics Cards):</strong>
+                  <pre className="mt-1 p-2 bg-white rounded overflow-auto max-h-32">
+                    {JSON.stringify(currentPageStats, null, 2)}
+                  </pre>
+                </div>
               </div>
             </div>
           )}
@@ -182,7 +267,10 @@ const Customers: React.FC = () => {
           {/* Filters Section */}
           <div className="flex items-center gap-4 mb-6">
             <div className="w-1/2 me-auto">
-              <InputFilter setQuery={setFilter} />
+              <InputFilter
+                setQuery={setFilter}
+                placeholder="Search customers..."
+              />
             </div>
             <SelectFilter
               setFilter={setType}
@@ -190,9 +278,14 @@ const Customers: React.FC = () => {
               list={customerList}
             />
             <SelectFilter
+              setFilter={setStatus}
+              placeholder="Status"
+              list={statusList}
+            />
+            <SelectFilter
               setFilter={setkycStatus}
               list={kycList}
-              placeholder="Kyc status"
+              placeholder="KYC status"
             />
           </div>
 
@@ -207,6 +300,21 @@ const Customers: React.FC = () => {
             handleDelete={() => setIsOpen(true)}
             isLoading={getCustomersIsLoading}
           />
+
+          {/* Pagination Debug Info */}
+          {process.env.NODE_ENV === 'development' && data?.pagination && (
+            <div className="mt-4 p-3 bg-gray-100 rounded text-sm">
+              <strong>🔍 Pagination Debug:</strong>
+              <br />
+              Current Page: {data.pagination.currentPage} of {data.pagination.totalPages}
+              <br />
+              Total Customers: {data.pagination.total}
+              <br />
+              Page Size: {data.pagination.pageSize || pageSize}
+              <br />
+              Customers on this page: {data?.data?.length || 0}
+            </div>
+          )}
         </CardContent>
       </Card>
 

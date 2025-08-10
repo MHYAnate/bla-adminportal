@@ -160,7 +160,7 @@ export default function AdminRegistrationPage() {
           <p className="text-red-600 mb-6">{inviteParamsState.error}</p>
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/admin/login')}
+              onClick={() => router.push('/login')}
               className="w-full bg-[#0F3D30] text-white py-3 px-4 rounded-md hover:bg-[#1b5d49] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0F3D30]"
             >
               Go to Login

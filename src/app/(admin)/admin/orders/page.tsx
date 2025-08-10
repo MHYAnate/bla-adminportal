@@ -7,9 +7,6 @@ import { OrdersErrorBoundary } from "@/components/error-boundary"; // Adjust pat
 
 // Loading component for the orders page
 const OrdersLoading = () => (
-
-
-
   <section className="p-6">
     <Card className="bg-white">
       <CardContent className="p-6">
@@ -56,34 +53,33 @@ const OrdersLoading = () => (
 );
 
 export default function OrdersPage() {
+  // REMOVED: The problematic global click listener that was interfering with navigation
+  // This was likely preventing sidebar navigation and other click events from working properly
 
-  // Add this to your Orders component for debugging
+  // FIXED: Only add necessary event listeners for debugging if needed
   useEffect(() => {
-    const debugClicks = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      console.log('Click detected:', {
-        target: target.tagName,
-        className: target.className,
-        id: target.id,
-        preventDefault: e.defaultPrevented,
-        bubbles: e.bubbles,
-        path: e.composedPath?.() || 'Not available'
-      });
-    };
+    // Only add debugging in development mode
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Orders page mounted in development mode');
 
-    document.addEventListener('click', debugClicks, true);
+      // Optional: Add minimal debugging without interfering with navigation
+      const handleError = (e: ErrorEvent) => {
+        console.error('Orders page error:', e.error);
+      };
 
-    return () => {
-      document.removeEventListener('click', debugClicks, true);
-    };
+      window.addEventListener('error', handleError);
+
+      return () => {
+        window.removeEventListener('error', handleError);
+      };
+    }
   }, []);
 
   return (
     <OrdersErrorBoundary>
       <Suspense fallback={<OrdersLoading />}>
-        <section>
-          <Orders />
-        </section>
+        {/* FIXED: Removed unnecessary section wrapper that might cause layout issues */}
+        <Orders />
       </Suspense>
     </OrdersErrorBoundary>
   );

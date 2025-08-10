@@ -50,6 +50,11 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
     // const [endDate, setEndDate] = useState<string | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
+    useEffect(() => {
+        console.log('🔍 Filter state changed:', { filter, status });
+    }, [filter, status]);
+
+
     const onPageChange = (page: number) => {
         setCurrentPage(page);
     };
@@ -140,13 +145,47 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         page: currentPage,
         pageSize,
         type: status,
+        search: filter, // ✅ CRITICAL: This must be here
     };
 
+
+    // Update the useEffect to include filter in dependencies and ensure it triggers API calls
     useEffect(() => {
         if (manufacturerId) {
+            console.log('🔄 ManufacturerDetails - Triggering API with:', {
+                manufacturerId,
+                payload: payload,
+                filterValue: filter,
+                statusValue: status
+            });
+
             setManufacturerProductsFilter({ manufacturerId, data: payload });
         }
     }, [currentPage, filter, status, pageSize, manufacturerId, setManufacturerProductsFilter]);
+
+
+    // ✅ Also add debugging to see what's happening with the filter
+    useEffect(() => {
+        console.log('🔧 Filter values changed:', {
+            filter,
+            status,
+            currentPage,
+            pageSize,
+            manufacturerId,
+            payload
+        });
+    }, [filter, status, currentPage, pageSize, manufacturerId]);
+
+    // ✅ Add debugging to see the API response
+    useEffect(() => {
+        console.log('📦 Manufacturer Products API Response:', {
+            loading: getManufacturerProductsIsLoading,
+            data: getManufacturerProductsData,
+            error: getManufacturerProductsError,
+            hasData: !!getManufacturerProductsData?.data,
+            itemCount: getManufacturerProductsData?.data?.length
+        });
+    }, [getManufacturerProductsIsLoading, getManufacturerProductsData, getManufacturerProductsError]);
 
     // Handlers for product actions
     const handleViewProduct = (product: any) => {

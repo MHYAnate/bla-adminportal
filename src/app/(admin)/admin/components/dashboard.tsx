@@ -85,12 +85,12 @@ const Dashboard: React.FC = () => {
 		}
 	}, []);
 
-  const {
-    salesData,
-    isSalesLoading,
-    salesError,
-    salesYear,
-  } = useGetSalesData()
+	const {
+		salesData,
+		isSalesLoading,
+		salesError,
+		salesYear,
+	} = useGetSalesData()
 
 	const { adminsData, isAdminsLoading } = useGetAdmins({ enabled: true });
 	const admin = adminsData?.find(
@@ -99,11 +99,11 @@ const Dashboard: React.FC = () => {
 
 	console.log(email, "email", adminsData, "data", admin, "filter");
 
-  function formatNumber(value: number): string {
-    if (isNaN(value)) return "0";
-    return Math.floor(value).toLocaleString(); // comma-separated, no decimals
-  }
-  
+	function formatNumber(value: number): string {
+		if (isNaN(value)) return "0";
+		return Math.floor(value).toLocaleString(); // comma-separated, no decimals
+	}
+
 
 	return (
 		<section>
@@ -119,17 +119,16 @@ const Dashboard: React.FC = () => {
 							<h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
 								{data?.metrics?.revenue?.total
 									? formatNumber(
-											Math.floor(Number(data?.metrics?.revenue?.total))
-									  )
+										Math.floor(Number(data?.metrics?.revenue?.total))
+									)
 									: "0"}
 							</h1>
 							<div className="mt-auto mb-1">
 								<div
-									className={`${
-										data?.metrics?.revenue?.trend?.toLowerCase() !== "down"
+									className={`${data?.metrics?.revenue?.trend?.toLowerCase() !== "down"
 											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
 											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
-									}`}
+										}`}
 								>
 									{data?.metrics?.revenue?.trend?.toLowerCase() === "down" ? (
 										<DowngressIcon />
@@ -139,10 +138,10 @@ const Dashboard: React.FC = () => {
 									<p>
 										{data?.metrics?.revenue?.changePercentage
 											? formatNumber(
-													Math.floor(
-														Number(data?.metrics?.revenue?.changePercentage)
-													)
-											  )
+												Math.floor(
+													Number(data?.metrics?.revenue?.changePercentage)
+												)
+											)
 											: "0"}
 										%
 									</p>
@@ -157,17 +156,16 @@ const Dashboard: React.FC = () => {
 							<h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
 								{data?.metrics?.profits?.total
 									? formatNumber(
-											Math.floor(Number(data?.metrics?.profits?.total))
-									  )
+										Math.floor(Number(data?.metrics?.profits?.total))
+									)
 									: "0"}
 							</h1>
 							<div className="mt-auto mb-1">
 								<div
-									className={`${
-										data?.metrics?.profits?.trend?.toLowerCase() !== "down"
+									className={`${data?.metrics?.profits?.trend?.toLowerCase() !== "down"
 											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
 											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
-									}`}
+										}`}
 								>
 									{data?.metrics?.profits?.trend?.toLowerCase() === "down" ? (
 										<DowngressIcon />
@@ -177,10 +175,10 @@ const Dashboard: React.FC = () => {
 									<p>
 										{data?.metrics?.profits?.changePercentage
 											? formatNumber(
-													Math.floor(
-														Number(data?.metrics?.profits?.changePercentage)
-													)
-											  )
+												Math.floor(
+													Number(data?.metrics?.profits?.changePercentage)
+												)
+											)
 											: "0"}
 										%
 									</p>
@@ -195,17 +193,16 @@ const Dashboard: React.FC = () => {
 							<h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
 								{data?.metrics?.orders?.total
 									? formatNumber(
-											Math.floor(Number(data?.metrics?.orders?.total))
-									  )
+										Math.floor(Number(data?.metrics?.orders?.total))
+									)
 									: "0"}
 							</h1>
 							<div className="mt-auto mb-1">
 								<div
-									className={`${
-										data?.metrics?.orders?.trend?.toLowerCase() !== "down"
+									className={`${data?.metrics?.orders?.trend?.toLowerCase() !== "down"
 											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
 											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
-									}`}
+										}`}
 								>
 									{data?.metrics?.orders?.trend?.toLowerCase() === "down" ? (
 										<DowngressIcon />
@@ -215,10 +212,10 @@ const Dashboard: React.FC = () => {
 									<p>
 										{data?.metrics?.orders?.changePercentage
 											? formatNumber(
-													Math.floor(
-														Number(data?.metrics?.orders?.changePercentage)
-													)
-											  )
+												Math.floor(
+													Number(data?.metrics?.orders?.changePercentage)
+												)
+											)
 											: "0"}
 										%
 									</p>
@@ -233,17 +230,16 @@ const Dashboard: React.FC = () => {
 							<h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
 								{data?.metrics?.customers?.total
 									? formatNumber(
-											Math.floor(Number(data?.metrics?.customers?.total))
-									  )
+										Math.floor(Number(data?.metrics?.customers?.total))
+									)
 									: "0"}
 							</h1>
 							<div className="mt-auto mb-1">
 								<div
-									className={`${
-										data?.metrics?.customers?.trend?.toLowerCase() !== "down"
+									className={`${data?.metrics?.customers?.trend?.toLowerCase() !== "down"
 											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
 											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
-									}`}
+										}`}
 								>
 									{data?.metrics?.customers?.trend?.toLowerCase() === "down" ? (
 										<DowngressIcon />
@@ -253,10 +249,10 @@ const Dashboard: React.FC = () => {
 									<p>
 										{data?.metrics?.customers?.changePercentage
 											? formatNumber(
-													Math.floor(
-														Number(data?.metrics?.customers?.changePercentage)
-													)
-											  )
+												Math.floor(
+													Number(data?.metrics?.customers?.changePercentage)
+												)
+											)
 											: "0"}
 										%
 									</p>
@@ -268,7 +264,7 @@ const Dashboard: React.FC = () => {
 						</div>
 					</div>
 					<div className="flex-1 h-auto">
-          <SalesPerformance data={salesData}/>
+						<SalesPerformance data={salesData} />
 					</div>
 				</CardContent>
 			</Card>

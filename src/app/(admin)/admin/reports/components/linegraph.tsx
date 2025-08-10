@@ -35,23 +35,55 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export default function MultiLineGraphComponent({ salesData }: MultiLineGraphProps) {
+  // Parse month strings into Date objects for proper formatting - FIXED VERSION
+  const parseMonth = (monthString: string) => {
+    if (!monthString) return new Date();
+
+    // Handle different date formats
+    if (monthString.includes('-')) {
+      const [year, month] = monthString.split('-');
+      const parsedYear = parseInt(year);
+      const parsedMonth = parseInt(month);
+
+      // Validate year and month
+      if (isNaN(parsedYear) || isNaN(parsedMonth) || parsedYear < 2000 || parsedYear > 2030 || parsedMonth < 1 || parsedMonth > 12) {
+        console.warn(`Invalid date format: ${monthString}, using current date`);
+        return new Date();
+      }
+
+      return new Date(parsedYear, parsedMonth - 1);
+    }
+
+    // Try to parse as a regular date string
+    const parsed = new Date(monthString);
+    if (isNaN(parsed.getTime())) {
+      console.warn(`Could not parse date: ${monthString}, using current date`);
+      return new Date();
+    }
+
+    return parsed;
+  };
+
   // Transform and validate data
   const chartData = React.useMemo(() => {
     if (!salesData || !Array.isArray(salesData)) return [];
 
-    return salesData.map((item) => ({
-      date: item?.month || "",
-      sales: item?.total_sales || 0,
-      orders: item?.orders_count || 0,
-    })).filter(item => item.date !== "");
-  }, [salesData]);
+    return salesData.map((item) => {
+      const monthString = item?.month || "";
+      const parsedDate = parseMonth(monthString);
 
-  // Parse month strings into Date objects for proper formatting
-  const parseMonth = (monthString: string) => {
-    if (!monthString) return new Date();
-    const [year, month] = monthString.split('-');
-    return new Date(parseInt(year) || 0, (parseInt(month) || 1) - 1);
-  };
+      return {
+        date: monthString,
+        displayDate: parsedDate.toLocaleDateString("en-US", {
+          month: "short",
+          year: "numeric"
+        }),
+        sales: item?.total_sales || 0,
+        orders: item?.orders_count || 0,
+        parsedDate: parsedDate
+      };
+    }).filter(item => item.date !== "").sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
+  }, [salesData]);
 
   // Calculate statistics - ONLY from chart data, not external sources
   const stats = React.useMemo(() => {
@@ -140,10 +172,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
             <div className="bg-green-50 p-3 rounded-lg">
               <p className="text-xs text-green-600 font-medium">Best Performing Month</p>
               <p className="text-sm font-semibold text-green-800">
-                {parseMonth(performance.bestMonth.date).toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "numeric"
-                })}
+                {performance.bestMonth.displayDate}
               </p>
               <p className="text-xs text-green-700">
                 ₦{performance.bestMonth.sales.toLocaleString()} • {performance.bestMonth.orders} orders
@@ -152,10 +181,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
             <div className="bg-orange-50 p-3 rounded-lg">
               <p className="text-xs text-orange-600 font-medium">Lowest Performing Month</p>
               <p className="text-sm font-semibold text-orange-800">
-                {parseMonth(performance.worstMonth.date).toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "numeric"
-                })}
+                {performance.worstMonth.displayDate}
               </p>
               <p className="text-xs text-orange-700">
                 ₦{performance.worstMonth.sales.toLocaleString()} • {performance.worstMonth.orders} orders
@@ -176,18 +202,14 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis
-                dataKey="date"
+                dataKey="displayDate"
                 tickLine={false}
                 axisLine={false}
                 tickMargin={8}
                 minTickGap={32}
-                tickFormatter={(value) => {
-                  const date = parseMonth(value);
-                  return date.toLocaleDateString("en-US", {
-                    month: "short",
-                    year: "2-digit"
-                  });
-                }}
+                angle={-45}
+                textAnchor="end"
+                height={60}
               />
               <YAxis
                 yAxisId="sales"
@@ -207,12 +229,7 @@ export default function MultiLineGraphComponent({ salesData }: MultiLineGraphPro
                 content={
                   <ChartTooltipContent
                     className="w-[200px]"
-                    labelFormatter={(value) =>
-                      parseMonth(value).toLocaleDateString("en-US", {
-                        month: "long",
-                        year: "numeric"
-                      })
-                    }
+                    labelFormatter={(value) => value}
                     formatter={(value, name) => {
                       if (name === "sales") {
                         return [

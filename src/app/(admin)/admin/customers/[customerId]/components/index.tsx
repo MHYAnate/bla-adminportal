@@ -23,7 +23,6 @@ interface CustomerDetailProps {
 }
 
 export default function CustomerDetail({ customerId }: CustomerDetailProps) {
-  // ✅ ALL HOOKS MUST BE AT THE TOP - NO CONDITIONAL HOOKS
   const [status, setStatus] = useState("");
   const param = useSearchParams();
   const { handlePush } = useHandlePush();
@@ -36,13 +35,13 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
     refetchCustomerInfo,
   } = useGetCustomerInfo();
 
-  // ✅ ALWAYS call useEffect hooks in the same order
+  // ✅ Trigger fetch immediately when component mounts
   useEffect(() => {
     console.log("🎬 CustomerDetail mounted with customerId:", customerId);
     if (customerId) {
       setCustomerInfoFilter(customerId);
     }
-  }, [customerId, setCustomerInfoFilter]);
+  }, [customerId]);
 
   useEffect(() => {
     if (data?.customerStatus) {
@@ -50,7 +49,6 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
     }
   }, [data?.customerStatus]);
 
-  // ✅ Process tab value safely
   const tabber = param.get("tab") || "general";
 
   console.log("🔍 CustomerDetail Debug:", {
@@ -60,53 +58,64 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
     error: getCustomerInfoError
   });
 
-  // ✅ Early returns AFTER all hooks are declared
+  // Show loading state
   if (getCustomerInfoIsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-4">Loading customer information...</p>
+      <div>
+        <Header title="Customer information" showBack={true} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-4">Loading customer information...</p>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Show error state
   if (getCustomerInfoError) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center text-red-600">
-          <p className="text-lg font-semibold">Error loading customer</p>
-          <p className="text-sm">{getCustomerInfoError}</p>
-          <button
-            onClick={() => refetchCustomerInfo()}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
+      <div>
+        <Header title="Customer information" showBack={true} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center text-red-600">
+            <p className="text-lg font-semibold">Error loading customer</p>
+            <p className="text-sm">{getCustomerInfoError}</p>
+            <button
+              onClick={() => refetchCustomerInfo()}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  // Show "not found" only if we're not loading and have no data
   if (!data && !getCustomerInfoIsLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <p className="text-lg font-semibold text-gray-600">Customer not found</p>
-          <p className="text-sm text-gray-500">Customer ID: {customerId}</p>
-          <button
-            onClick={() => refetchCustomerInfo()}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
+      <div>
+        <Header title="Customer information" showBack={true} />
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-lg font-semibold text-gray-600">Customer not found</p>
+            <p className="text-sm text-gray-500">Customer ID: {customerId}</p>
+            <button
+              onClick={() => refetchCustomerInfo()}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // ✅ Safe data processing
+  // Rest of your component remains the same...
   const address = data?.addresses?.find((addr: any) => addr.isDefault) || data?.addresses?.[0];
 
   const list = [
@@ -124,8 +133,10 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
     <div>
       <Header title="Customer information" showBack={true} />
       <div className="flex gap-6 mt-5">
+        {/* Left sidebar card */}
         <Card className="w-[300px]">
           <CardContent className="p-6">
+            {/* Customer profile content */}
             <div>
               <div className="mb-6 pb-6 border-b border-[#F1F2F4]">
                 <div className="flex items-center justify-center mt-6">
@@ -159,7 +170,8 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
                 </div>
               </div>
 
-              <div className="mb-6 pb-6 border-b border-[#F1F2F4] px-auto">
+              {/* Contact info */}
+              <div className="mb-6 pb-6 border-b border-[#F1F2F4]">
                 <div className="flex gap-3 items-start mb-4">
                   <div className="flex-shrink-0 mt-0.5">
                     <MailIcon />
@@ -186,6 +198,7 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
                 </div>
               </div>
 
+              {/* Additional info */}
               <div>
                 <div>
                   <p className="text-xs text-[#687588] mb-1">Referral Code</p>
@@ -210,6 +223,7 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
           </CardContent>
         </Card>
 
+        {/* Right content card */}
         <Card className="flex-1">
           <CardContent className="p-6">
             <Tabs defaultValue={tabber}>
@@ -227,8 +241,8 @@ export default function CustomerDetail({ customerId }: CustomerDetailProps) {
                   >
                     <p
                       className={`w-full text-center pb-[9px] ${tabber === tab.value
-                          ? "border-b-2 border-[#EC9F01] text-[#030C0A]"
-                          : "border-b-2 border-transparent text-[#111827]"
+                        ? "border-b-2 border-[#EC9F01] text-[#030C0A]"
+                        : "border-b-2 border-transparent text-[#111827]"
                         }`}
                     >
                       {tab.text}

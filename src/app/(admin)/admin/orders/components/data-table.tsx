@@ -7,17 +7,9 @@ import { ProductTableComponent } from "@/components/custom-table/productIndex";
 import { formatMoney } from "@/lib/utils";
 import { useMemo, useCallback, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, Eye, Package, User } from "lucide-react";
+import { Eye, Package, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import httpService from "@/services/httpService";
-import { routes } from "@/services/api-routes";
 
 interface DataTableProps {
   data: any[];
@@ -43,55 +35,8 @@ const DataTable: React.FC<DataTableProps> = ({
   onRefreshData,
 }) => {
   const router = useRouter();
-  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
-  // FIXED: Handle status change with proper API call
-  const handleStatusChange = useCallback(async (orderId: string, newStatus: string) => {
-    try {
-      setUpdatingOrderId(orderId);
-
-      const mapStatusForUpdate = (status: string): string => {
-        switch (status.toLowerCase()) {
-          case 'ongoing':
-            return 'PROCESSING';
-          case 'delivered':
-            return 'DELIVERED';
-          case 'cancelled':
-            return 'CANCELLED';
-          default:
-            return 'PROCESSING';
-        }
-      };
-
-      const backendStatus = mapStatusForUpdate(newStatus);
-
-      console.log(`Updating order ${orderId} status to:`, {
-        frontendStatus: newStatus,
-        backendStatus: backendStatus
-      });
-
-      // ✅ FIXED: Use patchData instead of putData
-      const response = await httpService.patchData(
-        { status: backendStatus },
-        routes.updateOrderStatus(orderId)
-      );
-
-      console.log('Status update response:', response);
-      toast.success(`Order status updated to ${newStatus}`);
-
-      if (onRefreshData) {
-        onRefreshData();
-      }
-
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      toast.error('Failed to update order status');
-    } finally {
-      setUpdatingOrderId(null);
-    }
-  }, [onRefreshData]);
-
-  // FIXED: Handle view order details with proper ID extraction
+  // FIXED: Handle view order details with proper navigation
   const handleViewOrder = useCallback((orderId: string | number) => {
     if (!orderId) {
       console.error("Invalid order ID for navigation:", orderId);
@@ -109,11 +54,10 @@ const DataTable: React.FC<DataTableProps> = ({
     });
 
     try {
-      // Use window.location for debugging first
       const targetUrl = `/admin/orders/${cleanOrderId}`;
       console.log('Attempting navigation to:', targetUrl);
 
-      // Try router.push first
+      // Use router.push first
       router.push(targetUrl);
 
       // Backup navigation method if router fails
@@ -130,6 +74,20 @@ const DataTable: React.FC<DataTableProps> = ({
     }
   }, [router]);
 
+  // FIXED: Prevent event bubbling and add better click handling
+  const handleActionClick = useCallback((e: React.MouseEvent, orderId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    console.log('🔥 View button clicked!', {
+      orderId,
+      event: 'click',
+      timestamp: new Date().toISOString()
+    });
+
+    handleViewOrder(orderId);
+  }, [handleViewOrder]);
+
   // Memoize cell renderers to prevent unnecessary re-renders
   const cellRenderers = useMemo(() => ({
     customerName: (item: any) => {
@@ -144,9 +102,9 @@ const DataTable: React.FC<DataTableProps> = ({
       return (
         <div className="font-medium flex items-center gap-3">
           <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-            {customer?.profileImage ? (
+            {profileImage ? (
               <Image
-                src={customer.profileImage}
+                src={profileImage}
                 alt="Customer"
                 width={64}
                 height={64}
@@ -211,10 +169,10 @@ const DataTable: React.FC<DataTableProps> = ({
       return (
         <div className="font-medium flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-            {item.product?.image ? (
+            {productImage && productImage !== "/images/placeholder-product.png" ? (
               <Image
-                src={item.product.image}
-                alt={item.product?.name || 'Product'}
+                src={productImage}
+                alt={productName || 'Product'}
                 width={48}
                 height={48}
                 className="w-full h-full object-cover rounded"
@@ -252,11 +210,23 @@ const DataTable: React.FC<DataTableProps> = ({
       );
     },
 
+    // FIXED: Status cell is now read-only (no dropdown)
     status: (item: any) => {
       const backendStatus = item?.status || 'pending';
       const frontendStatus = mapStatusToFrontend(backendStatus);
-      const orderId = item?.id || item?.orderId;
-      const isUpdating = updatingOrderId === orderId;
+
+      const getBadgeColor = (status: string) => {
+        switch (status) {
+          case 'delivered':
+            return 'bg-green-100 text-green-800';
+          case 'ongoing':
+            return 'bg-yellow-100 text-yellow-800';
+          case 'cancelled':
+            return 'bg-red-100 text-red-800';
+          default:
+            return 'bg-gray-100 text-gray-800';
+        }
+      };
 
       const getVariant = (status: string) => {
         switch (status) {
@@ -271,74 +241,18 @@ const DataTable: React.FC<DataTableProps> = ({
         }
       };
 
-      const getBadgeColor = (status: string) => {
-        switch (status) {
-          case 'delivered':
-            return 'bg-green-100 text-green-800 hover:bg-green-200';
-          case 'ongoing':
-            return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
-          case 'cancelled':
-            return 'bg-red-100 text-red-800 hover:bg-red-200';
-          default:
-            return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-        }
-      };
-
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              className="h-auto p-0 hover:bg-transparent"
-              disabled={isUpdating}
-            >
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant={getVariant(frontendStatus)}
-                  className={`capitalize ${getBadgeColor(frontendStatus)}`}
-                >
-                  {isUpdating ? 'Updating...' : frontendStatus}
-                </Badge>
-                <ChevronDown className="w-4 h-4 text-gray-400" />
-              </div>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() => handleStatusChange(orderId, 'ongoing')}
-              disabled={frontendStatus === 'ongoing' || isUpdating}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                Ongoing
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleStatusChange(orderId, 'delivered')}
-              disabled={frontendStatus === 'delivered' || isUpdating}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                Delivered
-              </div>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => handleStatusChange(orderId, 'cancelled')}
-              disabled={frontendStatus === 'cancelled' || isUpdating}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                Cancelled
-              </div>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Badge
+          variant={getVariant(frontendStatus)}
+          className={`capitalize ${getBadgeColor(frontendStatus)}`}
+        >
+          {frontendStatus}
+        </Badge>
       );
     },
 
-    // FIXED: Only show View button with proper ID handling
+    // FIXED: Actions cell with better event handling
     actions: (item: any) => {
-      // FIXED: Get the correct order ID and ensure it's valid
       const orderId = item?.id || item?.orderId;
 
       // Debug the ID extraction
@@ -373,7 +287,7 @@ const DataTable: React.FC<DataTableProps> = ({
               });
               handleViewOrder(orderId);
             }}
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 flex items-center gap-1 transition-colors duration-200"
             title={`View Order Details for #${orderId}`}
           >
             <Eye className="w-4 h-4" />
@@ -382,7 +296,7 @@ const DataTable: React.FC<DataTableProps> = ({
         </div>
       );
     },
-  }), [mapStatusToFrontend, updatingOrderId, handleStatusChange, handleViewOrder]);
+  }), [mapStatusToFrontend, handleViewOrder]);
 
   // Memoize column configuration
   const columnOrder: (keyof any)[] = useMemo(() => [
@@ -410,15 +324,7 @@ const DataTable: React.FC<DataTableProps> = ({
     if (!Array.isArray(data)) return [];
 
     return data.map((item, index) => {
-      // FIXED: Ensure we have a valid ID and log for debugging
       const id = item.id || item.orderId || `order-${index}`;
-
-      console.log(`Processing item ${index}:`, {
-        originalId: item.id,
-        orderId: item.orderId,
-        finalId: id,
-        status: item.status
-      });
 
       return {
         ...item,
@@ -437,17 +343,6 @@ const DataTable: React.FC<DataTableProps> = ({
       };
     });
   }, [data]);
-
-  // Debug processed data
-  useEffect(() => {
-    if (processedData.length > 0) {
-      console.log('DataTable processed data:', {
-        count: processedData.length,
-        sampleItem: processedData[0],
-        allIds: processedData.map(item => item.id)
-      });
-    }
-  }, [processedData]);
 
   // Loading state
   if (loading) {

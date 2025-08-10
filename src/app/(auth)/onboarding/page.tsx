@@ -39,7 +39,7 @@ export default function AdminOnboardingPage() {
 
       if (result.success) {
         alert('Registration successful!');
-        router.push('/admin/login');
+        router.push('/login');
       } else {
         alert('Error: ' + result.error);
       }
