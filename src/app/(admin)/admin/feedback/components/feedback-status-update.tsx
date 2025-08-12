@@ -50,7 +50,7 @@ const FeedbackStatusUpdate: React.FC<FeedbackStatusUpdateProps> = ({
     const validateForm = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.status) {
+        if (!formData.status || formData.status === 'default') {
             newErrors.status = 'Status is required';
         }
 

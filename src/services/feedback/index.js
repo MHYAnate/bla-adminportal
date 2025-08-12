@@ -130,6 +130,7 @@ export const useUpdateFeedbackStatus = (options = {}) => {
 
   return useMutation({
     mutationFn: async (variables) => {
+      // Extract the parameters correctly
       const { feedbackId, data } = variables;
       return await updateFeedbackStatus(feedbackId, data);
     },
@@ -399,4 +400,21 @@ export const getSentimentColor = (sentiment) => {
     default:
       return 'text-yellow-600';
   }
+};
+
+// ADD THESE FUNCTIONS TO YOUR services/feedback.js FILE
+
+/**
+ * Validate status transition for feedback
+ */
+export const isValidFeedbackTransition = (currentStatus, newStatus) => {
+  const transitions = {
+    'NEW': ['REVIEWED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'],
+    'REVIEWED': ['IN_PROGRESS', 'RESOLVED', 'CLOSED'],
+    'IN_PROGRESS': ['RESOLVED', 'CLOSED', 'REVIEWED'],
+    'RESOLVED': ['CLOSED', 'IN_PROGRESS'], // Can reopen if needed
+    'CLOSED': ['IN_PROGRESS'] // Can reopen only to in progress
+  };
+  
+  return transitions[currentStatus]?.includes(newStatus) || false;
 };

@@ -54,8 +54,8 @@ const SupportStatusUpdate: React.FC<SupportStatusUpdateProps> = ({
     // Form state
     const [formData, setFormData] = useState({
         status: supportRequest.status || 'NEW',
-        assignedAdminId: supportRequest.assignedAdminId?.toString() || '',
-        resolutionChannel: supportRequest.resolutionChannel || '',
+        assignedAdminId: supportRequest.assignedAdminId?.toString() || 'unassigned',
+        resolutionChannel: supportRequest.resolutionChannel || 'not_specified',
         internalNotes: supportRequest.internalNotes || ''
     });
 
@@ -92,7 +92,7 @@ const SupportStatusUpdate: React.FC<SupportStatusUpdateProps> = ({
         const newErrors: Record<string, string> = {};
 
         if (type === 'status') {
-            if (!formData.status) {
+            if (!formData.status || formData.status === 'default') {
                 newErrors.status = 'Status is required';
             }
 
@@ -103,7 +103,7 @@ const SupportStatusUpdate: React.FC<SupportStatusUpdateProps> = ({
         }
 
         if (type === 'tracking') {
-            if (formData.assignedAdminId && isNaN(Number(formData.assignedAdminId))) {
+            if (formData.assignedAdminId && formData.assignedAdminId !== 'unassigned' && isNaN(Number(formData.assignedAdminId))) {
                 newErrors.assignedAdminId = 'Please select a valid admin';
             }
         }
@@ -131,8 +131,8 @@ const SupportStatusUpdate: React.FC<SupportStatusUpdateProps> = ({
         updateTrackingMutation.mutate({
             supportId: supportRequest.id,
             data: {
-                assignedAdminId: formData.assignedAdminId ? Number(formData.assignedAdminId) : null,
-                resolutionChannel: formData.resolutionChannel,
+                assignedAdminId: formData.assignedAdminId === 'unassigned' ? null : Number(formData.assignedAdminId),
+                resolutionChannel: formData.resolutionChannel === 'not_specified' ? null : formData.resolutionChannel,
                 internalNotes: formData.internalNotes
             }
         } as any);
@@ -290,7 +290,7 @@ const SupportStatusUpdate: React.FC<SupportStatusUpdateProps> = ({
                                     <SelectValue placeholder="Select admin to assign" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Unassigned</SelectItem>
+                                    <SelectItem value="unassigned">Unassigned</SelectItem>
                                     {adminsList.map((admin: AdminData) => (
                                         <SelectItem key={admin.id} value={admin.id.toString()}>
                                             {admin.adminProfile?.fullName || admin.email}
@@ -313,7 +313,7 @@ const SupportStatusUpdate: React.FC<SupportStatusUpdateProps> = ({
                                     <SelectValue placeholder="Select communication channel" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">Not specified</SelectItem>
+                                    <SelectItem value="not_specified">Not specified</SelectItem>
                                     <SelectItem value="email">Email</SelectItem>
                                     <SelectItem value="phone">Phone Call</SelectItem>
                                     <SelectItem value="chat">Live Chat</SelectItem>
