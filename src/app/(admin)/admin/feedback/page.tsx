@@ -1,9 +1,15 @@
-import Feedbacks from "./components";
+"use client";
 
-export default function FeedbackPage() {
+import React, { Suspense } from "react";
+import LoadingSvg from "@/components/load";
+import FeedbackPage from "./components";
+
+export default function FeedbackManagementPage() {
   return (
-    <>
-      <Feedbacks />
-    </>
+    <Suspense fallback={<LoadingSvg />}>
+      <section>
+        <FeedbackPage />
+      </section>
+    </Suspense>
   );
 }

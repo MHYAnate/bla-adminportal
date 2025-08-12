@@ -454,20 +454,76 @@ export const routes = {
   // Bulk update pricing - Requires PRODUCT write permission
   bulkUpdatePricing: () => "admin/bulk-pricing/bulk-update",
   
-  // =================== FEEDBACK ROUTES (ADMIN ROLE-BASED) ===================
-  
-  // Get all feedback - Requires SUPPORT read permission
+  // =================== FEEDBACK ROUTES (ADMIN ROLE-BASED) - ENHANCED ===================
+
+  // Update the existing getAllFeedback 
   getAllFeedback: (params) => {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
     return `admin/feedback${queryString}`;
   },
-  
-  // Get feedback by user - Requires SUPPORT read permission
-  getFeedbackByUser: (userId, params) => {
+
+
+  // Get feedback details - Requires SUPPORT read permission
+  getFeedbackDetails: (feedbackId) => `admin/feedback/${feedbackId}`,
+
+  // Update feedback status - Requires SUPPORT write permission
+  updateFeedbackStatus: (feedbackId) => `admin/feedback/${feedbackId}/status`,
+
+  // Get feedback analytics - Requires ANALYTICS read or SUPPORT read permission
+  getFeedbackAnalytics: (params) => {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
-    return `admin/feedback/user/${userId}${queryString}`;
+    return `admin/feedback/analytics${queryString}`;
   },
   
+  // =================== SUPPORT ROUTES (ADMIN ROLE-BASED) ===================
+
+  // Get all support requests - Requires SUPPORT read permission
+  getAllSupportRequests: (params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/support${queryString}`;
+  },
+
+  // Get support request details - Requires SUPPORT read permission
+  getSupportRequestDetails: (supportId) => `admin/support/${supportId}`,
+
+  // Update support request status - Requires SUPPORT write permission
+  updateSupportStatus: (supportId) => `admin/support/${supportId}/status`,
+
+  // Update support tracking information - Requires SUPPORT write permission
+  updateSupportTracking: (supportId) => `admin/support/${supportId}/tracking`,
+
+  // Get support requests by user - Requires SUPPORT read permission
+  getSupportRequestsByUser: (userId, params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/support/user/${userId}${queryString}`;
+  },
+
+  // Get support analytics - Requires ANALYTICS read or SUPPORT read permission
+  getSupportAnalytics: (params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/support/analytics${queryString}`;
+  },
+
+  // =================== CUSTOMER SERVICE DASHBOARD ROUTES ===================
+
+  // Get customer service dashboard metrics - Requires SUPPORT read permission
+  getCustomerServiceDashboard: (params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/customer-service/dashboard${queryString}`;
+  },
+
+  // Get support ticket metrics - Requires ANALYTICS read or SUPPORT read permission
+  getSupportTicketMetrics: (params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/customer-service/metrics/tickets${queryString}`;
+  },
+
+  // Get feedback sentiment analysis - Requires ANALYTICS read or SUPPORT read permission
+  getFeedbackSentimentAnalysis: (params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/customer-service/metrics/sentiment${queryString}`;
+  },
+
   // =================== REPORTS ROUTES (ADMIN ROLE-BASED) ===================
   
   // Get complete dashboard metrics - Requires ANALYTICS read permission
