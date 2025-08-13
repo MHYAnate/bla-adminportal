@@ -4,7 +4,7 @@ import { ViewIcon } from "../../../../../../../public/icons";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useGetOrderInfo, useProcessRefund } from "@/services/orders";
+import { useGetOrderInfo } from "@/services/orders";
 import { RefundModal, PaymentInfoDisplay } from "./refund";
 import { formatDate, formatDateTime } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -44,7 +44,116 @@ import {
 	DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import BackButton from "./backbtn";
+
+// ✅ Enhanced refund hook (since it's not in your services yet)
+const useProcessRefund = () => {
+	const queryClient = useQueryClient();
+
+	return useMutation({
+		mutationFn: async (refundData: any) => {
+			console.log('🔄 Processing refund request:', refundData);
+
+			const response = await httpService.postData(
+				routes.processRefund(refundData.orderId),
+				{
+					amount: refundData.amount,
+					reason: refundData.reason,
+					refundType: refundData.refundType,
+					breakdown: refundData.breakdown
+				}
+			);
+
+			return response;
+		},
+		onSuccess: (data, variables) => {
+			console.log('✅ Refund processed successfully:', data);
+
+			// Invalidate relevant queries to refresh data
+			queryClient.invalidateQueries({
+				queryKey: ['orderInfo', variables.orderId]
+			});
+			queryClient.invalidateQueries({
+				queryKey: ['orders']
+			});
+
+			toast.success(`Refund of ₦${data.data.refundAmount.toLocaleString()} processed successfully`);
+		},
+		onError: (error: any) => {
+			console.error('❌ Refund processing failed:', error);
+
+			const errorMessage = error?.response?.data?.error ||
+				error?.message ||
+				'Failed to process refund';
+
+			toast.error(`Refund failed: ${errorMessage}`);
+		}
+	});
+};
+
+// ✅ Order actions hook
+const useOrderActions = (order: any) => {
+	const processRefundMutation = useProcessRefund();
+
+	const processRefund = useCallback(async (refundData: any) => {
+		if (!order?.id) {
+			throw new Error('Order ID is required');
+		}
+
+		// Check refund eligibility
+		if (order.paymentStatus !== 'PAID') {
+			throw new Error(`Order payment status is ${order.paymentStatus}. Only paid orders can be refunded.`);
+		}
+
+		if (order.paymentStatus === 'REFUNDED') {
+			throw new Error('Order has already been refunded.');
+		}
+
+		if (['CANCELLED'].includes(order.status)) {
+			throw new Error('Cancelled orders cannot be refunded.');
+		}
+
+		return processRefundMutation.mutateAsync({
+			...refundData,
+			orderId: order.id
+		});
+	}, [order?.id, order?.paymentStatus, order?.status, processRefundMutation]);
+
+	const refundEligibility = useMemo(() => {
+		if (!order) return { canRefund: false, reason: 'Order not found' };
+
+		if (order.paymentStatus !== 'PAID') {
+			return {
+				canRefund: false,
+				reason: `Order payment status is ${order.paymentStatus}. Only paid orders can be refunded.`
+			};
+		}
+
+		if (order.paymentStatus === 'REFUNDED') {
+			return {
+				canRefund: false,
+				reason: 'Order has already been refunded.'
+			};
+		}
+
+		if (['CANCELLED'].includes(order.status)) {
+			return {
+				canRefund: false,
+				reason: 'Cancelled orders cannot be refunded.'
+			};
+		}
+
+		return { canRefund: true, reason: null };
+	}, [order]);
+
+	return {
+		processRefund,
+		isProcessingRefund: processRefundMutation.isPending,
+		refundError: processRefundMutation.error,
+		refundEligibility,
+	};
+};
 
 // Product Details Modal Component
 const ProductDetailsModal = React.memo(
@@ -184,8 +293,8 @@ const OrderTrackingModal = React.memo(
 							status === "PROCESSING"
 								? "current"
 								: ["SHIPPED", "DELIVERED", "COMPLETED"].includes(status)
-								? "completed"
-								: "pending",
+									? "completed"
+									: "pending",
 						icon: <Package className="w-6 h-6" />,
 						description: "Order is being prepared",
 					},
@@ -196,8 +305,8 @@ const OrderTrackingModal = React.memo(
 							status === "SHIPPED"
 								? "current"
 								: ["DELIVERED", "COMPLETED"].includes(status)
-								? "completed"
-								: "pending",
+									? "completed"
+									: "pending",
 						icon: <Truck className="w-6 h-6" />,
 						description: "Order is on the way",
 					},
@@ -258,22 +367,20 @@ const OrderTrackingModal = React.memo(
 										className="flex flex-col items-center relative z-10 bg-white px-3"
 									>
 										<div
-											className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg transition-all duration-500 ${
-												step.status === "completed"
-													? "bg-gradient-to-br from-green-500 to-emerald-600 text-white scale-110"
-													: step.status === "current"
+											className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 shadow-lg transition-all duration-500 ${step.status === "completed"
+												? "bg-gradient-to-br from-green-500 to-emerald-600 text-white scale-110"
+												: step.status === "current"
 													? "bg-gradient-to-br from-blue-500 to-purple-600 text-white scale-110 animate-pulse"
 													: "bg-gray-100 text-gray-400"
-											}`}
+												}`}
 										>
 											{step.icon}
 										</div>
 										<span
-											className={`text-sm text-center font-bold max-w-24 leading-tight ${
-												step.status === "completed" || step.status === "current"
-													? "text-gray-900"
-													: "text-gray-400"
-											}`}
+											className={`text-sm text-center font-bold max-w-24 leading-tight ${step.status === "completed" || step.status === "current"
+												? "text-gray-900"
+												: "text-gray-400"
+												}`}
 										>
 											{step.name}
 										</span>
@@ -308,11 +415,10 @@ const OrderTrackingModal = React.memo(
 									<div className="flex justify-between items-center">
 										<span className="text-gray-600 font-medium">Status:</span>
 										<Badge
-											className={`px-3 py-1 rounded-full font-semibold ${
-												order.status === "DELIVERED"
-													? "bg-green-100 text-green-800"
-													: "bg-yellow-100 text-yellow-800"
-											}`}
+											className={`px-3 py-1 rounded-full font-semibold ${order.status === "DELIVERED"
+												? "bg-green-100 text-green-800"
+												: "bg-yellow-100 text-yellow-800"
+												}`}
 										>
 											{order.status}
 										</Badge>
@@ -447,7 +553,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 	const [selectedProduct, setSelectedProduct] = useState(null);
 	const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 	const [refundModalOpen, setRefundModalOpen] = useState(false);
-	const processRefundMutation = useProcessRefund();
 
 	// Validate orderId before proceeding
 	if (!orderId) {
@@ -484,21 +589,52 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 		orderId: orderId,
 	} as any);
 
+	// Memoized processed data based on your controller's response structure
+	const processedOrderData = useMemo((): ProcessedOrderData | null => {
+		if (!rawData) return null;
+
+		return {
+			...rawData,
+			id: rawData.id,
+			orderId:
+				rawData.orderId || `#${String(rawData.id || "").padStart(6, "0")}`,
+			status: rawData.status || "PENDING",
+			totalPrice: Number(rawData.totalPrice) || 0,
+			createdAt: rawData.createdAt || new Date().toISOString(),
+			paymentStatus: rawData.paymentStatus || "PENDING",
+			orderType: rawData.orderType || "IMMEDIATE",
+			items: Array.isArray(rawData.items) ? rawData.items : [],
+			timeline: Array.isArray(rawData.timeline) ? rawData.timeline : [],
+			user: rawData.user || {},
+			summary: rawData.summary || {},
+			breakdown: rawData.breakdown || {},
+			shipping: rawData.shipping || null,
+			transactions: rawData.transactions || [],
+			adminAlerts: rawData.adminAlerts || [],
+			notes: rawData.notes || [],
+			amountPaid: rawData.amountPaid || rawData.breakdown?.amountPaid || 0,
+			amountDue: rawData.amountDue || rawData.breakdown?.amountDue || 0,
+		};
+	}, [rawData]);
+
+	// ✅ Use order actions hook with the processed data
+	const { processRefund, isProcessingRefund, refundEligibility } = useOrderActions(processedOrderData);
+
 	// Helper functions for safe property access
 	const getAmountPaid = useCallback((orderData: any): number => {
 		return typeof orderData?.amountPaid === "number"
 			? orderData.amountPaid
 			: typeof orderData?.breakdown?.amountPaid === "number"
-			? orderData.breakdown.amountPaid
-			: 0;
+				? orderData.breakdown.amountPaid
+				: 0;
 	}, []);
 
 	const getAmountDue = useCallback((orderData: any): number => {
 		return typeof orderData?.amountDue === "number"
 			? orderData.amountDue
 			: typeof orderData?.breakdown?.amountDue === "number"
-			? orderData.breakdown.amountDue
-			: 0;
+				? orderData.breakdown.amountDue
+				: 0;
 	}, []);
 
 	// Determine payment type and schedule based on available data
@@ -561,11 +697,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 			setIsUpdatingStatus(true);
 			try {
 				const response = await httpService.patchData(
+					routes.updateOrderStatus(orderId),
 					{
 						status: newStatus,
 						notes: `Status updated to ${newStatus} via admin panel`,
-					},
-					routes.updateOrderStatus(orderId)
+					}
 				);
 
 				if (refetchOrderInfo) {
@@ -601,34 +737,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 			refetchOrderInfo();
 		}
 	}, [refetchOrderInfo]);
-
-	// Memoized processed data based on your controller's response structure
-	const processedOrderData = useMemo((): ProcessedOrderData | null => {
-		if (!rawData) return null;
-
-		return {
-			...rawData,
-			id: rawData.id,
-			orderId:
-				rawData.orderId || `#${String(rawData.id || "").padStart(6, "0")}`,
-			status: rawData.status || "PENDING",
-			totalPrice: Number(rawData.totalPrice) || 0,
-			createdAt: rawData.createdAt || new Date().toISOString(),
-			paymentStatus: rawData.paymentStatus || "PENDING",
-			orderType: rawData.orderType || "IMMEDIATE",
-			items: Array.isArray(rawData.items) ? rawData.items : [],
-			timeline: Array.isArray(rawData.timeline) ? rawData.timeline : [],
-			user: rawData.user || {},
-			summary: rawData.summary || {},
-			breakdown: rawData.breakdown || {},
-			shipping: rawData.shipping || null,
-			transactions: rawData.transactions || [],
-			adminAlerts: rawData.adminAlerts || [],
-			notes: rawData.notes || [],
-			amountPaid: rawData.amountPaid || rawData.breakdown?.amountPaid || 0,
-			amountDue: rawData.amountDue || rawData.breakdown?.amountDue || 0,
-		};
-	}, [rawData]);
 
 	// Memoized shipping address calculation
 	const shippingAddress = useMemo(() => {
@@ -786,6 +894,23 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 		return statusTransitions[processedOrderData.status] || [];
 	}, [processedOrderData]);
 
+	// ✅ Helper function for timeline event descriptions
+	const getEventDescription = (action: string): string => {
+		const descriptions: Record<string, string> = {
+			'ORDER_CREATED': 'Order has been placed and confirmed',
+			'PAYMENT_RECEIVED': 'Payment has been successfully processed',
+			'PAYMENT_PENDING': 'Waiting for payment confirmation',
+			'ORDER_PROCESSING': 'Order is being prepared for shipment',
+			'ORDER_SHIPPED': 'Order has been shipped to customer',
+			'ORDER_DELIVERED': 'Order has been successfully delivered',
+			'ORDER_CANCELLED': 'Order has been cancelled',
+			'STATUS_UPDATED': 'Order status has been updated by admin',
+			'REFUND_PROCESSED': 'Refund has been processed for this order'
+		};
+
+		return descriptions[action] || 'Order status updated';
+	};
+
 	// Loading state
 	if (getOrderInfoIsLoading) {
 		return (
@@ -892,13 +1017,12 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 									Order# {order.orderId || order.id}
 								</h1>
 								<Badge
-									className={`px-3 py-1 rounded-lg text-sm font-semibold ${
-										statusInfo.variant === "default"
-											? "bg-green-100 text-green-800"
-											: statusInfo.variant === "destructive"
+									className={`px-3 py-1 rounded-lg text-sm font-semibold ${statusInfo.variant === "default"
+										? "bg-green-100 text-green-800"
+										: statusInfo.variant === "destructive"
 											? "bg-red-100 text-red-800"
 											: "bg-yellow-100 text-yellow-800"
-									}`}
+										}`}
 								>
 									{statusInfo.text}
 								</Badge>
@@ -912,13 +1036,19 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 									variant="outline"
 									onClick={() => setRefundModalOpen(true)}
 									disabled={
-										processRefundMutation.isPending ||
-										order.paymentStatus !== "PAID" ||
-										["REFUNDED", "CANCELLED"].includes(order.status)
+										isProcessingRefund ||
+										!refundEligibility.canRefund
 									}
 									className="px-4 py-2 rounded-lg font-semibold border hover:bg-gray-50"
 								>
-									Refund
+									{isProcessingRefund ? (
+										<>
+											<RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+											Processing...
+										</>
+									) : (
+										"Refund"
+									)}
 								</Button>
 
 								{/* Status Update Dropdown */}
@@ -1058,10 +1188,10 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 												status: ["PROCESSING", "ONGOING"].includes(order.status)
 													? "current"
 													: ["SHIPPED", "DELIVERED", "COMPLETED"].includes(
-															order.status
-													  )
-													? "completed"
-													: "pending",
+														order.status
+													)
+														? "completed"
+														: "pending",
 												isActive: [
 													"PROCESSING",
 													"ONGOING",
@@ -1076,8 +1206,8 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 													order.status === "SHIPPED"
 														? "current"
 														: ["DELIVERED", "COMPLETED"].includes(order.status)
-														? "completed"
-														: "pending",
+															? "completed"
+															: "pending",
 												isActive: [
 													"SHIPPED",
 													"DELIVERED",
@@ -1101,20 +1231,18 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 												className="flex flex-col items-center bg-white"
 											>
 												<div
-													className={`w-12 h-12 rounded-full mb-2 transition-all duration-500 flex items-center justify-center ${
-														step.status === "completed"
-															? "bg-green-500 text-white"
-															: step.status === "current"
+													className={`w-12 h-12 rounded-full mb-2 transition-all duration-500 flex items-center justify-center ${step.status === "completed"
+														? "bg-green-500 text-white"
+														: step.status === "current"
 															? "bg-yellow-500 text-white"
 															: "bg-gray-200 text-gray-400"
-													}`}
+														}`}
 												>
 													<CheckCircle className="w-6 h-6" />
 												</div>
 												<span
-													className={`text-xs text-center font-semibold max-w-20 leading-tight ${
-														step.isActive ? "text-gray-900" : "text-gray-400"
-													}`}
+													className={`text-xs text-center font-semibold max-w-20 leading-tight ${step.isActive ? "text-gray-900" : "text-gray-400"
+														}`}
 												>
 													{step.label}
 												</span>
@@ -1155,47 +1283,118 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 							<CardContent>
 								<div className="space-y-4">
 									{order.timeline && order.timeline.length > 0 ? (
-										order.timeline.map((event: any, index: number) => (
-											<div
-												key={index}
-												className="flex gap-3 p-3 rounded-lg border border-gray-100"
-											>
-												<div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
-													<div className="w-3 h-3 bg-white rounded-full"></div>
-												</div>
-												<div className="flex-1">
-													<div className="flex items-center justify-between mb-1">
-														<h4 className="font-semibold text-gray-900 capitalize">
-															{event?.action?.replace?.(/_/g, " ") ||
-																"Order Update"}
-														</h4>
-														<span className="text-xs text-gray-500">
-															{formatDateTime(
-																event?.createdAt || order.createdAt
-															)}
-														</span>
-													</div>
-													<p className="text-sm text-gray-600">
-														{event?.details?.description ||
-															event?.details?.adminNotes ||
-															"Order status updated"}
-													</p>
-													{event?.details?.previousStatus && (
-														<div className="mt-2">
-															<Badge className="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded">
-																Download Invoice
-															</Badge>
+										// ✅ FIX: Ensure chronological order (oldest first) and add timeline validation
+										(() => {
+											// Validate and sort timeline to ensure proper chronological order
+											const sortedTimeline = [...order.timeline].sort((a, b) => {
+												const dateA = new Date(a.createdAt || a.displayTime || order.createdAt);
+												const dateB = new Date(b.createdAt || b.displayTime || order.createdAt);
+												return dateA.getTime() - dateB.getTime(); // Ascending order (oldest first)
+											});
+
+											// Debug timeline ordering
+											console.log('📅 Frontend Timeline Order Check:', {
+												originalLength: order.timeline.length,
+												sortedLength: sortedTimeline.length,
+												firstEvent: {
+													action: sortedTimeline[0]?.action,
+													time: sortedTimeline[0]?.createdAt || sortedTimeline[0]?.displayTime,
+													formatted: sortedTimeline[0]?.formattedAction
+												},
+												lastEvent: {
+													action: sortedTimeline[sortedTimeline.length - 1]?.action,
+													time: sortedTimeline[sortedTimeline.length - 1]?.createdAt || sortedTimeline[sortedTimeline.length - 1]?.displayTime,
+													formatted: sortedTimeline[sortedTimeline.length - 1]?.formattedAction
+												}
+											});
+
+											return sortedTimeline.map((event, index) => (
+												<div
+													key={`timeline-${event.id || index}`}
+													className="flex gap-3 p-4 rounded-lg border border-gray-100 hover:border-gray-200 transition-colors"
+												>
+													{/* Timeline indicator */}
+													<div className="flex flex-col items-center">
+														<div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
+															<div className="w-3 h-3 bg-white rounded-full"></div>
 														</div>
-													)}
+														{/* Connect line to next event (except for last event) */}
+														{index < sortedTimeline.length - 1 && (
+															<div className="w-0.5 h-6 bg-gray-200 mt-2"></div>
+														)}
+													</div>
+
+													{/* Event content */}
+													<div className="flex-1">
+														<div className="flex items-center justify-between mb-1">
+															<h4 className="font-semibold text-gray-900 capitalize flex items-center gap-2">
+																{/* ✅ FIX: Show proper event title with sequence */}
+																{event?.formattedAction ||
+																	event?.action?.replace?.(/_/g, " ") ||
+																	"Order Update"}
+																{/* Show sequence number for debugging */}
+																{process.env.NODE_ENV === 'development' && (
+																	<span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+																		#{event.sequenceNumber || index + 1}
+																	</span>
+																)}
+															</h4>
+															<span className="text-xs text-gray-500">
+																{formatDateTime(
+																	event?.createdAt ||
+																	event?.displayTime ||
+																	order.createdAt
+																)}
+															</span>
+														</div>
+
+														<p className="text-sm text-gray-600">
+															{event?.details?.description ||
+																event?.details?.adminNotes ||
+																getEventDescription(event?.action) ||
+																"Order status updated"}
+														</p>
+
+														{/* Show status badge for important events */}
+														{event?.details?.previousStatus && (
+															<div className="mt-2">
+																<Badge className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+																	Status: {event.details.previousStatus} → {event?.details?.newStatus || 'Updated'}
+																</Badge>
+															</div>
+														)}
+
+														{/* Show payment information for payment events */}
+														{event?.action?.includes('PAYMENT') && event?.details?.amount && (
+															<div className="mt-2">
+																<Badge className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+																	Amount: ₦{Number(event.details.amount).toLocaleString()}
+																</Badge>
+															</div>
+														)}
+
+														{/* Show refund information for refund events */}
+														{event?.action === 'REFUND_PROCESSED' && (
+															<div className="mt-2 space-y-1">
+																<Badge className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+																	Refund: ₦{Number(event.details?.refundAmount || 0).toLocaleString()}
+																</Badge>
+																{event.details?.breakdown && (
+																	<div className="text-xs text-gray-500">
+																		Items: ₦{Number(event.details.itemsRefund || 0).toLocaleString()} •
+																		Shipping: ₦{Number(event.details.shippingRefund || 0).toLocaleString()}
+																	</div>
+																)}
+															</div>
+														)}
+													</div>
 												</div>
-											</div>
-										))
+											));
+										})()
 									) : (
 										<div className="text-center py-8">
 											<Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-											<p className="text-gray-500">
-												No timeline events available
-											</p>
+											<p className="text-gray-500">No timeline events available</p>
 										</div>
 									)}
 								</div>
@@ -1215,7 +1414,6 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 												<th className="text-left py-4 px-6 font-semibold text-gray-900">
 													Amount
 												</th>
-												{/* <th className="text-left py-4 px-6 font-semibold text-gray-900">Order ID</th> */}
 												<th className="text-left py-4 px-6 font-semibold text-gray-900">
 													QTY
 												</th>
@@ -1275,24 +1473,20 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 																0
 															).toLocaleString()}
 														</td>
-														{/* <td className="py-4 px-6 font-semibold text-gray-900">
-                              #{String(order.id).slice(-6)}
-                            </td> */}
 														<td className="py-4 px-6 font-semibold text-gray-900">
 															{item.quantity || 0}
 														</td>
 														<td className="py-4 px-6">
 															<Badge
-																className={`px-2 py-1 rounded text-xs font-semibold ${
-																	order.status === "DELIVERED" ||
+																className={`px-2 py-1 rounded text-xs font-semibold ${order.status === "DELIVERED" ||
 																	order.status === "COMPLETED"
-																		? "bg-green-100 text-green-800"
-																		: order.status === "PROCESSING"
+																	? "bg-green-100 text-green-800"
+																	: order.status === "PROCESSING"
 																		? "bg-yellow-100 text-yellow-800"
 																		: order.status === "CANCELLED"
-																		? "bg-red-100 text-red-800"
-																		: "bg-gray-100 text-gray-800"
-																}`}
+																			? "bg-red-100 text-red-800"
+																			: "bg-gray-100 text-gray-800"
+																	}`}
 															>
 																{order.status}
 															</Badge>
@@ -1315,7 +1509,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 												))
 											) : (
 												<tr>
-													<td colSpan={6} className="py-12 text-center">
+													<td colSpan={5} className="py-12 text-center">
 														<Package className="w-12 h-12 mx-auto mb-4 text-gray-300" />
 														<p className="text-gray-500">No products found</p>
 													</td>
@@ -1440,7 +1634,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 									<div className="flex justify-between items-center text-sm">
 										<span className="text-gray-600">Shipping Fee:</span>
 										<span className="font-semibold">
-											₦{(order.summary?.shippingFee || 0).toLocaleString()}
+											₦{(order.summary?.shippingFee || order.shipping?.totalShippingFee || 0).toLocaleString()}
 										</span>
 									</div>
 									<div className="flex justify-between items-center text-sm">

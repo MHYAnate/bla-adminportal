@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,7 +11,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, CreditCard, DollarSign, RefreshCw } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+    AlertTriangle,
+    CreditCard,
+    DollarSign,
+    RefreshCw,
+    Info,
+    Truck,
+    Package,
+    Calculator
+} from "lucide-react";
 import { toast } from "sonner";
 import httpService from "@/services/httpService";
 import { routes } from "@/services/api-routes";
@@ -23,6 +34,21 @@ interface RefundModalProps {
     onRefundSuccess: () => void;
 }
 
+interface RefundCalculation {
+    refundAmount: number;
+    itemsRefund: number;
+    shippingRefund: number;
+    canRefundShipping: boolean;
+    isShipped: boolean;
+    maxRefundable: number;
+    breakdown: {
+        originalTotal: number;
+        itemsSubtotal: number;
+        shippingFee: number;
+        nonRefundable: number;
+    };
+}
+
 export const RefundModal: React.FC<RefundModalProps> = ({
     order,
     isOpen,
@@ -31,33 +57,120 @@ export const RefundModal: React.FC<RefundModalProps> = ({
 }) => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [refundType, setRefundType] = useState<'full' | 'partial'>('full');
-    const [refundAmount, setRefundAmount] = useState(order?.totalPrice || 0);
+    const [customAmount, setCustomAmount] = useState('');
     const [reason, setReason] = useState('');
 
-    const maxRefundAmount = order?.totalPrice || 0;
-    const amountPaid = order?.amountPaid || order?.totalPrice || 0;
+    // ✅ Calculate refund details based on order status and shipping
+    const refundCalculation = useMemo((): RefundCalculation => {
+        const totalPrice = Number(order?.totalPrice) || 0;
+        const shippingFee = Number(order?.shipping?.totalShippingFee) || 0;
+        const itemsSubtotal = totalPrice - shippingFee;
+
+        // Determine if order has been shipped
+        const isShipped = ['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order?.status);
+        const canRefundShipping = !isShipped;
+
+        let refundAmount = 0;
+        let itemsRefund = 0;
+        let shippingRefund = 0;
+
+        if (refundType === 'full') {
+            if (isShipped) {
+                // If shipped: Only refund items, not shipping
+                itemsRefund = itemsSubtotal;
+                shippingRefund = 0;
+                refundAmount = itemsRefund;
+            } else {
+                // If not shipped: Refund everything
+                itemsRefund = itemsSubtotal;
+                shippingRefund = shippingFee;
+                refundAmount = totalPrice;
+            }
+        } else if (refundType === 'partial') {
+            const requestedAmount = Number(customAmount) || 0;
+            const maxRefundable = isShipped ? itemsSubtotal : totalPrice;
+
+            if (requestedAmount <= maxRefundable) {
+                refundAmount = requestedAmount;
+
+                if (isShipped) {
+                    // For shipped orders, partial refund comes only from items
+                    itemsRefund = refundAmount;
+                    shippingRefund = 0;
+                } else {
+                    // For non-shipped orders, calculate proportional refund
+                    const itemsProportion = itemsSubtotal / totalPrice;
+                    const shippingProportion = shippingFee / totalPrice;
+
+                    itemsRefund = refundAmount * itemsProportion;
+                    shippingRefund = refundAmount * shippingProportion;
+                }
+            }
+        }
+
+        return {
+            refundAmount: Math.round(refundAmount * 100) / 100,
+            itemsRefund: Math.round(itemsRefund * 100) / 100,
+            shippingRefund: Math.round(shippingRefund * 100) / 100,
+            canRefundShipping,
+            isShipped,
+            maxRefundable: isShipped ? itemsSubtotal : totalPrice,
+            breakdown: {
+                originalTotal: totalPrice,
+                itemsSubtotal,
+                shippingFee,
+                nonRefundable: totalPrice - refundAmount
+            }
+        };
+    }, [order, refundType, customAmount]);
+
+    // Reset custom amount when switching to full refund
+    useEffect(() => {
+        if (refundType === 'full') {
+            setCustomAmount('');
+        }
+    }, [refundType]);
 
     const handleRefund = async () => {
+        // Validation
         if (!reason.trim()) {
             toast.error('Please provide a reason for the refund');
             return;
         }
 
-        if (refundType === 'partial' && (refundAmount <= 0 || refundAmount > amountPaid)) {
-            toast.error(`Refund amount must be between ₦1 and ₦${amountPaid.toLocaleString()}`);
+        if (refundType === 'partial') {
+            const amount = Number(customAmount);
+            if (!amount || amount <= 0) {
+                toast.error('Please enter a valid refund amount');
+                return;
+            }
+            if (amount > refundCalculation.maxRefundable) {
+                toast.error(`Refund amount cannot exceed ₦${refundCalculation.maxRefundable.toLocaleString()}`);
+                return;
+            }
+        }
+
+        if (refundCalculation.refundAmount <= 0) {
+            toast.error('Invalid refund amount');
             return;
         }
 
         setIsProcessing(true);
 
         try {
+            const requestData = {
+                amount: refundCalculation.refundAmount,
+                reason: reason.trim(),
+                refundType,
+                breakdown: refundCalculation.breakdown
+            };
+
+            console.log('🔄 Sending refund request:', requestData);
+
+            // ✅ FIX: Correct parameter order for httpService.postData(data, endpoint)
             const response = await httpService.postData(
-                routes.processRefund(order.id),
-                {
-                    amount: refundType === 'full' ? amountPaid : refundAmount,
-                    reason: reason.trim(),
-                    refundType,
-                }
+                requestData,                          // data parameter first
+                routes.processRefund(order.id)       // endpoint parameter second
             );
 
             toast.success('Refund processed successfully');
@@ -66,7 +179,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
 
             // Reset form
             setRefundType('full');
-            setRefundAmount(maxRefundAmount);
+            setCustomAmount('');
             setReason('');
 
         } catch (error: any) {
@@ -93,18 +206,20 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                         </DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 mb-4">
                             Refunds are only available for paid orders that haven't been refunded or cancelled.
                         </p>
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                            <p className="text-sm">
+                        <div className="space-y-2 p-3 bg-gray-50 rounded-lg">
+                            <div className="flex justify-between items-center">
                                 <span className="font-medium">Payment Status:</span>
-                                <Badge className="ml-2">{order?.paymentStatus}</Badge>
-                            </p>
-                            <p className="text-sm mt-1">
+                                <Badge variant={order?.paymentStatus === 'PAID' ? 'default' : 'secondary'}>
+                                    {order?.paymentStatus}
+                                </Badge>
+                            </div>
+                            <div className="flex justify-between items-center">
                                 <span className="font-medium">Order Status:</span>
-                                <Badge className="ml-2">{order?.status}</Badge>
-                            </p>
+                                <Badge variant="outline">{order?.status}</Badge>
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
@@ -117,7 +232,7 @@ export const RefundModal: React.FC<RefundModalProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                         <DollarSign className="w-5 h-5 text-blue-500" />
@@ -126,139 +241,206 @@ export const RefundModal: React.FC<RefundModalProps> = ({
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
-                    {/* Order Summary */}
-                    <div className="p-4 bg-gray-50 rounded-lg">
-                        <h4 className="font-medium mb-2">Order Summary</h4>
-                        <div className="space-y-1 text-sm">
-                            <div className="flex justify-between">
-                                <span>Total Amount:</span>
-                                <span className="font-medium">₦{maxRefundAmount.toLocaleString()}</span>
+                    {/* Order Status Info */}
+                    <Card className="border-l-4 border-l-blue-500">
+                        <CardContent className="p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Info className="w-4 h-4 text-blue-500" />
+                                <span className="font-semibold">Order Status Information</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Amount Paid:</span>
-                                <span className="font-medium text-green-600">₦{amountPaid.toLocaleString()}</span>
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="flex items-center gap-2">
+                                    <Package className="w-4 h-4" />
+                                    <span>Status: <Badge variant="outline">{order?.status}</Badge></span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Truck className="w-4 h-4" />
+                                    <span>Shipped: {refundCalculation.isShipped ? '✅ Yes' : '❌ No'}</span>
+                                </div>
                             </div>
-                            <div className="flex justify-between">
-                                <span>Payment Status:</span>
-                                <Badge variant="default">{order?.paymentStatus}</Badge>
-                            </div>
-                        </div>
-                    </div>
+                            {refundCalculation.isShipped && (
+                                <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm">
+                                    <AlertTriangle className="w-4 h-4 text-yellow-600 inline mr-1" />
+                                    <span className="text-yellow-800">
+                                        Since this order has been shipped, shipping fees cannot be refunded.
+                                    </span>
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                    {/* Refund Type */}
+                    {/* Order Summary */}
+                    <Card>
+                        <CardContent className="p-4">
+                            <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                <Calculator className="w-4 h-4" />
+                                Order Breakdown
+                            </h4>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span>Items Subtotal:</span>
+                                    <span className="font-medium">₦{refundCalculation.breakdown.itemsSubtotal.toLocaleString()}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Shipping Fee:</span>
+                                    <span className="font-medium">₦{refundCalculation.breakdown.shippingFee.toLocaleString()}</span>
+                                </div>
+                                <Separator />
+                                <div className="flex justify-between font-semibold">
+                                    <span>Total Paid:</span>
+                                    <span>₦{refundCalculation.breakdown.originalTotal.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Refund Type Selection - Using standard radio inputs */}
                     <div>
-                        <Label className="text-base font-medium">Refund Type</Label>
+                        <Label className="text-base font-semibold">Refund Type</Label>
                         <div className="mt-2 space-y-3">
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-start space-x-3">
                                 <input
                                     type="radio"
                                     id="full"
                                     name="refundType"
                                     value="full"
                                     checked={refundType === 'full'}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setRefundType('full');
-                                            setRefundAmount(amountPaid);
-                                        }
-                                    }}
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
+                                    onChange={(e) => setRefundType(e.target.value as 'full' | 'partial')}
+                                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                                 />
-                                <Label htmlFor="full" className="cursor-pointer font-normal">
-                                    Full Refund (₦{amountPaid.toLocaleString()})
+                                <Label htmlFor="full" className="flex-1 cursor-pointer">
+                                    <div>
+                                        <div className="font-medium">
+                                            Full Refund
+                                            {refundCalculation.isShipped && (
+                                                <span className="text-sm text-gray-500"> (Items Only)</span>
+                                            )}
+                                        </div>
+                                        <div className="text-sm text-gray-600">
+                                            Refund ₦{refundCalculation.refundAmount.toLocaleString()}
+                                            {refundCalculation.isShipped
+                                                ? ' (excluding shipping)'
+                                                : ' (including shipping)'
+                                            }
+                                        </div>
+                                    </div>
                                 </Label>
                             </div>
-                            <div className="flex items-center space-x-3">
+                            <div className="flex items-start space-x-3">
                                 <input
                                     type="radio"
                                     id="partial"
                                     name="refundType"
                                     value="partial"
                                     checked={refundType === 'partial'}
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setRefundType('partial');
-                                        }
-                                    }}
-                                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
+                                    onChange={(e) => setRefundType(e.target.value as 'full' | 'partial')}
+                                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300"
                                 />
-                                <Label htmlFor="partial" className="cursor-pointer font-normal">
-                                    Partial Refund
+                                <Label htmlFor="partial" className="flex-1 cursor-pointer">
+                                    <div>
+                                        <div className="font-medium">Partial Refund</div>
+                                        <div className="text-sm text-gray-600">
+                                            Specify custom amount (max: ₦{refundCalculation.maxRefundable.toLocaleString()})
+                                        </div>
+                                    </div>
                                 </Label>
                             </div>
                         </div>
                     </div>
 
-                    {/* Partial Refund Amount */}
+                    {/* Custom Amount Input */}
                     {refundType === 'partial' && (
                         <div>
-                            <Label htmlFor="amount">Refund Amount</Label>
-                            <div className="relative mt-1">
-                                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₦</span>
-                                <Input
-                                    id="amount"
-                                    type="number"
-                                    value={refundAmount}
-                                    onChange={(e) => setRefundAmount(Number(e.target.value))}
-                                    className="pl-8"
-                                    min={1}
-                                    max={amountPaid}
-                                    placeholder="0"
-                                />
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                                Maximum refundable: ₦{amountPaid.toLocaleString()}
-                            </p>
+                            <Label htmlFor="amount">Refund Amount (₦)</Label>
+                            <Input
+                                id="amount"
+                                type="number"
+                                value={customAmount}
+                                onChange={(e) => setCustomAmount(e.target.value)}
+                                placeholder={`Enter amount (max: ₦${refundCalculation.maxRefundable.toLocaleString()})`}
+                                min="1"
+                                max={refundCalculation.maxRefundable}
+                                className="mt-1"
+                            />
+                            {customAmount && Number(customAmount) > refundCalculation.maxRefundable && (
+                                <p className="text-sm text-red-600 mt-1">
+                                    Amount exceeds maximum refundable amount
+                                </p>
+                            )}
                         </div>
+                    )}
+
+                    {/* Refund Preview */}
+                    {refundCalculation.refundAmount > 0 && (
+                        <Card className="bg-green-50 border-green-200">
+                            <CardContent className="p-4">
+                                <h4 className="font-semibold text-green-800 mb-3">Refund Preview</h4>
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                        <span>Items Refund:</span>
+                                        <span className="font-medium text-green-700">
+                                            ₦{refundCalculation.itemsRefund.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span>Shipping Refund:</span>
+                                        <span className="font-medium text-green-700">
+                                            ₦{refundCalculation.shippingRefund.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <Separator />
+                                    <div className="flex justify-between font-semibold text-green-800">
+                                        <span>Total Refund:</span>
+                                        <span>₦{refundCalculation.refundAmount.toLocaleString()}</span>
+                                    </div>
+                                    {refundCalculation.breakdown.nonRefundable > 0 && (
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>Non-refundable:</span>
+                                            <span>₦{refundCalculation.breakdown.nonRefundable.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
 
                     {/* Reason */}
                     <div>
-                        <Label htmlFor="reason">Reason for Refund *</Label>
+                        <Label htmlFor="reason">Refund Reason *</Label>
                         <Textarea
                             id="reason"
                             value={reason}
                             onChange={(e) => setReason(e.target.value)}
-                            placeholder="Please provide a reason for this refund..."
+                            placeholder="Please provide a detailed reason for this refund..."
                             className="mt-1"
                             rows={3}
                         />
                     </div>
-
-                    {/* Warning */}
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div className="flex items-start gap-2">
-                            <AlertTriangle className="w-4 h-4 text-yellow-600 mt-0.5" />
-                            <div className="text-sm text-yellow-800">
-                                <p className="font-medium">Please confirm:</p>
-                                <p>This action will process a refund and cannot be undone. The customer will be notified.</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
-                <DialogFooter className="flex gap-2">
-                    <Button
-                        onClick={onClose}
-                        variant="outline"
-                        disabled={isProcessing}
-                    >
+                <DialogFooter className="flex gap-3">
+                    <Button onClick={onClose} variant="outline" disabled={isProcessing}>
                         Cancel
                     </Button>
                     <Button
                         onClick={handleRefund}
-                        disabled={isProcessing || !reason.trim()}
-                        className="bg-red-500 hover:bg-red-600"
+                        disabled={
+                            isProcessing ||
+                            !reason.trim() ||
+                            refundCalculation.refundAmount <= 0 ||
+                            (refundType === 'partial' && (!customAmount || Number(customAmount) > refundCalculation.maxRefundable))
+                        }
+                        className="bg-red-600 hover:bg-red-700 text-white"
                     >
                         {isProcessing ? (
                             <>
                                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                Processing...
+                                Processing Refund...
                             </>
                         ) : (
                             <>
                                 <CreditCard className="w-4 h-4 mr-2" />
-                                Process Refund
+                                Process Refund (₦{refundCalculation.refundAmount.toLocaleString()})
                             </>
                         )}
                     </Button>
@@ -268,10 +450,9 @@ export const RefundModal: React.FC<RefundModalProps> = ({
     );
 };
 
-// Enhanced Payment Info Component (based on your backend data)
+// Enhanced Payment Info Component with refund history
 export const PaymentInfoDisplay: React.FC<{ order: any }> = ({ order }) => {
     const getPaymentMethodInfo = () => {
-        // Based on your backend, you might have paymentMethod or derive from orderType
         const method = order.paymentMethod || order.orderType || 'UNKNOWN';
         const status = order.paymentStatus || 'PENDING';
 
@@ -285,23 +466,21 @@ export const PaymentInfoDisplay: React.FC<{ order: any }> = ({ order }) => {
         };
     };
 
-    const getDeliveryInfo = () => {
-        // Based on your backend structure
-        const shipping = order.shipping || {};
-        const hasSchedule = Boolean(order.scheduledDeliveryDate);
+    const getRefundInfo = () => {
+        // Check timeline for refund events
+        const refundEvents = order.timeline?.filter((event: any) =>
+            event.action === 'REFUND_PROCESSED'
+        ) || [];
 
         return {
-            hasSchedule,
-            scheduledDate: order.scheduledDeliveryDate,
-            timeSlot: order.preferredTimeSlot,
-            distance: shipping.distance,
-            shippingFee: shipping.totalShippingFee,
-            estimatedDelivery: order.estimatedDelivery
+            hasRefunds: refundEvents.length > 0,
+            refundEvents,
+            isRefunded: order.paymentStatus === 'REFUNDED'
         };
     };
 
     const paymentInfo = getPaymentMethodInfo();
-    const deliveryInfo = getDeliveryInfo();
+    const refundInfo = getRefundInfo();
 
     const formatPaymentMethod = (method: string) => {
         const methodMap: Record<string, string> = {
@@ -309,119 +488,125 @@ export const PaymentInfoDisplay: React.FC<{ order: any }> = ({ order }) => {
             'BANK_TRANSFER': 'Bank Transfer',
             'CASH_ON_DELIVERY': 'Cash on Delivery',
             'PAY_ON_DELIVERY': 'Pay on Delivery',
-            'WALLET': 'Digital Wallet'
+            'PAYSTACK': 'Paystack',
+            'FLUTTERWAVE': 'Flutterwave'
         };
-        return methodMap[method] || method.replace('_', ' ');
+        return methodMap[method] || method;
     };
 
     return (
         <div className="space-y-4">
-            {/* Payment Information */}
-            <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-3 flex items-center gap-2">
-                    <CreditCard className="w-4 h-4" />
-                    Payment Information
-                </h4>
-
-                <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">Payment Method:</span>
-                        <span className="font-medium">
-                            {formatPaymentMethod(paymentInfo.method)}
-                        </span>
-                    </div>
-
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">Payment Status:</span>
-                        <Badge
-                            variant={paymentInfo.status === 'PAID' ? 'default' : 'secondary'}
-                            className={
-                                paymentInfo.status === 'PAID' ? 'bg-green-100 text-green-800' :
-                                    paymentInfo.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-gray-100 text-gray-800'
-                            }
-                        >
-                            {paymentInfo.status}
-                        </Badge>
-                    </div>
-
-                    {/* Payment Characteristics */}
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">Payment Type:</span>
-                        <div className="flex gap-1">
-                            {paymentInfo.isPayOnDelivery && (
-                                <Badge className="bg-blue-100 text-blue-800 text-xs">
-                                    Pay on Delivery
-                                </Badge>
-                            )}
-                            {paymentInfo.requiresPayment && (
-                                <Badge className="bg-red-100 text-red-800 text-xs">
-                                    Payment Required
-                                </Badge>
-                            )}
-                            {paymentInfo.status === 'PAID' && (
-                                <Badge className="bg-green-100 text-green-800 text-xs">
-                                    Paid
-                                </Badge>
-                            )}
-                        </div>
-                    </div>
-                </div>
+            {/* Payment Method */}
+            <div className="flex justify-between items-center">
+                <span className="text-gray-600 font-medium">Payment Method:</span>
+                <span className="font-semibold">
+                    {formatPaymentMethod(paymentInfo.method)}
+                </span>
             </div>
 
-            {/* Delivery Information */}
-            <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium mb-3">Delivery Information</h4>
-
-                <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                        <span className="text-gray-600">Delivery Type:</span>
-                        <Badge className={
-                            deliveryInfo.hasSchedule ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'
-                        }>
-                            {deliveryInfo.hasSchedule ? 'Scheduled' : 'Standard'}
-                        </Badge>
-                    </div>
-
-                    {deliveryInfo.scheduledDate && (
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Scheduled Date:</span>
-                            <span className="font-medium">
-                                {new Date(deliveryInfo.scheduledDate).toLocaleDateString()}
-                            </span>
-                        </div>
-                    )}
-
-                    {deliveryInfo.timeSlot && (
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Time Slot:</span>
-                            <span className="font-medium">
-                                {deliveryInfo.timeSlot.start} - {deliveryInfo.timeSlot.end}
-                            </span>
-                        </div>
-                    )}
-
-                    {deliveryInfo.distance && (
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Distance:</span>
-                            <span className="font-medium">{deliveryInfo.distance} km</span>
-                        </div>
-                    )}
-
-                    {deliveryInfo.shippingFee && (
-                        <div className="flex justify-between">
-                            <span className="text-gray-600">Shipping Fee:</span>
-                            <span className="font-medium">₦{deliveryInfo.shippingFee.toLocaleString()}</span>
-                        </div>
-                    )}
-                </div>
+            {/* Payment Status */}
+            <div className="flex justify-between items-center">
+                <span className="text-gray-600 font-medium">Payment Status:</span>
+                <Badge
+                    variant={
+                        paymentInfo.status === 'PAID' ? 'default' :
+                            paymentInfo.status === 'REFUNDED' ? 'destructive' :
+                                'secondary'
+                    }
+                >
+                    {paymentInfo.status}
+                </Badge>
             </div>
+
+            {/* Amount Information */}
+            <div className="flex justify-between items-center">
+                <span className="text-gray-600 font-medium">Amount Paid:</span>
+                <span className="font-semibold">
+                    ₦{(order.amountPaid || 0).toLocaleString()}
+                </span>
+            </div>
+
+            {order.amountDue > 0 && (
+                <div className="flex justify-between items-center">
+                    <span className="text-gray-600 font-medium">Amount Due:</span>
+                    <span className="font-semibold text-red-600">
+                        ₦{(order.amountDue || 0).toLocaleString()}
+                    </span>
+                </div>
+            )}
+
+            {/* Refund Information */}
+            {refundInfo.isRefunded && (
+                <>
+                    <Separator className="my-3" />
+                    <div className="space-y-2">
+                        <h4 className="font-semibold text-red-600 flex items-center gap-2">
+                            <RefreshCw className="w-4 h-4" />
+                            Refund Information
+                        </h4>
+                        {refundInfo.refundEvents.map((event: any, index: number) => (
+                            <div key={index} className="bg-red-50 border border-red-200 rounded p-3">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <div className="font-medium text-red-800">
+                                            Refund Processed
+                                        </div>
+                                        <div className="text-sm text-red-600">
+                                            {event.details?.reason || 'No reason provided'}
+                                        </div>
+                                        {event.details?.breakdown && (
+                                            <div className="text-xs text-red-600 mt-1">
+                                                Items: ₦{(event.details.itemsRefund || 0).toLocaleString()} •
+                                                Shipping: ₦{(event.details.shippingRefund || 0).toLocaleString()}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-semibold text-red-800">
+                                            ₦{(event.details?.refundAmount || 0).toLocaleString()}
+                                        </div>
+                                        <div className="text-xs text-red-600">
+                                            {new Date(event.createdAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
+
+            {/* Transaction History */}
+            {order.transactions && order.transactions.length > 0 && (
+                <>
+                    <Separator className="my-3" />
+                    <div className="space-y-2">
+                        <h4 className="font-semibold text-gray-700">Transaction History</h4>
+                        {order.transactions.slice(0, 3).map((transaction: any, index: number) => (
+                            <div key={index} className="flex justify-between items-center text-sm">
+                                <span className="text-gray-600">
+                                    {transaction.reference || `Transaction ${index + 1}`}
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <Badge
+                                        variant={
+                                            transaction.status === 'success' ? 'default' :
+                                                transaction.status === 'refunded' ? 'destructive' :
+                                                    'secondary'
+                                        }
+                                        className="text-xs"
+                                    >
+                                        {transaction.status}
+                                    </Badge>
+                                    <span className="font-medium">
+                                        ₦{(transaction.amount || 0).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
         </div>
     );
 };
-
-
-
-
-
-

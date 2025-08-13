@@ -45,20 +45,16 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
     const [filter, setFilter] = useState<string>("");
     const [status, setStatus] = useState<string>("all");
     const [pageSize, setPageSize] = useState<string>("10");
-    const [currentPage, setCurrentPage] = useState(1);
-    // const [startDate, setStartDate] = useState<string | null>(null);
-    // const [endDate, setEndDate] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState<number>(1);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
-    useEffect(() => {
-        console.log('🔍 Filter state changed:', { filter, status });
-    }, [filter, status]);
-
+    console.log('🔄 ManufacturerDetails - manufacturerId:', manufacturerId);
 
     const onPageChange = (page: number) => {
         setCurrentPage(page);
     };
 
+    // FIXED: Get manufacturers data for finding manufacturer info
     const {
         getManufacturersData,
         getManufacturersIsLoading,
@@ -66,6 +62,7 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         setManufacturersFilter,
     } = useGetManufacturers();
 
+    // Find manufacturer from the list
     const findManufacturerById = (id: string) => {
         if (!getManufacturersData?.data) return null;
         return getManufacturersData.data.find(
@@ -75,6 +72,24 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
 
     const manufacturer = findManufacturerById(manufacturerId);
 
+    // FIXED: Pass manufacturerId directly to the hooks
+    const {
+        getManufacturerInfoData: manufacturerInfo,
+        getManufacturerInfoIsLoading: manufacturerInfoLoading,
+        getManufacturerInfoError: manufacturerInfoError,
+        refetchManufacturerInfo,
+        setManufacturerInfoFilter,
+    } = useGetManufacturerInfo(manufacturerId); // Pass manufacturerId directly
+
+    const {
+        getManufacturerProductsData,
+        getManufacturerProductsIsLoading: productsLoading,
+        getManufacturerProductsError: productsError,
+        refetchManufacturerProducts,
+        setManufacturerProductsFilter,
+    } = useGetManufacturerProducts(manufacturerId); // Pass manufacturerId directly
+
+    // Delete product hook
     const {
         deleteProduct,
         isLoading: isDeletingProduct
@@ -86,6 +101,7 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         },
     });
 
+    // Delete manufacturer hook
     const {
         deleteManufacturer,
         isLoading: isDeletingManufacturer
@@ -99,38 +115,7 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         },
     });
 
-    const {
-        getManufacturerInfoData: data,
-        getManufacturerInfoIsLoading,
-        refetchManufacturerInfo,
-        setManufacturerInfoFilter,
-    } = useGetManufacturerInfo();
-
-    useEffect(() => {
-        if (manufacturerId) {
-            setManufacturerInfoFilter(manufacturerId);
-        }
-    }, [manufacturerId, setManufacturerInfoFilter]);
-
-    const handleDeleteManufacturer = async () => {
-        if (!manufacturer) return;
-
-        try {
-            await deleteManufacturer(manufacturer.id);
-        } catch (error) {
-            console.error("Delete failed:", error);
-            toast.error("Failed to delete manufacturer");
-        }
-    };
-
-    const {
-        getManufacturerProductsData,
-        getManufacturerProductsError,
-        getManufacturerProductsIsLoading,
-        refetchManufacturerProducts,
-        setManufacturerProductsFilter,
-    } = useGetManufacturerProducts();
-
+    // Update manufacturer status hook
     const {
         updateManufacturerStatusData,
         updateManufacturerStatusIsLoading,
@@ -141,49 +126,59 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         toast.success("Manufacturer status updated successfully!");
     });
 
-    const payload = {
-        page: currentPage,
-        pageSize,
-        type: status,
-        search: filter, // ✅ CRITICAL: This must be here
+    // Build filter payload for products
+    const buildFilterPayload = () => {
+        const payload: any = {
+            page: currentPage,
+            pageSize: parseInt(pageSize),
+        };
+
+        if (filter.trim()) {
+            payload.search = filter.trim();
+        }
+
+        if (status !== "all") {
+            payload.status = status;
+        }
+
+        return payload;
     };
 
-
-    // Update the useEffect to include filter in dependencies and ensure it triggers API calls
+    // Handle filter changes
     useEffect(() => {
-        if (manufacturerId) {
-            console.log('🔄 ManufacturerDetails - Triggering API with:', {
-                manufacturerId,
-                payload: payload,
-                filterValue: filter,
-                statusValue: status
-            });
+        const payload = buildFilterPayload();
 
-            setManufacturerProductsFilter({ manufacturerId, data: payload });
-        }
-    }, [currentPage, filter, status, pageSize, manufacturerId, setManufacturerProductsFilter]);
+        console.log('🔄 ManufacturerDetails - Triggering API with:', {
+            manufacturerId,
+            payload,
+            filterValue: filter,
+            statusValue: status
+        });
 
+        setManufacturerProductsFilter(payload);
+    }, [manufacturerId, filter, status, currentPage, pageSize]);
 
+    // Debug API responses
     useEffect(() => {
         console.log('🔧 Filter values changed:', {
             filter,
             status,
             currentPage,
-            pageSize,
+            pageSize: pageSize,
             manufacturerId,
-            payload
+            payload: buildFilterPayload()
         });
     }, [filter, status, currentPage, pageSize, manufacturerId]);
 
     useEffect(() => {
         console.log('📦 Manufacturer Products API Response:', {
-            loading: getManufacturerProductsIsLoading,
+            loading: productsLoading,
             data: getManufacturerProductsData,
-            error: getManufacturerProductsError,
-            hasData: !!getManufacturerProductsData?.data,
-            itemCount: getManufacturerProductsData?.data?.length
+            error: productsError,
+            hasData: !!getManufacturerProductsData,
+            itemCount: getManufacturerProductsData?.data?.length || 0
         });
-    }, [getManufacturerProductsIsLoading, getManufacturerProductsData, getManufacturerProductsError]);
+    }, [productsLoading, getManufacturerProductsData, productsError]);
 
     // Handlers for product actions
     const handleViewProduct = (product: any) => {
@@ -210,10 +205,32 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         }
     };
 
+    const handleDeleteManufacturer = async () => {
+        if (!manufacturer) return;
+
+        try {
+            await deleteManufacturer(manufacturer.id);
+        } catch (error) {
+            console.error("Delete failed:", error);
+            toast.error("Failed to delete manufacturer");
+        }
+    };
+
+    const handleFilterReset = () => {
+        setFilter("");
+        setStatus("all");
+        setCurrentPage(1);
+    };
+
     const renderItem = () => {
         switch (tab) {
             case "update":
-                return <EditManufacturer setClose={() => setOpen(false)} manufacturer={manufacturer} />;
+                return (
+                    <EditManufacturer
+                        setClose={() => setOpen(false)}
+                        manufacturer={manufacturer}
+                    />
+                );
             case "delete":
                 return (
                     <DeleteManufacturer
@@ -225,89 +242,110 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
                     />
                 );
             case "view":
-                return (
+                return selectedProduct ? (
                     <ViewProduct
-                        setClose={() => setOpen(false)}
                         productData={selectedProduct}
-                    />
-                );
-            case "edit":
-                return (
-                    <EditProduct
                         setClose={() => setOpen(false)}
-                        product={selectedProduct}
-                        manufacturers={getManufacturersData?.data || []}
                     />
-                );
+                ) : null;
+            case "edit":
+                return selectedProduct ? (
+                    <EditProduct
+                        product={selectedProduct}
+                        setClose={() => setOpen(false)}
+                        manufacturers={getManufacturersData?.data || []}
+                        categories={[]} // Add categories if available
+                    />
+                ) : null;
             case "delete-product":
                 return (
                     <DeleteContent
                         handleClose={() => setOpen(false)}
-                        title="Product"
+                        title={selectedProduct?.name || "Product"}
                         handleClick={handleConfirmDelete}
                         isLoading={isDeletingProduct}
                     />
                 );
             default:
-                return <EditManufacturer manufacturer={manufacturer} setClose={() => setOpen(false)} />;
+                return null;
         }
     };
 
-    const handleToggleStatus = async () => {
-        try {
-            // Toggle the status - if currently active, make inactive, and vice versa
-            const newStatus = !manufacturer?.status;
-
-            await updateManufacturerStatusPayload({
-                payload: { status: newStatus },
-                id: manufacturerId,
-            });
-        } catch (error) {
-            console.error("Status update failed:", error);
-            toast.error("Failed to update manufacturer status");
-        }
-    };
-
-    // Don't render if manufacturer is not found
-    if (!manufacturer && !getManufacturersIsLoading) {
+    if (getManufacturersIsLoading || manufacturerInfoLoading) {
         return (
-            <div className="p-4">
-                <Card>
-                    <CardContent className="p-8 text-center">
-                        <p className="text-lg text-gray-600">Manufacturer not found</p>
-                    </CardContent>
-                </Card>
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+                    <p className="mt-4 text-gray-600">Loading manufacturer details...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!manufacturer && !manufacturerInfo) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Manufacturer Not Found</h2>
+                    <p className="text-gray-600 mb-4">The manufacturer you're looking for doesn't exist.</p>
+                    <button
+                        onClick={() => router.push('/admin/manufacturers')}
+                        className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                    >
+                        Back to Manufacturers
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
-        <div>
+        <div className="p-6">
+            <Header
+                title={`${manufacturer?.name || manufacturerInfo?.name || 'Manufacturer'} Details`}
+                subtext="Manage manufacturer information and products"
+                showBack={true}
+            />
+
+            <div className="mb-6">
+                <SupplierManagementCard
+                    item={manufacturer || manufacturerInfo}
+                    handleUpdateManufacturerStatus={async () => {
+                        const newStatus = !(manufacturer?.status || manufacturerInfo?.status);
+                        await updateManufacturerStatusPayload({
+                            payload: { status: newStatus },
+                            id: manufacturerId
+                        });
+                    }}
+                    showToggle={true}
+                    showOptions={true}
+                    setTab={setTab}
+                    setOpen={setOpen}
+                    loading={updateManufacturerStatusIsLoading}
+                />
+            </div>
+
             <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-6">
                     <div className="flex justify-between items-center mb-6">
-                        <Header
-                            title="Manufacturer"
-                            subtext="Manage Manufacturer"
-                            showBack={true}
-                        />
+                        <h3 className="text-xl font-semibold text-gray-900">Products</h3>
+                        <div className="flex items-center gap-4">
+                            <div className="text-sm text-gray-500">
+                                {getManufacturerProductsData?.pagination?.totalItems || 0} total products
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setTab("update");
+                                    setOpen(true);
+                                }}
+                                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                            >
+                                Edit Manufacturer
+                            </button>
+                        </div>
                     </div>
 
-                    {manufacturer && (
-                        <div className="mb-6">
-                            <SupplierManagementCard
-                                item={manufacturer}
-                                handleUpdateManufacturerStatus={handleToggleStatus}
-                                showToggle={true}
-                                showOptions={true}
-                                setTab={setTab}
-                                setOpen={setOpen}
-                                loading={updateManufacturerStatusIsLoading}
-                            />
-                        </div>
-                    )}
-
-                    <div className="flex items-center gap-4 mb-6">
+                    <div className="flex gap-4 mb-6">
                         <InputFilter
                             setQuery={setFilter}
                             placeholder="Search by product name, description"
@@ -318,10 +356,6 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
                             placeholder="Filters"
                             list={productFilterList}
                         />
-                        {/* <DatePickerWithRange
-                            setFromDate={setStartDate}
-                            setToDate={setEndDate}
-                        /> */}
                     </div>
 
                     <ManufacturerProductTable
@@ -334,7 +368,7 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
                         onPageChange={onPageChange}
                         pageSize={Number(pageSize)}
                         totalPages={getManufacturerProductsData?.pagination?.totalPages || 1}
-                        loading={getManufacturerProductsIsLoading}
+                        loading={productsLoading}
                     />
                 </CardContent>
             </Card>

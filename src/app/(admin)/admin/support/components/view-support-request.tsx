@@ -411,7 +411,7 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="">Unassigned</SelectItem>
+                                                <SelectItem value="unassigned">Unassigned</SelectItem>
                                                 <SelectItem value="1">Admin User 1</SelectItem>
                                                 <SelectItem value="2">Admin User 2</SelectItem>
                                             </SelectContent>

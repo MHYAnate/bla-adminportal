@@ -115,7 +115,7 @@ const AddProduct: React.FC<iProps> = ({ form }) => {
         />
       </div>
 
-      <div className="mb-6">
+      {/* <div className="mb-6">
         <FormField
           control={form.control}
           name="shortDescription"
@@ -135,7 +135,7 @@ const AddProduct: React.FC<iProps> = ({ form }) => {
             </FormItem>
           )}
         />
-      </div>
+      </div> */}
 
       <div className="flex gap-6 mb-6">
         <FormField

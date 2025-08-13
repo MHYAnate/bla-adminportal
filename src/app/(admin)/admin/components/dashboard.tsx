@@ -32,7 +32,7 @@ interface DashboardData {
 			trend?: string;
 			changePercentage?: number;
 		};
-		profits?: {
+		products?: {  // Changed from profits to products
 			total?: number;
 			trend?: string;
 			changePercentage?: number;
@@ -126,8 +126,8 @@ const Dashboard: React.FC = () => {
 							<div className="mt-auto mb-1">
 								<div
 									className={`${data?.metrics?.revenue?.trend?.toLowerCase() !== "down"
-											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
-											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+										? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+										: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
 										}`}
 								>
 									{data?.metrics?.revenue?.trend?.toLowerCase() === "down" ? (
@@ -154,29 +154,29 @@ const Dashboard: React.FC = () => {
 						<div className="p-6 bg-[#FFE2B3] flex flex-col h-full">
 							<DashboardTotalProductsIcon />
 							<h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">
-								{data?.metrics?.profits?.total
+								{data?.metrics?.products?.total  // Changed from profits to products
 									? formatNumber(
-										Math.floor(Number(data?.metrics?.profits?.total))
+										Math.floor(Number(data?.metrics?.products?.total))
 									)
 									: "0"}
 							</h1>
 							<div className="mt-auto mb-1">
 								<div
-									className={`${data?.metrics?.profits?.trend?.toLowerCase() !== "down"
+									className={`${data?.metrics?.products?.trend?.toLowerCase() !== "down"  // Changed from profits to products
 											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
 											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
 										}`}
 								>
-									{data?.metrics?.profits?.trend?.toLowerCase() === "down" ? (
+									{data?.metrics?.products?.trend?.toLowerCase() === "down" ? (  // Changed from profits to products
 										<DowngressIcon />
 									) : (
 										<ProgressIcon />
 									)}
 									<p>
-										{data?.metrics?.profits?.changePercentage
+										{data?.metrics?.products?.changePercentage  // Changed from profits to products
 											? formatNumber(
 												Math.floor(
-													Number(data?.metrics?.profits?.changePercentage)
+													Number(data?.metrics?.products?.changePercentage)
 												)
 											)
 											: "0"}
@@ -185,7 +185,7 @@ const Dashboard: React.FC = () => {
 								</div>
 							</div>
 							<p className="font-semibold text-sm text-[#111827]">
-								Total Profits
+								Total Products  {/* Changed from "Total Profits" to "Total Products" */}
 							</p>
 						</div>
 						<div className="p-6 bg-[#ABFFD5] flex flex-col h-full">
@@ -200,8 +200,8 @@ const Dashboard: React.FC = () => {
 							<div className="mt-auto mb-1">
 								<div
 									className={`${data?.metrics?.orders?.trend?.toLowerCase() !== "down"
-											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
-											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+										? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+										: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
 										}`}
 								>
 									{data?.metrics?.orders?.trend?.toLowerCase() === "down" ? (
@@ -237,8 +237,8 @@ const Dashboard: React.FC = () => {
 							<div className="mt-auto mb-1">
 								<div
 									className={`${data?.metrics?.customers?.trend?.toLowerCase() !== "down"
-											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
-											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+										? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+										: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
 										}`}
 								>
 									{data?.metrics?.customers?.trend?.toLowerCase() === "down" ? (

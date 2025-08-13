@@ -44,7 +44,7 @@ export default function AddProductsPage() {
   const formSchema = z.object({
     name: z.string().min(3, "Product name must be at least 3 characters"),
     description: z.string().min(10, "Description must be at least 10 characters"),
-    shortDescription: z.string().min(10, "Short description must be at least 10 characters"),
+    // shortDescription: z.string().min(10, "Short description must be at least 10 characters"),
     categoryId: z.string().min(1, "Category is required"),
     manufacturerId: z.string().min(1, "Manufacturer is required"),
     processingTimeDays: z.number().min(1, "Processing time must be at least 1 day").default(1),
@@ -126,7 +126,7 @@ export default function AddProductsPage() {
     defaultValues: {
       name: "",
       description: "",
-      shortDescription: "",
+      // shortDescription: "",
       categoryId: "",
       manufacturerId: "",
       processingTimeDays: 1,

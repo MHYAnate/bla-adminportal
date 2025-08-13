@@ -1,3 +1,5 @@
+// src/app/(admin)/admin/components/customers-datatable.tsx
+
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -24,24 +26,26 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
     setCurrentPage(page);
   };
 
-  // ✅ CRITICAL FIX: Filter out admin users - only show business and individual customers
-  const filteredData = (data || []).filter((item: CustomersData) => {
-    const customerType =
-      (item?.customerType !== undefined && item?.customerType !== null
-        ? String(item.customerType)
-        : "") ||
-      (item?.type !== undefined && item?.type !== null
-        ? String(item.type)
-        : "");
+  // Transform backend data to match frontend expectations
+  const transformedData = (data || []).map((customer: any) => ({
+    id: customer.id,
+    name: customer.name,           // Backend sends 'name'
+    fullName: customer.name,       // Map to 'fullName' for compatibility
+    email: customer.email,
+    type: customer.role,           // Backend sends 'role' (business_owner, individual)
+    customerType: customer.role,   // Map to 'customerType' for compatibility  
+    status: customer.status,       // Backend sends 'status' (ACTIVE, INACTIVE)
+    kyc: customer.kycStatus,       // Backend sends 'kycStatus' (verified, pending)
+    kycStatus: customer.kycStatus, // Keep original field name too
+    joinDate: customer.joinDate,
+    role: customer.role
+  }));
 
-    const customerTypeLower = customerType.toLowerCase();
-
-    return customerTypeLower === "business" || customerTypeLower === "individual";
-  });
-
+  console.log('Original data:', data);
+  console.log('Transformed data:', transformedData);
 
   const cellRenderers = {
-    fullName: (item: CustomersData) => (
+    fullName: (item: any) => (
       <div className="font-medium flex items-center gap-3">
         <Image
           src="/images/user-avatar.png"
@@ -51,7 +55,6 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
           className="w-6 h-6 rounded-full"
         />
         <div>
-          {/* ✅ ENHANCED: Handle both 'name' and potential other field names */}
           <p>{item?.name || item?.fullName || "----"}</p>
           <p className="font-normal text-[0.75rem] text-[#A0AEC0]">
             {item?.email || "No email provided"}
@@ -60,23 +63,31 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
       </div>
     ),
 
-    type: (item: CustomersData) => (
-      <span className="font-medium">
-        {/* ✅ ENHANCED: Handle both customerType and type fields */}
-        {capitalizeFirstLetter(
-          item?.customerType?.toString() ||
-          item?.type?.toString() ||
-          "customer"
-        )}
-      </span>
-    ),
+    type: (item: any) => {
+      // Map backend role values to display values
+      const roleMapping: { [key: string]: string } = {
+        'business_owner': 'Business',
+        'individual': 'Individual',
+        'customer': 'Customer'
+      };
 
-    id: (item: CustomersData) => (
+      const displayType = roleMapping[item?.role] ||
+        roleMapping[item?.type] ||
+        capitalizeFirstLetter(item?.customerType?.toString() || 'customer');
+
+      return (
+        <span className="font-medium">
+          {displayType}
+        </span>
+      );
+    },
+
+    id: (item: any) => (
       <div className="font-medium flex items-center gap-3">{item?.id}</div>
     ),
 
-    kyc: (item: CustomersData) => {
-      // ✅ ENHANCED: Handle multiple KYC field variations
+    kyc: (item: any) => {
+      // Handle multiple KYC field variations
       const kycStatus = item?.kycStatus || item?.kyc || 'pending';
       const statusLower = kycStatus.toString().toLowerCase();
 
@@ -98,9 +109,9 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
       );
     },
 
-    status: (item: CustomersData) => {
-      // ✅ ENHANCED: Handle both customerStatus and status fields
-      const customerStatus = item?.customerStatus || item?.status || 'INACTIVE';
+    status: (item: any) => {
+      // Handle status field
+      const customerStatus = item?.status || 'INACTIVE';
       const statusLower = customerStatus.toString().toLowerCase();
 
       return (
@@ -121,7 +132,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
       );
     },
 
-    action: (item: CustomersData) => (
+    action: (item: any) => (
       <div className="flex gap-2.5">
         <Link
           href={`${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/${item?.id}?tab=general`}
@@ -133,7 +144,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
     ),
   };
 
-  const columnOrder: (keyof CustomersData)[] = [
+  const columnOrder: string[] = [
     "fullName",
     "type",
     "id",
@@ -151,6 +162,30 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
     action: "Action",
   };
 
+  // Handle empty data state
+  if (!data || data.length === 0) {
+    return (
+      <Card className="bg-white flex-1">
+        <CardContent className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h6 className="font-semibold text-lg text-[#111827]">
+              Recent Customers
+            </h6>
+            <Link
+              href={ROUTES.ADMIN.SIDEBAR.CUSTOMERS}
+              className="text-sm font-medium text-[#687588] underline border border-[#E9EAEC] rounded-md px-[3.56rem] py-4"
+            >
+              View All
+            </Link>
+          </div>
+          <div className="text-center text-gray-500 p-8">
+            {loading ? "Loading customers..." : "No recent customers found"}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="bg-white flex-1">
       <CardContent className="p-6">
@@ -165,13 +200,11 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
             View All
           </Link>
         </div>
-
-
-        <CustomerTableComponent<CustomersData>
-          tableData={filteredData} // ✅ Use filtered data instead of raw data
+        <CustomerTableComponent
+          tableData={transformedData || []}
           currentPage={currentPage}
           onPageChange={onPageChange}
-          totalPages={Math.ceil(filteredData.length / pageSize)} // ✅ Calculate based on filtered data
+          totalPages={Math.ceil((transformedData?.length || 0) / pageSize)}
           cellRenderers={cellRenderers}
           columnOrder={columnOrder}
           columnLabels={columnLabels}

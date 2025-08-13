@@ -1,3 +1,5 @@
+// src/app/(admin)/admin/components/top-customers-chart.tsx
+
 "use client";
 
 import { Pie, PieChart } from "recharts";
@@ -21,26 +23,46 @@ interface iProps {
 }
 
 export function TopCustomersChart({ data }: iProps) {
-  const totalSpent = data?.reduce(
-    (acc, customer) => acc + Number(customer?.totalSpent),
+  // Filter out any null/undefined customers and ensure they have required fields
+  const validData = (data || []).filter(customer =>
+    customer &&
+    customer.email &&
+    typeof customer.totalSpent === 'number'
+  );
+
+  const totalSpent = validData.reduce(
+    (acc, customer) => acc + Number(customer?.totalSpent || 0),
     0
   );
 
   const customerColors = ["#9333EA", "#2DD4BF", "#F97316", "#0000FF"]; // purple, aqua green, orange, light grey
 
-  const coloredData = data.map((item, index) => ({
+  const coloredData = validData.map((item, index) => ({
     ...item,
     fill: customerColors[index] || "#94A3B8", // fallback color if more than 4 items
   }));
 
-
   const chartConfig = coloredData.reduce((acc, item, index) => {
     acc[`customer_${index + 1}`] = {
-      label: item.email,
+      label: item.email || "Unknown",
       color: item.fill,
     };
     return acc;
   }, {} as Record<string, { label: string; color: string }>) satisfies ChartConfig;
+
+  // Handle case where there's no valid data
+  if (validData.length === 0) {
+    return (
+      <Card className="flex flex-col p-6 w-full h-auto">
+        <div className="flex items-center justify-between">
+          <h5 className="font-bold text-[#111827]">Top Customers</h5>
+        </div>
+        <CardContent className="flex-1 pb-0 flex items-center justify-center">
+          <p className="text-gray-500 text-sm">No customer data available</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="flex flex-col p-6 w-full h-auto">
@@ -78,7 +100,6 @@ export function TopCustomersChart({ data }: iProps) {
                   <tspan x={cx} y={cy + 24} className="fill-[#A0AEC0] text-xs">
                     Total Sales
                   </tspan>
-
                 </text>
               )}
             />
@@ -94,12 +115,12 @@ export function TopCustomersChart({ data }: iProps) {
               style={{ backgroundColor: data.fill }}
             ></div>
             <p className="text-[#687588] text-xs font-medium me-auto">
-              {data.email.split('@')[0]}
+              {/* FIX: Add safety check for email before splitting */}
+              {data.email ? data.email.split('@')[0] : 'Unknown'}
             </p>
             <h6 className="font-bold text-sm text-[#111827]">
-              {Math.floor(data.totalSpent)}
+              {Math.floor(data.totalSpent || 0)}
             </h6>
-
           </div>
         ))}
       </div>

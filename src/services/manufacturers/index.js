@@ -66,16 +66,25 @@ export const useGetManufacturers = () => {
 };
 
 // =================== GET MANUFACTURER INFO ===================
-export const useGetManufacturerInfo = () => {
-  const { isLoading, error, data, refetch, setFilter } = useFetchItem({
-    queryKey: ["fetchManufacturerInfo"],
-    queryFn: (id) => httpService.getData(routes.getSingleManufacturer(id)),
+export const useGetManufacturerInfo = (manufacturerId) => {
+  const { isLoading, error, data, refetch, setFilter, filter } = useFetchItem({
+    queryKey: ["fetchManufacturerInfo", manufacturerId],
+    queryFn: () => {
+      // Validate manufacturerId
+      if (!manufacturerId) {
+        throw new Error('Manufacturer ID is required');
+      }
+      
+      console.log('🚀 useGetManufacturerInfo API call with ID:', manufacturerId);
+      return httpService.getData(routes.getManufacturerInfo(manufacturerId));
+    },
     retry: 2,
+    enabled: Boolean(manufacturerId), // Only enable when manufacturerId exists
   });
 
   return {
     getManufacturerInfoIsLoading: isLoading,
-    getManufacturerInfoData: data?.data || {},
+    getManufacturerInfoData: data?.data?.data || {},
     getManufacturerInfoError: ErrorHandler(error),
     refetchManufacturerInfo: refetch,
     setManufacturerInfoFilter: setFilter,
@@ -83,46 +92,73 @@ export const useGetManufacturerInfo = () => {
 };
 
 // =================== GET MANUFACTURER PRODUCTS - FIXED ===================
-export const useGetManufacturerProducts = () => {
+export const useGetManufacturerProducts = (manufacturerId) => {
   const { isLoading, error, data, refetch, setFilter } = useFetchItem({
-    queryKey: ["fetchManufacturerProducts"],
-    queryFn: ({ manufacturerId, data: queryParams }) => {
-      console.log('🚀 useGetManufacturerProducts API call:', {
-        manufacturerId,
-        queryParams,
-        hasRouteFunction: typeof routes.getProductsByManufacturer === 'function'
-      });
-      
-      if (typeof routes.getProductsByManufacturer !== 'function') {
-        console.error('❌ routes.getProductsByManufacturer is not a function');
-        throw new Error('Route function not found');
+    queryKey: ["fetchManufacturerProducts", manufacturerId],
+    queryFn: (filterParams) => {
+      // Validate manufacturerId
+      if (!manufacturerId) {
+        throw new Error('Manufacturer ID is required');
       }
       
-      const endpoint = routes.getProductsByManufacturer(manufacturerId, queryParams || {});
-      console.log('📡 Calling endpoint:', endpoint);
+      console.log('🚀 useGetManufacturerProducts API call:', {
+        manufacturerId,
+        queryParams: filterParams,
+        hasRouteFunction: typeof routes.manufacturerProducts === 'function'
+      });
       
-      return httpService.getData(endpoint);
+      // Build the URL properly
+      const url = routes.manufacturerProducts({ 
+        manufacturerId, 
+        data: filterParams 
+      });
+      
+      console.log('🔗 Built manufacturer products URL:', url);
+      console.log('📡 Calling endpoint:', url);
+      
+      return httpService.getData(url);
     },
     retry: 2,
+    enabled: Boolean(manufacturerId), // Only enable when manufacturerId exists
   });
 
+  // Debug logging to see what data structure we're getting
   console.log('🔍 useGetManufacturerProducts - Raw data:', data);
 
-  // Process the data
+  // Process data using the same logic as useGetManufacturers
   let processedData = [];
   let paginationData = null;
 
   if (data) {
+    // Check if data is directly an array
     if (Array.isArray(data)) {
       processedData = data;
-    } else if (data.data && Array.isArray(data.data)) {
+    }
+    // Check if data has a 'data' property that's an array
+    else if (data.data && Array.isArray(data.data)) {
       processedData = data.data;
       paginationData = data.pagination || data.meta;
-    } else if (data.products && Array.isArray(data.products)) {
-      processedData = data.products;
+    }
+    // Check if data has other common property names
+    else if (data.result && Array.isArray(data.result)) {
+      processedData = data.result;
       paginationData = data.pagination || data.meta;
-    } else {
-      console.warn('🚨 Unexpected data structure:', data);
+    }
+    else if (data.manufacturers && Array.isArray(data.manufacturers)) {
+      processedData = data.manufacturers;
+      paginationData = data.pagination || data.meta;
+    }
+    else if (data.items && Array.isArray(data.items)) {
+      processedData = data.items;
+      paginationData = data.pagination || data.meta;
+    }
+    // If data is an object with pagination and data properties
+    else if (data.data) {
+      processedData = Array.isArray(data.data) ? data.data : [];
+      paginationData = data.pagination || data.meta;
+    }
+    else {
+      console.warn('🚨 Unknown data structure for manufacturer products:', data);
       processedData = [];
     }
   }

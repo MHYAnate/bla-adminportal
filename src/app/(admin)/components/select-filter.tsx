@@ -27,12 +27,16 @@ interface IProps {
   value?: string;
 }
 
+// In src/app/(admin)/components/select-filter.tsx
 export function SelectFilter({
   list,
   placeholder = "Status",
   setFilter,
   className = "w-[186px] h-11",
 }: IProps) {
+  // Filter out items with empty values
+  const validItems = list?.filter(item => item?.value && item.value.trim() !== '') || [];
+
   return (
     <Select
       onValueChange={async (value) => {
@@ -44,9 +48,9 @@ export function SelectFilter({
       </SelectTrigger>
       <SelectContent className="">
         <SelectGroup>
-          {list?.map((list, index: number) => (
-            <SelectItem value={list?.value} key={index}>
-              {list?.text}
+          {validItems.map((list, index: number) => (
+            <SelectItem value={list.value} key={index}>
+              {list.text}
             </SelectItem>
           ))}
         </SelectGroup>

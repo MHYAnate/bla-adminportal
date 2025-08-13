@@ -30,7 +30,25 @@ export const useGetOrders = ({
   } = useFetchItem({
     queryKey: ['orders'],
     queryFn: (params) => {
-      return httpService.getData(routes.orders(params));
+      // ✅ FIX: Map pageNumber to page for backend compatibility
+      const backendParams = {
+        ...params,
+        page: params.pageNumber || params.page || 1, // Map pageNumber to page
+        pageSize: params.pageSize || 10,
+        // Remove pageNumber to avoid confusion
+        pageNumber: undefined
+      };
+      
+      // Clean undefined values
+      Object.keys(backendParams).forEach(key => {
+        if (backendParams[key] === undefined) {
+          delete backendParams[key];
+        }
+      });
+      
+      console.log('🚀 Orders API params sent to backend:', backendParams);
+      
+      return httpService.getData(routes.orders(backendParams));
     },
     enabled,
     retry: 2,
@@ -490,31 +508,6 @@ export const useShipOrder = () => {
   });
 };
 
-// Process Refund
-export const useProcessRefund = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ orderId, amount, reason }) => {
-      return httpService.postData({
-        amount,
-        reason
-      }, routes.processRefund(orderId));
-    },
-    onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['orderInfo', variables.orderId] });
-      queryClient.invalidateQueries({ queryKey: ['ordersSummary'] });
-      
-      toast.success(response?.message || 'Refund processed successfully');
-    },
-    onError: (error) => {
-      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to process refund';
-      toast.error(errorMessage);
-    }
-  });
-};
-
 // =================== ORDER NOTES ===================
 
 // Get Order Notes
@@ -710,4 +703,202 @@ export const useBulkArchiveOrders = () => {
       toast.error(errorMessage);
     }
   });
+};
+
+export const useProcessRefund = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (refundData) => {
+      console.log('🔄 Processing refund request:', refundData);
+      
+      const response = await httpService.postData(
+        routes.processRefund(refundData.orderId),
+        {
+          amount: refundData.amount,
+          reason: refundData.reason,
+          refundType: refundData.refundType,
+          breakdown: refundData.breakdown
+        }
+      );
+      
+      return response;
+    },
+    onSuccess: (data, variables) => {
+      console.log('✅ Refund processed successfully:', data);
+      
+      // Invalidate relevant queries to refresh data
+      queryClient.invalidateQueries({ 
+        queryKey: ['orderInfo', variables.orderId] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['orders'] 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: ['ordersSummary'] 
+      });
+      
+      toast.success(`Refund of ₦${data.data.refundAmount.toLocaleString()} processed successfully`);
+    },
+    onError: (error) => {
+      console.error('❌ Refund processing failed:', error);
+      
+      const errorMessage = error?.response?.data?.error || 
+                          error?.message || 
+                          'Failed to process refund';
+      
+      toast.error(`Refund failed: ${errorMessage}`);
+    }
+  });
+};
+
+// ✅ Refund calculation utility hook
+export const useRefundCalculator = (order) => {
+  const [refundType, setRefundType] = useState('full');
+  const [customAmount, setCustomAmount] = useState('');
+
+  const calculation = useCallback(() => {
+    if (!order) return null;
+
+    const totalPrice = Number(order.totalPrice) || 0;
+    const shippingFee = Number(order.shipping?.totalShippingFee) || 0;
+    const itemsSubtotal = totalPrice - shippingFee;
+    
+    // Determine if order has been shipped
+    const isShipped = ['SHIPPED', 'DELIVERED', 'COMPLETED'].includes(order.status);
+    const canRefundShipping = !isShipped;
+    
+    let refundAmount = 0;
+    let itemsRefund = 0;
+    let shippingRefund = 0;
+    
+    if (refundType === 'full') {
+      if (isShipped) {
+        // If shipped: Only refund items, not shipping
+        itemsRefund = itemsSubtotal;
+        shippingRefund = 0;
+        refundAmount = itemsRefund;
+      } else {
+        // If not shipped: Refund everything
+        itemsRefund = itemsSubtotal;
+        shippingRefund = shippingFee;
+        refundAmount = totalPrice;
+      }
+    } else if (refundType === 'partial') {
+      const requestedAmount = Number(customAmount) || 0;
+      const maxRefundable = isShipped ? itemsSubtotal : totalPrice;
+      
+      if (requestedAmount <= maxRefundable) {
+        refundAmount = requestedAmount;
+        
+        if (isShipped) {
+          // For shipped orders, partial refund comes only from items
+          itemsRefund = refundAmount;
+          shippingRefund = 0;
+        } else {
+          // For non-shipped orders, calculate proportional refund
+          const itemsProportion = itemsSubtotal / totalPrice;
+          const shippingProportion = shippingFee / totalPrice;
+          
+          itemsRefund = refundAmount * itemsProportion;
+          shippingRefund = refundAmount * shippingProportion;
+        }
+      }
+    }
+
+    return {
+      refundAmount: Math.round(refundAmount * 100) / 100,
+      itemsRefund: Math.round(itemsRefund * 100) / 100,
+      shippingRefund: Math.round(shippingRefund * 100) / 100,
+      canRefundShipping,
+      isShipped,
+      maxRefundable: isShipped ? itemsSubtotal : totalPrice,
+      isValid: refundAmount > 0 && refundAmount <= totalPrice,
+      breakdown: {
+        originalTotal: totalPrice,
+        itemsSubtotal,
+        shippingFee,
+        nonRefundable: totalPrice - refundAmount
+      }
+    };
+  }, [order, refundType, customAmount]);
+
+  return {
+    refundType,
+    setRefundType,
+    customAmount,
+    setCustomAmount,
+    calculation: calculation()
+  };
+};
+
+// ✅ Refund eligibility checker
+export const useRefundEligibility = (order) => {
+  return useCallback(() => {
+    if (!order) return { canRefund: false, reason: 'Order not found' };
+
+    if (order.paymentStatus !== 'PAID') {
+      return { 
+        canRefund: false, 
+        reason: `Order payment status is ${order.paymentStatus}. Only paid orders can be refunded.` 
+      };
+    }
+
+    if (order.paymentStatus === 'REFUNDED') {
+      return { 
+        canRefund: false, 
+        reason: 'Order has already been refunded.' 
+      };
+    }
+
+    if (['CANCELLED'].includes(order.status)) {
+      return { 
+        canRefund: false, 
+        reason: 'Cancelled orders cannot be refunded.' 
+      };
+    }
+
+    // Check if refund window has passed (if applicable)
+    const orderDate = new Date(order.createdAt);
+    const daysSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+    const refundWindowDays = 30; // Configure as needed
+
+    if (daysSinceOrder > refundWindowDays) {
+      return { 
+        canRefund: false, 
+        reason: `Refund window of ${refundWindowDays} days has expired.` 
+      };
+    }
+
+    return { canRefund: true, reason: null };
+  }, [order]);
+};
+
+// ✅ Enhanced order actions hook that includes refund
+export const useOrderActions = (order) => {
+  const processRefundMutation = useProcessRefund();
+  const refundEligibility = useRefundEligibility(order);
+  
+  const processRefund = useCallback(async (refundData) => {
+    if (!order?.id) {
+      throw new Error('Order ID is required');
+    }
+
+    const eligibility = refundEligibility();
+    if (!eligibility.canRefund) {
+      throw new Error(eligibility.reason || 'Refund not allowed');
+    }
+
+    return processRefundMutation.mutateAsync({
+      ...refundData,
+      orderId: order.id
+    });
+  }, [order?.id, processRefundMutation, refundEligibility]);
+
+  return {
+    processRefund,
+    isProcessingRefund: processRefundMutation.isPending,
+    refundError: processRefundMutation.error,
+    refundEligibility: refundEligibility(),
+  };
 };

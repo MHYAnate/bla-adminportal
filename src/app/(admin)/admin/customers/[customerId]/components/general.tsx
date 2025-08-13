@@ -1,3 +1,7 @@
+// src/app/(admin)/admin/customers/[customerId]/components/general.tsx
+
+import React from "react";
+
 export interface CustomerAddress {
   id: number;
   addressLine1: string;
@@ -9,7 +13,7 @@ export interface CustomerAddress {
   postalCode: string;
   phoneNumber: string;
   isDefault: boolean;
-  createdAt: string; // ISO string
+  createdAt: string;
   updatedAt: string;
 }
 
@@ -25,6 +29,7 @@ export interface PersonalInfo {
   email: string;
   phone: string;
   gender: string | null;
+  dateOfBirth?: string; // ADDED: DOB field
 }
 
 export interface ReferralInfo {
@@ -35,7 +40,7 @@ export interface ReferralInfo {
   successfulReferrals: number;
   totalBonuses: number;
   activeBonuses: number;
-  referralsMade: any[]; // Replace `any` with proper type if known
+  referralsMade: any[];
   referralsReceived: any[];
   bonusHistory: any[];
 }
@@ -59,10 +64,51 @@ export interface CustomerData {
   referralInfo: ReferralInfo;
 }
 
-// Fix the interface and component
 export interface Customer {
   data: CustomerData | null;
 }
+
+// Helper function to format date
+const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return "----";
+
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "----";
+
+    return date.toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch (error) {
+    console.error("Error formatting date:", error);
+    return "----";
+  }
+};
+
+// Helper function to calculate age from DOB
+const calculateAge = (dateOfBirth: string | null | undefined): string => {
+  if (!dateOfBirth) return "----";
+
+  try {
+    const dob = new Date(dateOfBirth);
+    if (isNaN(dob.getTime())) return "----";
+
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+      age--;
+    }
+
+    return age.toString() + " years";
+  } catch (error) {
+    console.error("Error calculating age:", error);
+    return "----";
+  }
+};
 
 const General: React.FC<Customer> = ({ data }) => {
   // Add null check at the beginning
@@ -105,6 +151,15 @@ const General: React.FC<Customer> = ({ data }) => {
                 {data?.email || "----"}
               </p>
             </div>
+            {/* ADDED: Date of Birth for individual customers */}
+            {data?.customerType === "individual" && (
+              <div className="flex justify-between mb-4">
+                <p className="text-sm text-[#687588]">Date of Birth</p>
+                <p className="text-sm text-[#111827] font-semibold">
+                  {formatDate(data?.personalInfo?.dateOfBirth)}
+                </p>
+              </div>
+            )}
           </div>
           <div className="w-full">
             <div className="flex justify-between mb-4">
@@ -130,12 +185,21 @@ const General: React.FC<Customer> = ({ data }) => {
               </>
             )}
             {data?.customerType !== "business" && (
-              <div className="flex justify-between mb-4">
-                <p className="text-sm text-[#687588]">Phone Number</p>
-                <p className="text-sm text-[#111827] font-semibold">
-                  {data?.personalInfo?.phone || "----"}
-                </p>
-              </div>
+              <>
+                <div className="flex justify-between mb-4">
+                  <p className="text-sm text-[#687588]">Phone Number</p>
+                  <p className="text-sm text-[#111827] font-semibold">
+                    {data?.personalInfo?.phone || "----"}
+                  </p>
+                </div>
+                {/* ADDED: Age calculation for individual customers */}
+                <div className="flex justify-between mb-4">
+                  <p className="text-sm text-[#687588]">Age</p>
+                  <p className="text-sm text-[#111827] font-semibold">
+                    {calculateAge(data?.personalInfo?.dateOfBirth)}
+                  </p>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -159,29 +223,34 @@ const General: React.FC<Customer> = ({ data }) => {
           {address ? (
             <div>
               <p className="text-sm text-[#111827] font-semibold mb-4">
-                {address.addressLine1 || '----'}
+                {address.addressLine1}
+                {address.addressLine2 && `, ${address.addressLine2}`}
               </p>
               <p className="text-sm text-[#111827] font-semibold mb-4">
-                {address.addressLine2 || '----'}
+                {address.addressLine1}
+                {address.addressLine2 && `, ${address.addressLine2}`}
               </p>
               <p className="text-sm text-[#111827] font-semibold mb-4">
-                {address.city || '----'}
+                {address.city || "----"}
               </p>
               <p className="text-sm text-[#111827] font-semibold mb-4">
-                {address.stateProvince || '----'}
+                {address.stateProvince || "----"}
               </p>
               <p className="text-sm text-[#111827] font-semibold mb-4">
-                {address.country || '----'}
+                {address.country || "----"}
               </p>
               <p className="text-sm text-[#111827] font-semibold mb-4">
-                {address.postalCode || '----'}
+                {address.postalCode || "----"}
               </p>
             </div>
           ) : (
             <div>
-              {[...Array(6)].map((_, i) => (
-                <p key={i} className="text-sm text-[#111827] font-semibold mb-4">----</p>
-              ))}
+              <p className="text-sm text-[#111827] font-semibold mb-4">----</p>
+              <p className="text-sm text-[#111827] font-semibold mb-4">----</p>
+              <p className="text-sm text-[#111827] font-semibold mb-4">----</p>
+              <p className="text-sm text-[#111827] font-semibold mb-4">----</p>
+              <p className="text-sm text-[#111827] font-semibold mb-4">----</p>
+              <p className="text-sm text-[#111827] font-semibold mb-4">----</p>
             </div>
           )}
         </div>
@@ -191,4 +260,3 @@ const General: React.FC<Customer> = ({ data }) => {
 };
 
 export default General;
-
