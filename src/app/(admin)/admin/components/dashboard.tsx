@@ -23,6 +23,8 @@ import { Storage } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import SalesPerformance from "./dashboardTopChart";
 import { useGetSalesData } from "@/services/orders";
+import EndpointTester from './EndpointTester';
+
 
 // Add this interface for type safety
 interface DashboardData {
@@ -163,8 +165,8 @@ const Dashboard: React.FC = () => {
 							<div className="mt-auto mb-1">
 								<div
 									className={`${data?.metrics?.products?.trend?.toLowerCase() !== "down"  // Changed from profits to products
-											? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
-											: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
+										? "gap-1 bg-[#E7F7EF] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#27A376] font-bold text-xs"
+										: "gap-1 bg-[#FFEDEC] rounded-[10px] items-center py-1 px-2.5 inline-flex text-[#E03137] font-bold text-xs"
 										}`}
 								>
 									{data?.metrics?.products?.trend?.toLowerCase() === "down" ? (  // Changed from profits to products
@@ -188,6 +190,7 @@ const Dashboard: React.FC = () => {
 								Total Products  {/* Changed from "Total Profits" to "Total Products" */}
 							</p>
 						</div>
+						{/* <EndpointTester /> */}
 						<div className="p-6 bg-[#ABFFD5] flex flex-col h-full">
 							<DashboardTotalOrderIcon />
 							<h1 className="mt-1 mb-3 font-bold 2xl:text-[2rem] text-[1.5rem] text-[#111827] break-words w-full">

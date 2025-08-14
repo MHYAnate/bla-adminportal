@@ -3,6 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import httpService from "@/services/httpService";
 import { routes } from "@/services/api-routes";
+import useFetchItem from "../useFetchItem";
+import { ErrorHandler } from "../errorHandler";
 
 // Transform function to ensure data consistency
 const transformDashboardData = (rawData) => {
@@ -71,47 +73,230 @@ const transformDashboardData = (rawData) => {
 };
 
 // Enhanced Dashboard Info Hook
-export const useGetDashboardInfo = (options = {}) => {
-  const {
-    enabled = true,
-    refetchInterval = 5 * 60 * 1000, // 5 minutes
-    ...queryOptions
-  } = options;
+export const useGetDashboardInfo = ({ enabled = true }) => {
+  const { isFetched, isLoading, error, data, refetch, isFetching, setFilter } =
+    useFetchItem({
+      queryKey: ["dashboard"],
+      queryFn: () => {
+        // 🔧 FIXED: Use the correct dashboard route (old admin dashboard, not reports)
+        return httpService.getData(routes.dashboard());
+      },
+      enabled,
+      retry: 2,
+    });
 
-  const query = useQuery({
-    queryKey: ["dashboard-info", "enhanced"],
-    queryFn: async () => {
-      try {
-        const response = await httpService.getData(routes.getCompleteDashboardMetrics());
-        
-        if (!response.data || !response.data.success) {
-          throw new Error(response.data?.error || "Failed to fetch dashboard data");
-        }
+  console.log('🔍 useGetDashboardInfo - Raw data:', data);
 
-        return transformDashboardData(response.data.data);
-      } catch (error) {
-        console.error("Dashboard fetch error:", error);
-        throw new Error(error?.message || "Failed to load dashboard information");
-      }
-    },
-    enabled,
-    refetchInterval,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    ...queryOptions,
-  });
+  // 🔧 FIXED: Process dashboard data based on actual backend response
+  let processedData = {};
+  
+  if (data) {
+    // Check for the actual structure from your working backend
+    if (data.success && data.data) {
+      processedData = data.data;
+    } else if (data.data) {
+      processedData = data.data;
+    } else if (data.result) {
+      processedData = data.result;
+    } else {
+      processedData = data;
+    }
+  }
+
+  console.log('🔍 useGetDashboardInfo - Processed data:', processedData);
 
   return {
-    dashboardData: query.data,
-    isDashboardInfoLoading: query.isLoading,
-    isFetchingDashboardInfo: query.isFetching,
-    dashboardError: query.error,
-    refetchDashboardData: query.refetch,
-    isStale: query.isStale,
-    dataUpdatedAt: query.dataUpdatedAt,
+    isFetchingDashboardInfo: isFetching,
+    isDashboardInfoLoading: isLoading,
+    dashboardData: processedData,
+    dashboardError: ErrorHandler(error),
+    refetchDashboardData: refetch,
+    // 🔧 NEW: Additional helpful flags
+    hasData: Boolean(data?.success || data?.data),
+    isSuccessful: Boolean(data?.success)
   };
+};
+
+// 🔧 NEW: Enhanced Dashboard Hook - Uses the reports endpoint for financial data
+export const useGetEnhancedDashboard = ({ enabled = true, includeFinancials = true } = {}) => {
+  // Get admin dashboard data (users, orders, basic metrics)
+  const adminDashboard = useGetDashboardInfo({ enabled });
+  
+  // Get financial dashboard data (detailed financial metrics)
+  const financialDashboard = useFetchItem({
+    queryKey: ["enhanced-dashboard"],
+    queryFn: () => {
+      return httpService.getData(routes.getCompleteDashboardMetrics());
+    },
+    enabled: enabled && includeFinancials,
+    retry: 2,
+  });
+
+  console.log('🔍 Enhanced Dashboard - Admin data:', adminDashboard.dashboardData);
+  console.log('🔍 Enhanced Dashboard - Financial data:', financialDashboard.data);
+
+  // Combine both data sources
+  const combinedData = {
+    // From admin dashboard
+    customers: adminDashboard.dashboardData?.metrics?.customers || {},
+    topPerformers: adminDashboard.dashboardData?.topPerformers || {},
+    recentActivity: adminDashboard.dashboardData?.recentActivity || {},
+    
+    // From financial dashboard  
+    metrics: financialDashboard.data?.data?.metrics || {},
+    charts: financialDashboard.data?.data?.charts || {},
+    financialBreakdown: financialDashboard.data?.data?.financialBreakdown || {},
+    refundDetails: financialDashboard.data?.data?.refundDetails || {},
+    
+    // Metadata
+    lastUpdated: financialDashboard.data?.data?.generatedAt || adminDashboard.dashboardData?.lastUpdated,
+    calculationMethod: financialDashboard.data?.data?.calculationMethod
+  };
+
+  return {
+    // Loading states
+    isDashboardInfoLoading: adminDashboard.isDashboardInfoLoading || financialDashboard.isLoading,
+    isFetchingDashboardInfo: adminDashboard.isFetchingDashboardInfo || financialDashboard.isFetching,
+    
+    // Combined data
+    dashboardData: combinedData,
+    
+    // Individual data sources
+    adminData: adminDashboard.dashboardData,
+    financialData: financialDashboard.data?.data,
+    
+    // Error handling
+    dashboardError: adminDashboard.dashboardError || ErrorHandler(financialDashboard.error),
+    adminError: adminDashboard.dashboardError,
+    financialError: ErrorHandler(financialDashboard.error),
+    
+    // Refresh functions
+    refetchDashboardData: () => {
+      adminDashboard.refetchDashboardData();
+      financialDashboard.refetch();
+    },
+    
+    // Status flags
+    hasData: adminDashboard.hasData || Boolean(financialDashboard.data?.success),
+    hasAdminData: adminDashboard.hasData,
+    hasFinancialData: Boolean(financialDashboard.data?.success),
+    isSuccessful: adminDashboard.isSuccessful && Boolean(financialDashboard.data?.success)
+  };
+};
+
+// 🔧 Helper function to validate dashboard data structure
+export const validateDashboardData = (data) => {
+  const required = [
+    'metrics',
+    'charts'
+  ];
+  
+  const validation = {
+    isValid: true,
+    missing: [],
+    hasMetrics: Boolean(data?.metrics),
+    hasCharts: Boolean(data?.charts),
+    hasFinancialBreakdown: Boolean(data?.financialBreakdown),
+    hasRefundDetails: Boolean(data?.refundDetails)
+  };
+  
+  required.forEach(field => {
+    if (!data || typeof data[field] === 'undefined') {
+      validation.isValid = false;
+      validation.missing.push(field);
+    }
+  });
+  
+  return validation;
+};
+
+// 🔧 Helper function to format dashboard metrics for display
+export const formatDashboardMetrics = (metrics) => {
+  if (!metrics) return {};
+  
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-NG', {
+      style: 'currency',
+      currency: 'NGN',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount || 0);
+  };
+
+  const formatPercentage = (value) => {
+    return `${value >= 0 ? '+' : ''}${(value || 0).toFixed(1)}%`;
+  };
+
+  const formatNumber = (number) => {
+    return (number || 0).toLocaleString('en-NG');
+  };
+
+  return {
+    revenue: {
+      formatted: formatCurrency(metrics.revenue?.value || metrics.revenue?.currentMonth || 0),
+      change: formatPercentage(metrics.revenue?.dailyChange || metrics.revenue?.changePercentage || 0),
+      trend: metrics.revenue?.trend || 'neutral',
+      raw: metrics.revenue?.value || metrics.revenue?.currentMonth || 0
+    },
+    orders: {
+      formatted: formatNumber(metrics.orders?.value || metrics.orders?.currentMonth || 0),
+      change: formatPercentage(metrics.orders?.dailyChange || metrics.orders?.changePercentage || 0),
+      trend: metrics.orders?.trend || 'neutral',
+      raw: metrics.orders?.value || metrics.orders?.currentMonth || 0
+    },
+    profits: {
+      formatted: formatCurrency(metrics.profits?.value || metrics.profits?.currentMonth || 0),
+      change: formatPercentage(metrics.profits?.dailyChange || metrics.profits?.changePercentage || 0),
+      trend: metrics.profits?.trend || 'neutral',
+      raw: metrics.profits?.value || metrics.profits?.currentMonth || 0
+    },
+    customers: {
+      formatted: formatNumber(metrics.customers?.total || metrics.customers?.value || 0),
+      active: formatNumber(metrics.customers?.active || 0),
+      raw: metrics.customers?.total || metrics.customers?.value || 0
+    }
+  };
+};
+
+// 🔧 Debug function to check route availability
+export const debugDashboardRoutes = () => {
+  const routesToCheck = [
+    'dashboard',
+    'getCompleteDashboardMetrics',
+    'getFinancialReports',
+    'getFinancialSummary'
+  ];
+  
+  const routeStatus = {};
+  
+  routesToCheck.forEach(routeName => {
+    if (routes[routeName]) {
+      try {
+        const url = routes[routeName]();
+        routeStatus[routeName] = {
+          exists: true,
+          url: url,
+          type: typeof routes[routeName]
+        };
+      } catch (error) {
+        routeStatus[routeName] = {
+          exists: true,
+          url: 'Error generating URL',
+          error: error.message,
+          type: typeof routes[routeName]
+        };
+      }
+    } else {
+      routeStatus[routeName] = {
+        exists: false,
+        url: null,
+        type: 'undefined'
+      };
+    }
+  });
+  
+  console.log('🔍 Dashboard Routes Debug:', routeStatus);
+  return routeStatus;
 };
 
 // Financial Summary Hook (for quick metrics)
@@ -191,16 +376,16 @@ export const useRealTimeFinancials = (
 };
 
 // Dashboard Data Validation
-export const validateDashboardData = (data) => {
-  const required = [
-    'metrics',
-    'changes', 
-    'charts',
-    'financialBreakdown'
-  ];
+// export const validateDashboardData = (data) => {
+//   const required = [
+//     'metrics',
+//     'changes', 
+//     'charts',
+//     'financialBreakdown'
+//   ];
   
-  return required.every(field => data && typeof data[field] !== 'undefined');
-};
+//   return required.every(field => data && typeof data[field] !== 'undefined');
+// };
 
 // Format financial data for display
 export const formatFinancialData = (data) => {

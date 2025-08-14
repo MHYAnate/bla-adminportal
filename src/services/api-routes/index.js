@@ -71,6 +71,24 @@ export const routes = {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
     return `admin/reports/dashboard${queryString}`;
   },
+
+  dashboardReports: (params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/reports/dashboard${queryString}`;
+  },
+  
+  financialReports: (params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/reports/financial${queryString}`;
+  },
+
+  financialReport: (customerId, params) => {
+    const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
+    return `admin/reports/financial/${customerId}${queryString}`;
+  },
+  
+  deleteFinancialData: (customerId) => `admin/reports/financial/${customerId}`,
+  
   getFinancialSummary: (params) => {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
     return `admin/reports/financial-summary${queryString}`;
