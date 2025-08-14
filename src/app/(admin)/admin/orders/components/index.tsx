@@ -19,6 +19,11 @@ import OrderCard from "@/components/widgets/order";
 import { OrderBarComponent } from "./order-bar-chart";
 import LineGraphComponent from "./line-graph";
 import {
+  useGetDashboardInfo, // For real-time updates after refunds
+  calculateProfitMargin,
+  calculateRefundRate
+} from "@/services/dashboard";
+import {
   useGetOrders,
   useGetOrdersAnalytics,
   useGetOrdersSummary,
