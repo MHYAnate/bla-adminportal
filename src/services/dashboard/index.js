@@ -7,7 +7,19 @@ import useFetchItem from "../useFetchItem";
 import { ErrorHandler } from "../errorHandler";
 
 // Transform function to ensure data consistency
+// ✅ MINIMAL FIX: src/services/dashboard/index.js
+// Just replace the transformDashboardData function with this enhanced version
+
+// ✅ ENHANCED: Transform function that handles your backend's new customer data structure
+// ✅ MINIMAL FIX: Only replace the transformDashboardData function in your existing service
+// src/services/dashboard/index.js - Line ~30-40 where transformDashboardData is defined
+
+// ✅ ENHANCED Transform function - handles your backend's net customer spending
+// ✅ EXACT FIX: Replace your transformDashboardData function in src/services/dashboard/index.js
+
 const transformDashboardData = (rawData) => {
+  console.log('🔍 Raw backend data received:', rawData);
+  
   return {
     metrics: {
       totalUsers: rawData?.metrics?.totalUsers || 0,
@@ -21,6 +33,33 @@ const transformDashboardData = (rawData) => {
       profitMargin: rawData?.metrics?.profitMargin || 0,
       refundRate: rawData?.metrics?.refundRate || 0,
       averageOrderValue: rawData?.metrics?.averageOrderValue || 0,
+      
+      // ✅ FIXED: Use the exact structure from your backend response
+      customers: {
+        total: rawData?.metrics?.customers?.total || 0,
+        active: rawData?.metrics?.customers?.active || 0,
+        changePercentage: rawData?.metrics?.customers?.changePercentage || 0,
+        trend: rawData?.metrics?.customers?.trend || "up",
+      },
+      revenue: {
+        total: rawData?.metrics?.revenue?.total || 0,
+        currentMonth: rawData?.metrics?.revenue?.currentMonth || 0,
+        previousMonth: rawData?.metrics?.revenue?.previousMonth || 0,
+        changePercentage: rawData?.metrics?.revenue?.changePercentage || 0,
+        trend: rawData?.metrics?.revenue?.trend || "up",
+      },
+      orders: {
+        total: rawData?.metrics?.orders?.total || 0,
+        changePercentage: rawData?.metrics?.orders?.changePercentage || 0,
+        trend: rawData?.metrics?.orders?.trend || "up",
+      },
+      profits: {
+        total: rawData?.metrics?.profits?.total || 0,
+        currentMonth: rawData?.metrics?.profits?.currentMonth || 0,
+        previousMonth: rawData?.metrics?.profits?.previousMonth || 0,
+        changePercentage: rawData?.metrics?.profits?.changePercentage || 0,
+        trend: rawData?.metrics?.profits?.trend || "up",
+      },
     },
     changes: {
       sales: {
@@ -45,65 +84,124 @@ const transformDashboardData = (rawData) => {
       revenueTrend: rawData?.charts?.revenueTrend || [],
       orderTrend: rawData?.charts?.orderTrend || [],
     },
-    topCustomers: (rawData?.topCustomers || []).map((customer) => ({
-      customerId: customer?.customerId || customer?.userId || 0,
-      name: customer?.name || "Unknown",
-      email: customer?.email || "",
-      sales: customer?.sales || customer?.totalSpent || 0,
-      orders: customer?.orders || customer?.orderCount || 0,
-    })),
-    statusBreakdown: rawData?.statusBreakdown || {},
-    financialBreakdown: {
-      grossRevenue: rawData?.financialBreakdown?.grossRevenue || 0,
-      totalRefunds: rawData?.financialBreakdown?.totalRefunds || 0,
-      netRevenue: rawData?.financialBreakdown?.netRevenue || 0,
-      totalCosts: rawData?.financialBreakdown?.totalCosts || 0,
-      grossProfit: rawData?.financialBreakdown?.grossProfit || 0,
-      netProfit: rawData?.financialBreakdown?.netProfit || 0,
-      costBreakdown: {
-        productCosts: rawData?.financialBreakdown?.costBreakdown?.productCosts || 0,
-        shippingCosts: rawData?.financialBreakdown?.costBreakdown?.shippingCosts || 0,
-        processingFees: rawData?.financialBreakdown?.costBreakdown?.processingFees || 0,
-        refundFees: rawData?.financialBreakdown?.costBreakdown?.refundFees || 0,
-      },
+    
+    // ✅ CRITICAL FIX: Use your backend's exact customer data structure
+    topPerformers: {
+      customers: (rawData?.topPerformers?.customers || []).map((customer, index) => {
+        // ✅ Your backend already sends the correct data:
+        // - grossSpent: 365200
+        // - refunds: 63750  
+        // - totalSpent: 301450 (THIS IS ALREADY NET!)
+        
+        console.log(`Processing customer ${customer?.email}:`, {
+          grossSpent: customer?.grossSpent,
+          refunds: customer?.refunds,
+          totalSpent: customer?.totalSpent, // This is ALREADY net from your backend
+          avgOrderValue: customer?.avgOrderValue
+        });
+        
+        return {
+          // ✅ Keep your UI's expected structure exactly
+          userId: customer?.userId || index + 1,
+          email: customer?.email || "",
+          totalSpent: customer?.totalSpent || 0, // ✅ This is ALREADY net from backend
+          orderCount: customer?.orderCount || 0,
+          status: customer?.status || "active",
+          
+          // ✅ Add the breakdown for debugging (won't affect current UI)
+          grossSpent: customer?.grossSpent || 0,
+          refunds: customer?.refunds || 0,
+          name: customer?.name || "",
+          type: customer?.type || "individual",
+          avgOrderValue: customer?.avgOrderValue || 0,
+        };
+      }),
+      products: rawData?.topPerformers?.products || [],
     },
+    
+    recentActivity: {
+      newCustomers: rawData?.recentActivity?.newCustomers || [],
+    },
+    
+    statusBreakdown: rawData?.statusBreakdown || {},
+    financialBreakdown: rawData?.financialBreakdown || {},
+    
+    // ✅ Include your backend's financial alignment data
+    financialAlignment: rawData?.financialAlignment || null,
+    
     generatedAt: rawData?.generatedAt || new Date().toISOString(),
     calculationMethod: rawData?.calculationMethod || "enhanced_financial_calculations",
   };
 };
 
-// Enhanced Dashboard Info Hook
+// ✅ ALSO UPDATE: Enhanced useGetDashboardInfo with verification logging
 export const useGetDashboardInfo = ({ enabled = true }) => {
   const { isFetched, isLoading, error, data, refetch, isFetching, setFilter } =
     useFetchItem({
       queryKey: ["dashboard"],
       queryFn: () => {
-        // 🔧 FIXED: Use the correct dashboard route (old admin dashboard, not reports)
         return httpService.getData(routes.dashboard());
       },
       enabled,
       retry: 2,
     });
 
-  console.log('🔍 useGetDashboardInfo - Raw data:', data);
+  console.log('🔍 useGetDashboardInfo - Raw API response:', data);
 
-  // 🔧 FIXED: Process dashboard data based on actual backend response
   let processedData = {};
   
   if (data) {
-    // Check for the actual structure from your working backend
+    // Extract data from your backend response
     if (data.success && data.data) {
       processedData = data.data;
     } else if (data.data) {
       processedData = data.data;
-    } else if (data.result) {
-      processedData = data.result;
     } else {
       processedData = data;
     }
+
+    // Apply transformation
+    processedData = transformDashboardData(processedData);
+    
+    // ✅ VERIFICATION: Check that we're using the correct customer totals
+    if (processedData.topPerformers?.customers?.length > 0) {
+      const frontendCalculatedTotal = processedData.topPerformers.customers.reduce((sum, c) => sum + c.totalSpent, 0);
+      const backendReportedTotal = processedData.financialAlignment?.customerTotal || 0;
+      
+      console.log('💰 CUSTOMER TOTAL VERIFICATION:', {
+        frontendCalculated: `₦${frontendCalculatedTotal.toLocaleString()}`,
+        backendReported: `₦${backendReportedTotal.toLocaleString()}`,
+        shouldMatch: frontendCalculatedTotal === backendReportedTotal ? '✅ PERFECT MATCH' : '❌ MISMATCH',
+        difference: Math.abs(frontendCalculatedTotal - backendReportedTotal),
+        customerBreakdown: processedData.topPerformers.customers.map(c => ({
+          email: c.email,
+          totalSpent: c.totalSpent,
+          grossSpent: c.grossSpent,
+          refunds: c.refunds
+        }))
+      });
+      
+      // ✅ EXPECTED: Should show ₦706,050 for both
+      if (frontendCalculatedTotal === 706050) {
+        console.log('🎉 SUCCESS: Frontend is now using correct net customer spending!');
+      } else {
+        console.log('⚠️ ISSUE: Frontend total still incorrect. Expected: ₦706,050, Got: ₦' + frontendCalculatedTotal.toLocaleString());
+      }
+    }
+    
+    // ✅ REVENUE vs CUSTOMER ALIGNMENT
+    if (processedData.financialAlignment) {
+      console.log('🎯 FINANCIAL ALIGNMENT STATUS:', {
+        revenueTotal: `₦${processedData.financialAlignment.revenueTotal?.toLocaleString()}`,
+        customerTotal: `₦${processedData.financialAlignment.customerTotal?.toLocaleString()}`,
+        coverage: `${processedData.financialAlignment.coveragePercentage?.toFixed(1)}%`,
+        isAligned: processedData.financialAlignment.isAligned ? '✅ ALIGNED' : '⚠️ NOT ALIGNED',
+        discrepancy: `₦${processedData.financialAlignment.discrepancy?.toLocaleString()}`
+      });
+    }
   }
 
-  console.log('🔍 useGetDashboardInfo - Processed data:', processedData);
+  console.log('🔍 useGetDashboardInfo - Final processed data:', processedData);
 
   return {
     isFetchingDashboardInfo: isFetching,
@@ -111,11 +209,17 @@ export const useGetDashboardInfo = ({ enabled = true }) => {
     dashboardData: processedData,
     dashboardError: ErrorHandler(error),
     refetchDashboardData: refetch,
-    // 🔧 NEW: Additional helpful flags
+    
+    // ✅ NEW: Financial alignment access
+    financialAlignment: processedData?.financialAlignment,
+    isFinanciallyAligned: processedData?.financialAlignment?.isAligned || false,
+    
     hasData: Boolean(data?.success || data?.data),
     isSuccessful: Boolean(data?.success)
   };
 };
+
+
 
 // 🔧 NEW: Enhanced Dashboard Hook - Uses the reports endpoint for financial data
 export const useGetEnhancedDashboard = ({ enabled = true, includeFinancials = true } = {}) => {

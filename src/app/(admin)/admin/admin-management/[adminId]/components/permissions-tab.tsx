@@ -1,16 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useGetAdminRoles } from '@/services/admin';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { ShieldCheck, Users, Lock, AlertCircle, Info } from 'lucide-react';
+import { useToggleAdminPermission } from '@/services/admin/permissions';
+import { useGetAdminRoles, useGetAdminPermissions } from '@/services/admin';
+import { Separator } from '@/components/ui/separator';
+import { Lock, Unlock, Shield, Settings } from 'lucide-react';
 
 interface Permission {
   id: number;
   name: string;
   description?: string;
+  category?: string;
   roles?: any[];
 }
 
@@ -27,7 +30,6 @@ interface UserRole {
   role?: {
     id: number;
     name?: string;
-    description?: string;
     permissions?: Permission[];
   };
 }
@@ -40,321 +42,257 @@ interface AdminData {
   status?: string;
 }
 
-interface PermissionsTabProps {
-  adminData: AdminData;
-}
-
-export const PermissionsTab: React.FC<PermissionsTabProps> = ({ adminData }) => {
+export const PermissionsTab = ({ adminData }: { adminData: AdminData }) => {
+  const [isEditing, setIsEditing] = useState(false);
   const [adminPermissions, setAdminPermissions] = useState<Set<number>>(new Set());
-  const [rolePermissions, setRolePermissions] = useState<Map<number, Permission[]>>(new Map());
+  const [groupedPermissions, setGroupedPermissions] = useState<Record<string, Permission[]>>({});
 
+  const { mutate: togglePermission, isPending } = useToggleAdminPermission(adminData.id);
   const { rolesData, isRolesLoading } = useGetAdminRoles({ enabled: true });
+  const { permissionsData, isPermissionsLoading } = useGetAdminPermissions({ enabled: true });
+
+  let rolesArray: Role[] = [];
+  let permissionsArray: Permission[] = [];
 
   // Process roles data
-  let rolesArray: Role[] = [];
   if (Array.isArray(rolesData)) {
     rolesArray = rolesData;
   } else if (rolesData?.data && Array.isArray(rolesData.data)) {
     rolesArray = rolesData.data;
   }
 
-  // Extract all permissions from all roles (since we don't have a separate permissions endpoint)
-  const allPermissions: Permission[] = React.useMemo(() => {
-    const permissionsMap = new Map<number, Permission>();
+  // Process permissions data
+  if (Array.isArray(permissionsData)) {
+    permissionsArray = permissionsData;
+  } else if (permissionsData?.data && Array.isArray(permissionsData.data)) {
+    permissionsArray = permissionsData.data;
+  }
 
-    rolesArray.forEach(role => {
-      if (role.permissions) {
-        role.permissions.forEach(permission => {
-          permissionsMap.set(permission.id, permission);
-        });
-      }
-    });
-
-    return Array.from(permissionsMap.values());
-  }, [rolesArray]);
-
+  // Group permissions by category
   useEffect(() => {
-    if (adminData?.roles && rolesArray.length) {
+    if (permissionsArray.length > 0) {
+      const grouped = permissionsArray.reduce((acc: Record<string, Permission[]>, permission: Permission) => {
+        const category = permission.category || 'general';
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(permission);
+        return acc;
+      }, {});
+      setGroupedPermissions(grouped);
+    }
+  }, [permissionsArray]);
+
+  // Calculate current admin permissions from roles
+  useEffect(() => {
+    if (adminData?.roles && rolesArray.length && permissionsArray.length) {
       const currentPermissions = new Set<number>();
-      const rolePermissionMap = new Map<number, Permission[]>();
 
       adminData.roles.forEach((userRole: UserRole) => {
         const roleId = userRole.role?.id || userRole.roleId || userRole.id;
         if (roleId) {
           const fullRole = rolesArray.find((role) => role.id === roleId);
           if (fullRole?.permissions?.length) {
-            // Store permissions for this specific role
-            rolePermissionMap.set(roleId, fullRole.permissions);
             fullRole.permissions.forEach((perm) => currentPermissions.add(perm.id));
+          } else {
+            // Fallback: check permissions that have this role
+            permissionsArray.forEach((perm) => {
+              if (perm.roles?.some((r) => r.id === roleId || r.name === fullRole?.name || r.role?.id === roleId)) {
+                currentPermissions.add(perm.id);
+              }
+            });
           }
         }
       });
 
       setAdminPermissions(currentPermissions);
-      setRolePermissions(rolePermissionMap);
     }
-  }, [adminData, rolesArray]);
+  }, [adminData, rolesArray, permissionsArray]);
 
-  const isLoading = isRolesLoading;
+  const handleTogglePermission = (permissionId: number) => {
+    togglePermission(permissionId, {
+      onSuccess: () => {
+        // Update local state immediately for better UX
+        setAdminPermissions(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(permissionId)) {
+            newSet.delete(permissionId);
+          } else {
+            newSet.add(permissionId);
+          }
+          return newSet;
+        });
+        toast.success('Permission updated successfully');
+      },
+      onError: (error: any) => {
+        console.error('Toggle permission error:', error);
+        toast.error('Failed to update permission');
+      }
+    });
+  };
 
-  // Get all permissions accessible to this admin
-  const adminAccessiblePermissions = allPermissions.filter((permission) =>
-    adminPermissions.has(permission.id)
-  );
+  const formatPermissionName = (name: string) => {
+    return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  };
 
-  // Group permissions by role for display
-  const permissionsByRole = Array.from(rolePermissions.entries()).map(([roleId, permissions]) => {
-    const role = rolesArray.find(r => r.id === roleId) ||
-      adminData.roles?.find(ur => ur.role?.id === roleId)?.role;
-    return {
-      role: role || { id: roleId, name: 'Unknown Role' },
-      permissions
+  const getCategoryDisplayName = (category: string) => {
+    const categoryMap: Record<string, string> = {
+      'admin': 'Admin Access',
+      'manager': 'Manager Access',
+      'general': 'General Access',
+      'user': 'User Management',
+      'product': 'Product Management',
+      'order': 'Order Management',
+      'inventory': 'Inventory Management',
+      'report': 'Reports & Analytics',
+      'financial': 'Financial Operations',
+      'system': 'System Administration'
     };
-  });
 
-  // Get role information for the admin
-  const adminRoles = adminData.roles?.map(userRole => {
-    const roleId = userRole.role?.id || userRole.roleId || userRole.id;
-    return rolesArray.find(role => role.id === roleId) || userRole.role;
-  }).filter(Boolean) || [];
+    return categoryMap[category.toLowerCase()] || category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) + ' Access';
+  };
+
+  const isLoading = isRolesLoading || isPermissionsLoading || isPending;
+  const hasPermissions = adminPermissions.size > 0;
+
+  if (isLoading && adminPermissions.size === 0) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading permissions...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-blue-600" />
-          <h2 className="text-xl font-semibold">Role-Based Permissions</h2>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center space-x-3">
+          <div className="p-2 bg-orange-100 rounded-lg">
+            <Shield className="w-6 h-6 text-orange-600" />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Permissions Management</h2>
+            <p className="text-gray-600">Toggle individual permissions for this admin</p>
+          </div>
         </div>
-        <Badge variant="outline" className="flex items-center gap-1">
-          <Lock className="h-3 w-3" />
-          Read-Only View
-        </Badge>
+
+        <Button
+          onClick={() => setIsEditing(!isEditing)}
+          variant={isEditing ? "outline" : "default"}
+          className={isEditing ? "border-orange-500 text-orange-600" : "bg-orange-500 hover:bg-orange-600"}
+        >
+          {isEditing ? (
+            <>
+              <Lock className="w-4 h-4 mr-2" />
+              Lock Editing
+            </>
+          ) : (
+            <>
+              <Settings className="w-4 h-4 mr-2" />
+              Edit Permissions
+            </>
+          )}
+        </Button>
       </div>
 
-      {/* Role-Based Access Info */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <Info className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div>
-              <h3 className="font-medium text-blue-900 mb-1">Role-Based Access Control</h3>
-              <p className="text-sm text-blue-800">
-                This admin's permissions are automatically inherited from their assigned roles.
-                To modify permissions, update the role configuration or assign different roles.
-              </p>
-            </div>
+      {/* Permissions Summary */}
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className={`w-3 h-3 rounded-full ${hasPermissions ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+            <span className="font-medium text-gray-900">
+              {adminPermissions.size} Permission{adminPermissions.size !== 1 ? 's' : ''} Active
+            </span>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Current Roles */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium flex items-center gap-2">
-          <Users className="h-5 w-5 text-gray-600" />
-          Assigned Roles ({adminRoles.length})
-        </h3>
-
-        {adminRoles.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {adminRoles.map((role, index) => {
-              const rolePerms = rolePermissions.get(role?.id || 0) || [];
-              return (
-                <Card key={role?.id || index} className="border-gray-200">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900">
-                        {role?.name?.replace(/_/g, ' ') || 'Unknown Role'}
-                      </h4>
-                      <Badge variant="secondary" className="text-xs">
-                        {rolePerms.length} permissions
-                      </Badge>
-                    </div>
-                    {role?.description && (
-                      <p className="text-sm text-gray-600 mb-3">{role.description}</p>
-                    )}
-                    <div className="text-xs text-gray-500">
-                      Role ID: {role?.id || 'Unknown'}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <Card className="border-amber-200 bg-amber-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-amber-800">
-                <AlertCircle className="h-4 w-4" />
-                <span className="text-sm font-medium">No roles assigned</span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          <span className="text-sm text-gray-600">
+            Total Available: {permissionsArray.length}
+          </span>
+        </div>
       </div>
 
-      {/* Permissions Breakdown by Role */}
-      {permissionsByRole.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-gray-600" />
-            Permissions by Role
-          </h3>
+      {/* Permissions List */}
+      {Object.keys(groupedPermissions).length > 0 ? (
+        <div className="space-y-6">
+          {Object.entries(groupedPermissions).map(([category, permissions]) => {
+            const categoryDisplayName = getCategoryDisplayName(category);
+            const categoryPermissions = permissions.filter(p => adminPermissions.has(p.id));
 
-          {permissionsByRole.map(({ role, permissions }) => (
-            <Card key={role.id} className="border-gray-200">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
-                    <Users className="h-4 w-4 text-blue-600" />
-                    {role.name?.replace(/_/g, ' ') || 'Unknown Role'}
-                  </h4>
-                  <Badge variant="outline">
-                    {permissions.length} permissions
-                  </Badge>
+            return (
+              <div key={category} className="bg-white border border-gray-200 rounded-lg">
+                <div className="p-4 border-b border-gray-200 bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-gray-900">{categoryDisplayName}</h3>
+                    <span className="text-sm text-gray-600">
+                      {categoryPermissions.length}/{permissions.length} enabled
+                    </span>
+                  </div>
                 </div>
 
-                {permissions.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {permissions.map((permission) => (
-                      <div
-                        key={permission.id}
-                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg bg-gray-50"
-                      >
+                <div className="p-4 space-y-3">
+                  {permissions.map((permission) => {
+                    const hasPermission = adminPermissions.has(permission.id);
+
+                    return (
+                      <div key={permission.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <div className="flex-1">
-                          <h5 className="font-medium text-gray-900 text-sm">
-                            {permission.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </h5>
-                          {permission.description && (
-                            <p className="text-xs text-gray-500 mt-1">
-                              {permission.description}
-                            </p>
-                          )}
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-2 h-2 rounded-full ${hasPermission ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+                            <div>
+                              <h4 className="font-medium text-gray-900">
+                                {formatPermissionName(permission.name)}
+                              </h4>
+                              {permission.description && (
+                                <p className="text-sm text-gray-600 mt-1">
+                                  {permission.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="success" className="text-xs">
-                            Enabled
-                          </Badge>
-                          <Lock className="h-3 w-3 text-gray-400" />
+
+                        <div className="ml-4">
+                          <Switch
+                            checked={hasPermission}
+                            onCheckedChange={() => handleTogglePermission(permission.id)}
+                            disabled={!isEditing || isPending}
+                            className="data-[state=checked]:bg-green-500"
+                          />
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <AlertCircle className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500">No permissions defined for this role</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* All Permissions Summary */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium">
-            All Available Permissions ({adminAccessiblePermissions.length})
-          </h3>
-          <div className="text-sm text-gray-500">
-            Inherited from {adminRoles.length} role{adminRoles.length !== 1 ? 's' : ''}
-          </div>
-        </div>
-
-        {adminAccessiblePermissions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {adminAccessiblePermissions.map((permission) => {
-              // Find which roles grant this permission
-              const grantingRoles = adminRoles.filter(role =>
-                rolePermissions.get(role?.id || 0)?.some(p => p.id === permission.id)
-              );
-
-              return (
-                <Card key={permission.id} className="border-green-200 bg-green-50">
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 text-sm">
-                        {permission.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </h4>
-                      <Badge variant="success" className="text-xs">
-                        Active
-                      </Badge>
-                    </div>
-
-                    {permission.description && (
-                      <p className="text-xs text-gray-600 mb-3">
-                        {permission.description}
-                      </p>
-                    )}
-
-                    <div className="text-xs text-gray-500">
-                      <span className="font-medium">Granted by:</span>
-                      {grantingRoles.length > 0 ? (
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {grantingRoles.map(role => (
-                            <Badge key={role?.id || Math.random()} variant="outline" className="text-xs">
-                              {role?.name?.replace(/_/g, ' ') || 'Unknown Role'}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="ml-1">Unknown role</span>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <Card className="border-red-200 bg-red-50">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-red-800">
-                <AlertCircle className="h-4 w-4" />
-                <div>
-                  <p className="text-sm font-medium">No permissions found</p>
-                  <p className="text-xs mt-1">
-                    This admin has no permissions assigned through their roles.
-                    Consider assigning appropriate roles to grant access.
-                  </p>
+                    );
+                  })}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-
-      {/* Permission Management Notice */}
-      <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="p-4">
-          <div className="flex items-start gap-3">
-            <ShieldCheck className="h-5 w-5 text-blue-600 mt-0.5" />
-            <div className="text-sm text-blue-800">
-              <h4 className="font-medium mb-1">Permission Management</h4>
-              <p className="mb-2">
-                This admin's permissions are managed through role assignment:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>To modify permissions: Update role configurations in the Roles section</li>
-                <li>To change access level: Assign different roles to this admin</li>
-                <li>All changes take effect immediately across the system</li>
-                <li>Role integrity is maintained - no direct permission editing</li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2 text-gray-600">Loading permissions...</span>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+          <Shield className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Permissions Available</h3>
+          <p className="text-gray-600">This admin doesn't have any permissions assigned yet.</p>
         </div>
       )}
 
-
+      {/* Edit Mode Warning */}
+      {isEditing && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <Unlock className="w-5 h-5 text-orange-600 mt-0.5" />
+            <div>
+              <h4 className="font-medium text-orange-800">Edit Mode Active</h4>
+              <p className="text-sm text-orange-700 mt-1">
+                You can now toggle permissions on/off. Changes are saved immediately.
+                Click "Lock Editing" when finished to prevent accidental changes.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

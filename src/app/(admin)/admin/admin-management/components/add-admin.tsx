@@ -23,7 +23,7 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { useInviteAdmin, useGetInvitableRoles } from "@/services/admin";
 import { toast } from "sonner";
-import { Loader2, CheckCircle, AlertCircle, Users, ShieldCheck } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 // Types
 interface RoleData {
@@ -182,152 +182,124 @@ const CreateAdmin: React.FC<IProps> = ({ setClose, setUrl }) => {
   }
 
   return (
-    <div>
-      <div className="mb-6">
-        <div className="flex items-center mb-2">
-          <ShieldCheck className="h-5 w-5 text-blue-600 mr-2" />
-          <h2 className="text-xl font-semibold">Invite New Administrator</h2>
-        </div>
-        <p className="text-sm text-gray-600">
-          Select a specific role to determine the new admin's permissions and access levels.
-        </p>
-      </div>
-
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="mb-8 flex flex-col h-full"
-        >
-          <div className="mb-6 space-y-4">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel className="text-[#111827] font-medium text-base">
-                    Email Address <span className="text-[#E03137]">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="Enter admin email address"
-                      className="h-14"
-                      {...field}
-                      disabled={isSubmitting || inviteAdminIsLoading}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="roleId"
-              render={({ field }) => (
-                <FormItem className="w-full">
-                  <FormLabel className="text-[#111827] font-medium text-base">
-                    Admin Role <span className="text-[#E03137]">*</span>
-                  </FormLabel>
-                  <Select
-                    onValueChange={(value: string) => {
-                      field.onChange(value);
-                      console.log("Role selected:", value);
-                    }}
-                    value={field.value?.toString()}
-                    disabled={isSubmitting || inviteAdminIsLoading}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="h-14">
-                        <SelectValue placeholder="Select admin role" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {availableRoles.map((role: RoleData) => (
-                        <SelectItem key={role.id} value={role.id.toString()}>
-                          <div className="flex items-center">
-                            <Users className="h-4 w-4 mr-2 text-blue-600" />
-                            <div>
-                              <span className="font-medium">
-                                {role.name.replace(/_/g, " ").toUpperCase()}
-                              </span>
-                              {role.description && (
-                                <span className="text-sm text-gray-500 ml-2">
-                                  - {role.description}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                  {field.value && (
-                    <div className="text-xs text-blue-600 mt-1">
-                      ✓ Role-based permissions will be automatically applied
-                    </div>
+    <div className="h-full flex flex-col absolute w-full px-10  ">
+      <div className="relative top-28 flex flex-col w-full">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col justify-between h-full w-full "
+          >
+            {/* Form Fields */}
+            <div className="flex w-full gap-6 mb-8 ">
+              <div className="w-full">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-900 font-medium text-sm">
+                        Email address
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="Enter email address"
+                          className="h-12  border-gray-300"
+                          {...field}
+                          disabled={isSubmitting || inviteAdminIsLoading}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </FormItem>
-              )}
-            />
-          </div>
+                />
+              </div>
 
-          {/* Role-based invitation info */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start">
-              <ShieldCheck className="h-4 w-4 text-blue-600 mr-2 mt-0.5" />
-              <div className="text-xs text-blue-800">
-                <p className="font-medium">Role-Based Access Control</p>
-                <p>The invited admin will inherit all permissions assigned to the selected role.</p>
+              <div className="w-full">
+                <FormField
+                  control={form.control}
+                  name="roleId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-gray-900 font-medium text-sm">
+                        Role
+                      </FormLabel>
+                      <Select
+                        onValueChange={(value: string) => {
+                          field.onChange(value);
+                          console.log("Role selected:", value);
+                        }}
+                        value={field.value?.toString()}
+                        disabled={isSubmitting || inviteAdminIsLoading}
+                      >
+                        <FormControl >
+                          <SelectTrigger className="h-12 border-gray-300">
+                            <SelectValue placeholder="Assign a role" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableRoles.map((role: RoleData) => (
+                            <SelectItem key={role.id} value={role.id.toString()}>
+                              <span className="font-medium">
+                                {role.name.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </div>
-          </div>
 
-          {/* ✅ Show any invite errors from unified hook */}
-          {inviteAdminError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
-              <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
-              <span className="text-red-700 text-sm">{inviteAdminError}</span>
+            {/* ✅ Show any invite errors from unified hook */}
+            {inviteAdminError && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
+                <AlertCircle className="h-4 w-4 text-red-500 mr-2" />
+                <span className="text-red-700 text-sm">{inviteAdminError}</span>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="  ">
+              <div className="flex justify-end space-x-3 pt-4 border-t ">
+                <div>
+                  <Button
+                    variant="outline"
+                    className=" w-[163px] h-[56px] p-4"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setClose();
+                    }}
+                    disabled={isSubmitting || inviteAdminIsLoading}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+
+                <Button
+                  disabled={isSubmitting || inviteAdminIsLoading || !availableRoles.length}
+                  className=" bg-[#EC9F01] text-white w-[163px] h-[56px] p-4"
+                  type="submit"
+                >
+                  {isSubmitting || inviteAdminIsLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
+              </div>
             </div>
-          )}
 
-          <div className="gap-5 justify-end flex mt-auto">
-            <Button
-              variant="outline"
-              className="w-auto py-4 px-[3rem] font-bold text-base"
-              size="xl"
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                setClose();
-              }}
-              disabled={isSubmitting || inviteAdminIsLoading}
-            >
-              Cancel
-            </Button>
-            <Button
-              disabled={isSubmitting || inviteAdminIsLoading || !availableRoles.length}
-              variant="warning"
-              className="w-auto px-[3rem] py-4 font-bold text-base"
-              size="xl"
-              type="submit"
-            >
-              {isSubmitting || inviteAdminIsLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending Invitation...
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Send Role-Based Invitation
-                </>
-              )}
-            </Button>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 };

@@ -608,3 +608,23 @@ export interface Permission {
   id: number;
   name: string;
 }
+
+export interface DataTableCustomer {
+  userId: number;
+  email: string;
+  name?: string;
+  
+  // Financial breakdown (NEW)
+  grossSpent: number;        // Total before refunds
+  refunds: number;           // Total refunds received
+  totalSpent: number;        // Net spending (gross - refunds)
+  
+  orderCount: number;
+  avgOrderValue: number;     // Now calculated from net spending
+  status: string;
+  type?: "individual" | "business";
+  
+  // Additional metrics (OPTIONAL)
+  refundRate?: number;       // Percentage of gross that was refunded
+  customerRank?: number;     // Ranking by net spending
+}

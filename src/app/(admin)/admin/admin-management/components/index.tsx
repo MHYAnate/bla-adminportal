@@ -153,7 +153,7 @@ export default function Admins() {
       </Tabs>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="right-[30px] p-8 max-w-[35.56rem]">
+        <DialogContent className="right-0 h-full w-1/2">
           <DialogHeader>
             <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-4.5 items-center">
               <div onClick={() => setIsOpen(false)} className="cursor-pointer">
