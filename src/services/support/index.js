@@ -263,10 +263,10 @@ export const formatSupportRequestForTable = (supportRequest) => {
     assignedAdminId: supportRequest.assignedAdminId,
     resolutionChannel: supportRequest.resolutionChannel,
     internalNotes: supportRequest.internalNotes,
-    createdAt: supportRequest.createdAt,
+    dateSubmitted: supportRequest.dateSubmitted,
     updatedAt: supportRequest.updatedAt,
     resolvedAt: supportRequest.resolvedAt,
-    formattedDate: new Date(supportRequest.createdAt).toLocaleDateString(),
+    formattedDate: new Date(supportRequest.dateSubmitted).toLocaleDateString(),
     formattedTime: new Date(supportRequest.createdAt).toLocaleTimeString(),
   };
 };

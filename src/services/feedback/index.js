@@ -668,10 +668,39 @@ const defaultWorkloadStats = {
   generatedAt: null,
 };
 
+// export const useGetSupportWorkloadStats = () => {
+//   return useQuery({
+//     queryKey: ['supportWorkloadStats'],
+//     // ✅ 1. queryFn should just fetch and return the raw API response.
+//     queryFn: async () => {
+//       console.log('🔍 Fetching support workload statistics...');
+//       const response = await httpService.getData('/admin/support/workload-stats');
+//       console.log('📊 Raw workload stats response:', response);
+//       return response;
+//     },
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+
+//     // ✅ 2. Use the `select` option to transform the data.
+//     select: (response) => {
+//       // The actual data is at `response.data`, not `response.data.data`.
+//       const stats = response?.data.data;
+      
+//       // If stats exist, return them. Otherwise, return a safe default structure.
+//       return stats || defaultWorkloadStats;
+//     },
+    
+//     retry: (failureCount, error) => {
+//       if ((error )?.response?.status === 401) return false;
+//       return failureCount < 3;
+//     },
+//   });
+// };
+
+
+
 export const useGetSupportWorkloadStats = () => {
   return useQuery({
     queryKey: ['supportWorkloadStats'],
-    // ✅ 1. queryFn should just fetch and return the raw API response.
     queryFn: async () => {
       console.log('🔍 Fetching support workload statistics...');
       const response = await httpService.getData('/admin/support/workload-stats');
@@ -680,16 +709,16 @@ export const useGetSupportWorkloadStats = () => {
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
 
-    // ✅ 2. Use the `select` option to transform the data.
+    // ✅ FIX: The data is in `response.data`, not `response.data.data`
     select: (response) => {
-      // The actual data is at `response.data`, not `response.data.data`.
       const stats = response?.data;
       
-      // If stats exist, return them. Otherwise, return a safe default structure.
+      // If stats exist, return them. Otherwise, return the safe default structure.
       return stats || defaultWorkloadStats;
     },
     
     retry: (failureCount, error) => {
+      // Added type assertion for safety with TypeScript
       if ((error )?.response?.status === 401) return false;
       return failureCount < 3;
     },

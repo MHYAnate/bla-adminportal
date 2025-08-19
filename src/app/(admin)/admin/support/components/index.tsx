@@ -74,13 +74,14 @@ const Support: React.FC = () => {
             </div>
           ) : (
             <SimpleSupportTable
-              data={supportData?.data || []}
+              data={supportData?.data?.requests || []}
               // pagination={supportData?.pagination}
               // summary={supportData?.summary}
               // filters={filters}
               // onFiltersChange={setFilters}
               // onRefresh={refetch}
             />
+            // <>a</>
           )}
         </CardContent>
       </Card>
