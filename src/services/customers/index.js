@@ -191,50 +191,115 @@ export const useGetCustomerOrderHistory = () => {
 // =================== UPDATE CUSTOMER STATUS ===================
 export const useUpdateCustomerStatus = () => {
   const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ customerId, status, reason, notifyCustomer = false }) => {
-      return httpService.patchData({
-        status,
-        reason,
-        notifyCustomer
-      }, routes.updateCustomerStatus(customerId));
+
+  const {
+    mutateAsync: updateStatusMutation,
+    isPending: isUpdating,
+    error,
+  } = useMutation({
+    mutationFn: async ({ customerId, status, reason, severity = 'MEDIUM' }) => {
+      console.log('🚀 Updating customer status:', { customerId, status, reason });
+      
+      const response = await httpService.patchData(
+        { status, reason, severity },
+        routes.updateCustomerStatus(customerId)
+      );
+      
+      return response;
     },
     onSuccess: (response, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["fetchCustomers"] });
-      queryClient.invalidateQueries({ queryKey: ["fetchCustomerInfo"] });
+      console.log('✅ Customer status updated successfully:', response);
       
-      toast.success(response?.message || 'Customer status updated successfully');
+      // Invalidate related queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ["fetchCustomers"] });
+      queryClient.invalidateQueries({ queryKey: ["fetchCustomerInfo", variables.customerId] });
+      
+      // Show success message
+      const message = response?.message || `Customer status updated to ${variables.status.toLowerCase().replace('_', ' ')}`;
+      toast.success(message);
     },
-    onError: (error) => {
-      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to update customer status';
+    onError: (error, variables) => {
+      console.error('❌ Error updating customer status:', error);
+      
+      const errorMessage = error?.response?.data?.error || 
+                          error?.response?.data?.message ||
+                          error?.message || 
+                          'Failed to update customer status';
       toast.error(errorMessage);
     }
   });
+
+  const updateCustomerStatus = async (customerId, status, reason, severity = 'MEDIUM') => {
+    try {
+      const response = await updateStatusMutation({ customerId, status, reason, severity });
+      return response?.data || response;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return {
+    updateCustomerStatus,
+    isUpdating,
+    updateCustomerStatusError: ErrorHandler(error),
+  };
 };
+
 
 // =================== BULK UPDATE CUSTOMER STATUS ===================
 export const useBulkUpdateCustomerStatus = () => {
   const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ customerIds, status, reason }) => {
-      return httpService.patchData({
-        customerIds,
-        status,
-        reason
-      }, routes.bulkUpdateCustomerStatus());
+
+  const {
+    mutateAsync: bulkUpdateMutation,
+    isPending: isUpdating,
+    error,
+  } = useMutation({
+    mutationFn: async ({ customerIds, status, reason, severity = 'MEDIUM' }) => {
+      console.log('🚀 Bulk updating customer status:', { customerIds, status, reason });
+      
+      const response = await httpService.patchData(
+        { customerIds, status, reason, severity },
+        routes.bulkUpdateCustomerStatus()
+      );
+      
+      return response;
     },
-    onSuccess: (response) => {
+    onSuccess: (response, variables) => {
+      console.log('✅ Bulk customer status update successful:', response);
+      
+      // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ["fetchCustomers"] });
       
-      toast.success(response?.message || 'Customer statuses updated successfully');
+      // Show success message
+      const message = response?.message || `Updated ${variables.customerIds.length} customer(s) to ${variables.status.toLowerCase().replace('_', ' ')}`;
+      toast.success(message);
     },
-    onError: (error) => {
-      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to update customer statuses';
+    onError: (error, variables) => {
+      console.error('❌ Error bulk updating customer status:', error);
+      
+      const errorMessage = error?.response?.data?.error || 
+                          error?.response?.data?.message ||
+                          error?.message || 
+                          'Failed to bulk update customer status';
       toast.error(errorMessage);
     }
   });
+
+  const bulkUpdateCustomerStatus = async (customerIds, status, reason, severity = 'MEDIUM') => {
+    try {
+      const response = await bulkUpdateMutation({ customerIds, status, reason, severity });
+      return response?.data || response;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  return {
+    bulkUpdateCustomerStatus,
+    isUpdating,
+    bulkUpdateCustomerStatusError: ErrorHandler(error),
+  };
 };
 
 // =================== GET CUSTOMER STATUS HISTORY ===================

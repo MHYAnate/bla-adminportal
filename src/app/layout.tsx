@@ -5,7 +5,7 @@ import TopLoader from "@/components/top-loader";
 import QueryProvider from "@/providers/tanstack";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/auth";
-import { ErrorBoundary } from "@/components/error-boundary";
+// import { ErrorBoundary } from "@/components/error-boundary";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -32,15 +32,15 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${manrope.variable} ${dmSans.variable}`}>
       <body className={`font-manrope antialiased`}>
-        <ErrorBoundary>
-          <QueryProvider>
-            <AuthProvider>
-              <TopLoader />
-              <Toaster richColors expand={false} />
-              {children}
-            </AuthProvider>
-          </QueryProvider>
-        </ErrorBoundary>
+        {/* <ErrorBoundary> */}
+        <QueryProvider>
+          <AuthProvider>
+            <TopLoader />
+            <Toaster richColors expand={false} />
+            {children}
+          </AuthProvider>
+        </QueryProvider>
+        {/* </ErrorBoundary> */}
       </body>
     </html>
   );

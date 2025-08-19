@@ -3,7 +3,7 @@
 import { Suspense, useEffect } from "react";
 import Orders from "./components";
 import { Card, CardContent } from "@/components/ui/card";
-import { OrdersErrorBoundary } from "@/components/error-boundary"; // Adjust path as needed
+// import { OrdersErrorBoundary } from "@/components/error-boundary"; // Adjust path as needed
 
 // Loading component for the orders page
 const OrdersLoading = () => (
@@ -71,11 +71,11 @@ export default function OrdersPage() {
   }, []);
 
   return (
-    <OrdersErrorBoundary>
-      <Suspense fallback={<OrdersLoading />}>
-        {/* FIXED: Removed unnecessary section wrapper that might cause layout issues */}
-        <Orders />
-      </Suspense>
-    </OrdersErrorBoundary>
+    // <OrdersErrorBoundary>
+    <Suspense fallback={<OrdersLoading />}>
+      {/* FIXED: Removed unnecessary section wrapper that might cause layout issues */}
+      <Orders />
+    </Suspense>
+    // </OrdersErrorBoundary>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useCreateRole, useGetAdminPermissions } from "@/services/admin";
+import { useCreateRole, useGetAdminPermissions, useGetAdminRoles } from "@/services/admin";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
+import RoleDataTable from "./role-data-table";
 import { PermissionsSection } from "./permissions-section";
 
 interface Permission {
@@ -33,16 +34,38 @@ export default function CreateRoleForm() {
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<Set<number>>(new Set());
   const [groupedPermissions, setGroupedPermissions] = useState<Record<string, Permission[]>>({});
 
-  // ✅ Fetch permissions
+  // Fetch permissions
   const { permissionsData, isPermissionsLoading } = useGetAdminPermissions({ enabled: true });
 
-  // ✅ Create role hook
+  // Fetch existing roles for the table
+  const { rolesData, isRolesLoading, refetchRoles } = useGetAdminRoles({ enabled: true });
+
+  // Handle the data structure - the API returns {data: Array(10), pagination: {...}}
+  const processedRolesData = React.useMemo(() => {
+    if (!rolesData) {
+      return [];
+    }
+
+    // Check different possible data structures
+    let roles = [];
+    if (Array.isArray(rolesData)) {
+      roles = rolesData;
+    } else if (rolesData.data && Array.isArray(rolesData.data)) {
+      roles = rolesData.data;
+    } else if (rolesData.roles && Array.isArray(rolesData.roles)) {
+      roles = rolesData.roles;
+    }
+
+    return roles;
+  }, [rolesData]);
+
+  // Create role hook
   const {
     createRole,
     isCreating,
   } = useCreateRole();
 
-  // ✅ Process permissions data
+  // Process permissions data
   useEffect(() => {
     console.log('Permissions data received:', permissionsData);
 
@@ -103,6 +126,7 @@ export default function CreateRoleForm() {
       console.log("Role created successfully:", response);
       toast.success(response?.message || "Role created successfully!");
       handleCancel();
+      refetchRoles(); // Refresh the roles table
     } catch (error: any) {
       console.error("Error creating role:", error);
       toast.error(error.message || "Failed to create role. Please try again.");
@@ -138,151 +162,152 @@ export default function CreateRoleForm() {
   const isRoleDetailsComplete = formData.name.trim().length > 0;
   const isFormValid = isRoleDetailsComplete && selectedPermissionIds.size > 0;
 
+  // Debug render
+  console.log('Component render state:', {
+    isPermissionsLoading,
+    permissionsDataType: typeof permissionsData,
+    permissionsDataKeys: permissionsData ? Object.keys(permissionsData) : 'null',
+    groupedPermissionsKeys: Object.keys(groupedPermissions),
+    selectedPermissionsCount: selectedPermissionIds.size
+  });
+
   return (
-    <div className=" mx-auto p-6 bg-white rounded-lg border">
-      <div className="space-y-8">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-800">Roles and Permissions</h2>
-          <p className="text-gray-600 mt-1">Create and assign roles</p>
-        </div>
+    <div className="space-y-8">
+      {/* Create Role Form Section */}
+      <div className="mx-auto p-6 bg-white rounded-lg border">
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-800">Roles and Permissions</h2>
+            <p className="text-gray-600 mt-1">Create and assign roles</p>
+          </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6"> <div></div>
-          <TabsList className="flex relative">
-            <div className="absolute left-0">
-              <TabsTrigger
-                value="role"
-                className="relative px-4 py-3 bg-transparent border-0 rounded-none shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-gray-900 text-gray-600 font-medium data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:w-full data-[state=active]:after:h-0.5 data-[state=active]:after:bg-[#EC9F01]"
-              >
-                Role
-              </TabsTrigger>
-              <TabsTrigger
-                value="permissions"
-                className="relative px-4 py-3 bg-transparent border-0 rounded-none shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-gray-900 text-gray-600 font-medium data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:w-full data-[state=active]:after:h-0.5 data-[state=active]:after:bg-[#EC9F01]"
-              >
-                Permissions
-              </TabsTrigger>
-            </div>
-
-          </TabsList>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Role Details Tab */}
-            <TabsContent value="role" className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">Basic Details</h3>
-                <p className="text-gray-600 mb-6">Add information about the role you're creating</p>
-
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="role-name" className="block text-sm font-medium text-gray-700 mb-2">
-                      Role name <span className="text-[#EC9F01]">*</span>
-                    </label>
-                    <Input
-                      id="role-name"
-                      type="text"
-                      placeholder="Role name"
-                      value={formData.name}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                      required
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="role-description" className="block text-sm font-medium text-gray-700 mb-2">
-                      Role Description
-                    </label>
-                    <Textarea
-                      id="role-description"
-                      placeholder="Describe the role you're creating"
-                      value={formData.description}
-                      onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
-                      rows={4}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end space-x-3 mt-6">
-                  <div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancel}
-                      className="w-[163px] h-[56px] p-4"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={handleNext}
-                    disabled={!formData.name.trim()}
-                    className="bg-[#EC9F01] text-white w-[163px] h-[56px] p-4"
-                  >
-                    Next
-                  </Button>
-                </div>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="flex relative">
+              <div className="absolute left-0">
+                <TabsTrigger
+                  value="role"
+                  className="relative px-4 py-3 bg-transparent border-0 rounded-none shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-gray-900 text-gray-600 font-medium data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:w-full data-[state=active]:after:h-0.5 data-[state=active]:after:bg-[#EC9F01]"
+                >
+                  Role
+                </TabsTrigger>
+                <TabsTrigger
+                  value="permissions"
+                  className="relative px-4 py-3 bg-transparent border-0 rounded-none shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-gray-900 text-gray-600 font-medium data-[state=active]:after:content-[''] data-[state=active]:after:absolute data-[state=active]:after:bottom-0 data-[state=active]:after:left-0 data-[state=active]:after:w-full data-[state=active]:after:h-0.5 data-[state=active]:after:bg-[#EC9F01]"
+                >
+                  Permissions
+                </TabsTrigger>
               </div>
-            </TabsContent>
+            </TabsList>
 
-            {/* Permissions Tab */}
-            <TabsContent value="permissions" className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-1">Set Permissions</h3>
-                <p className="text-gray-600 mb-6">Modify what users on this role can do</p>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Role Details Tab */}
+              <TabsContent value="role" className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Basic Details</h3>
+                  <p className="text-gray-600 mb-6">Add information about the role you're creating</p>
 
-                <PermissionsSection
-                  groupedPermissions={groupedPermissions}
-                  selectedPermissionIds={selectedPermissionIds}
-                  onPermissionChange={handlePermissionChange}
-                  isLoading={isPermissionsLoading}
-                  disabled={!isRoleDetailsComplete}
-                />
+                  <div className="space-y-4">
+                    <div>
+                      <label htmlFor="role-name" className="block text-sm font-medium text-gray-700 mb-2">
+                        Role name <span className="text-[#EC9F01]">*</span>
+                      </label>
+                      <Input
+                        id="role-name"
+                        type="text"
+                        placeholder="Role name"
+                        value={formData.name}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                        required
+                        className="w-full"
+                      />
+                    </div>
 
+                    <div>
+                      <label htmlFor="role-description" className="block text-sm font-medium text-gray-700 mb-2">
+                        Role Description
+                      </label>
+                      <Textarea
+                        id="role-description"
+                        placeholder="Describe the role you're creating"
+                        value={formData.description}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+                        rows={4}
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
 
-
-
-                <div className="relative mt-20">
-                  <div className="absolute right-0 flex space-x-3 bottom-1 ">
+                  <div className="flex justify-end space-x-3 mt-6">
                     <div>
                       <Button
                         type="button"
                         variant="outline"
-                        className="w-[163px] h-[56px] p-4"
                         onClick={handleCancel}
+                        className="w-[163px] h-[56px] p-4"
                       >
                         Cancel
                       </Button>
                     </div>
                     <Button
-                      type="submit"
-                      disabled={isCreating || !isFormValid}
+                      type="button"
+                      onClick={handleNext}
+                      disabled={!formData.name.trim()}
                       className="bg-[#EC9F01] text-white w-[163px] h-[56px] p-4"
                     >
-                      {isCreating ? "Creating..." : "Create Role"}
+                      Next
                     </Button>
                   </div>
                 </div>
+              </TabsContent>
 
-              </div>
-            </TabsContent>
-          </form>
-        </Tabs>
+              {/* Permissions Tab */}
+              <TabsContent value="permissions" className="space-y-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">Set Permissions</h3>
+                  <p className="text-gray-600 mb-6">Modify what users on this role can do</p>
 
-        {/* Status Indicator */}
-        {/* <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
-          <div className={`flex items-center space-x-2 ${formData.name.trim() ? 'text-green-600' : 'text-gray-400'}`}>
-            <div className={`w-2 h-2 rounded-full ${formData.name.trim() ? 'bg-green-600' : 'bg-gray-300'}`} />
-            <span>Role Details</span>
-          </div>
-          <div className="w-8 h-px bg-gray-300" />
-          <div className={`flex items-center space-x-2 ${selectedPermissionIds.size > 0 ? 'text-green-600' : 'text-gray-400'}`}>
-            <div className={`w-2 h-2 rounded-full ${selectedPermissionIds.size > 0 ? 'bg-green-600' : 'bg-gray-300'}`} />
-            <span>Permissions ({selectedPermissionIds.size})</span>
-          </div>
-        </div> */}
+                  <PermissionsSection
+                    groupedPermissions={groupedPermissions}
+                    selectedPermissionIds={selectedPermissionIds}
+                    onPermissionChange={handlePermissionChange}
+                    isLoading={isPermissionsLoading}
+                    disabled={!isRoleDetailsComplete}
+                  />
+
+                  <div className="relative mt-20">
+                    <div className="absolute right-0 flex space-x-3 bottom-1">
+                      <div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-[163px] h-[56px] p-4"
+                          onClick={handleCancel}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={isCreating || !isFormValid}
+                        className="bg-[#EC9F01] text-white w-[163px] h-[56px] p-4"
+                      >
+                        {isCreating ? "Creating..." : "Create Role"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </form>
+          </Tabs>
+        </div>
       </div>
+
+      {/* Roles Table Section - Below the form */}
+      <RoleDataTable
+        rolesData={processedRolesData}
+        loading={isRolesLoading}
+        refetch={refetchRoles}
+      />
     </div>
   );
 }

@@ -1,3 +1,5 @@
+// Update your src/app/(admin)/admin/customers/components/data-table.tsx
+
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +10,7 @@ import { ViewIcon } from "../../../../../../public/icons";
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { CustomerStatusDropdown } from "../../components/customer-status-dropdown";
 
 interface iProps {
   data?: any;
@@ -30,10 +33,18 @@ const DataTable: React.FC<iProps> = ({
   handleDelete,
   isLoading,
 }) => {
+  console.log('DataTable Debug:', {
+    dataLength: data?.length,
+    currentPage,
+    pageSize,
+    totalPages,
+    actualTotal: totalPages
+  });
 
-
-  // ✅ REMOVED: No frontend filtering - let backend handle customer type filtering
-  // The backend should already be returning only business and individual customers
+  const handleStatusUpdate = (customerId: string | number, newStatus: string) => {
+    console.log(`Customer ${customerId} status updated to ${newStatus}`);
+    // The table will automatically refresh due to query invalidation in the hook
+  };
 
   const cellRenderers = {
     name: (item: CustomersData) => (
@@ -42,7 +53,7 @@ const DataTable: React.FC<iProps> = ({
           src="/images/user-avatar.png"
           width={24}
           height={24}
-          alt="Customer avatar"
+          alt="Admin avatar"
           className="w-6 h-6 rounded-full"
         />
         <div>
@@ -54,23 +65,18 @@ const DataTable: React.FC<iProps> = ({
       </div>
     ),
 
-    // ✅ FIXED: Handle both customerType and type fields consistently
-    customerType: (item: CustomersData) => {
-      const customerType = item?.customerType || item?.type || "customer";
-      return (
-        <span className="font-medium">
-          {capitalizeFirstLetter(customerType.toString())}
-        </span>
-      );
-    },
-
-    id: (item: CustomersData) => (
-      <div className="font-medium flex items-center gap-3">{item?.id}</div>
+    customertype: (item: CustomersData) => (
+      <span className="font-medium">
+        {capitalizeFirstLetter(item?.customerType?.toString() || "")}
+      </span>
     ),
 
-    // ✅ FIXED: Improved KYC status handling
+    id: (item: CustomersData) => (
+      <div className="font-medium flex items-center gap-3">{item.id}</div>
+    ),
+
     kyc: (item: CustomersData) => {
-      const kycStatus = item?.kycStatus || item?.kyc || 'pending';
+      const kycStatus = item?.kyc || item?.kycStatus || 'pending';
       const statusLower = kycStatus.toString().toLowerCase();
 
       return (
@@ -80,9 +86,7 @@ const DataTable: React.FC<iProps> = ({
               ? "success"
               : statusLower === "pending" || statusLower === "not verified"
                 ? "tertiary"
-                : statusLower === "flagged"
-                  ? "destructive"
-                  : "warning"
+                : "warning"
           }
           className="py-1 px-[26px] font-bold text-[10px]"
         >
@@ -91,26 +95,27 @@ const DataTable: React.FC<iProps> = ({
       );
     },
 
-    // ✅ FIXED: Better customer status handling
-    customerStatus: (item: CustomersData) => {
-      const customerStatus = item?.customerStatus || item?.status || 'INACTIVE';
-      const statusLower = customerStatus.toString().toLowerCase();
+    // Updated status cell to use dropdown with proper type handling
+    customerstatus: (item: CustomersData) => {
+      // Ensure we have a valid ID
+      if (!item?.id) {
+        return (
+          <Badge variant="tertiary" className="py-1 px-[26px] font-bold text-[10px]">
+            INACTIVE
+          </Badge>
+        );
+      }
 
       return (
-        <Badge
-          variant={
-            statusLower === "active"
-              ? "success"
-              : statusLower === "inactive"
-                ? "tertiary"
-                : statusLower === "suspended"
-                  ? "destructive"
-                  : "warning"
-          }
-          className="py-1 px-[26px] font-bold text-[10px]"
-        >
-          {customerStatus.toString().toUpperCase()}
-        </Badge>
+        <CustomerStatusDropdown
+          customer={{
+            id: item.id,
+            status: item?.status || item?.customerStatus || 'INACTIVE',
+            email: item?.email || '',
+            name: item?.name || ''
+          }}
+          onStatusUpdate={handleStatusUpdate}
+        />
       );
     },
 
@@ -126,21 +131,20 @@ const DataTable: React.FC<iProps> = ({
     ),
   };
 
-  // ✅ FIXED: Corrected column order to match your cellRenderers
   const columnOrder: (keyof CustomersData)[] = [
     "name",
-    "customerType",
+    "customertype",
     "id",
-    "customerStatus",
+    "customerstatus",
     "kyc",
     "action",
   ];
 
   const columnLabels = {
     name: "Name",
-    customerType: "Customer Type",
+    customertype: "Customer Type",
     id: "Customer ID",
-    customerStatus: "Customer Status",
+    customerstatus: "Customer Status",
     kyc: "KYC",
     action: "Action",
   };
@@ -148,7 +152,7 @@ const DataTable: React.FC<iProps> = ({
   return (
     <div>
       <CustomerTableComponent<CustomersData>
-        tableData={data || []} // ✅ Use raw data - no filtering
+        tableData={data}
         currentPage={currentPage}
         onPageChange={onPageChange}
         totalPages={Math.ceil(totalPages / pageSize)}

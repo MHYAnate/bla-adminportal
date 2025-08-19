@@ -1,3 +1,4 @@
+// src/app/(admin)/admin/create-role/components/permissions-section.tsx
 import React from "react";
 
 interface Permission {
@@ -112,8 +113,8 @@ export const PermissionsSection: React.FC<PermissionsSectionProps> = ({
                                 <div
                                     key={permission.id}
                                     className={`flex items-start justify-between p-4 border border-gray-200 rounded-lg transition-colors ${disabled
-                                            ? 'opacity-50 cursor-not-allowed bg-gray-50'
-                                            : 'cursor-pointer hover:bg-gray-50'
+                                        ? 'opacity-50 cursor-not-allowed bg-gray-50'
+                                        : 'cursor-pointer hover:bg-gray-50'
                                         }`}
                                     onClick={() => !disabled && onPermissionChange(permission.id)}
                                 >
@@ -128,10 +129,10 @@ export const PermissionsSection: React.FC<PermissionsSectionProps> = ({
                                     </div>
                                     <div className="ml-4">
                                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${disabled
-                                                ? 'border-gray-200 bg-gray-100'
-                                                : isPermissionSelected(permission.id)
-                                                    ? 'bg-green-500 border-green-500'
-                                                    : 'border-gray-300 hover:border-gray-400'
+                                            ? 'border-gray-200 bg-gray-100'
+                                            : isPermissionSelected(permission.id)
+                                                ? 'bg-green-500 border-green-500'
+                                                : 'border-gray-300 hover:border-gray-400'
                                             }`}>
                                             {!disabled && isPermissionSelected(permission.id) && (
                                                 <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">

@@ -1,4 +1,4 @@
-// src/app/(admin)/admin/components/customers-datatable.tsx
+// Update your src/app/(admin)/admin/components/customers-datatable.tsx
 
 "use client";
 
@@ -12,6 +12,7 @@ import Link from "next/link";
 import { ViewIcon } from "../../../../../public/icons";
 import { ROUTES } from "@/constant/routes";
 import { capitalizeFirstLetter } from "@/lib/utils";
+import { CustomerStatusDropdown } from "./customer-status-dropdown";
 
 interface iProps {
   data?: any;
@@ -26,26 +27,13 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
     setCurrentPage(page);
   };
 
-  // Transform backend data to match frontend expectations
-  const transformedData = (data || []).map((customer: any) => ({
-    id: customer.id,
-    name: customer.name,           // Backend sends 'name'
-    fullName: customer.name,       // Map to 'fullName' for compatibility
-    email: customer.email,
-    type: customer.role,           // Backend sends 'role' (business_owner, individual)
-    customerType: customer.role,   // Map to 'customerType' for compatibility  
-    status: customer.status,       // Backend sends 'status' (ACTIVE, INACTIVE)
-    kyc: customer.kycStatus,       // Backend sends 'kycStatus' (verified, pending)
-    kycStatus: customer.kycStatus, // Keep original field name too
-    joinDate: customer.joinDate,
-    role: customer.role
-  }));
-
-  console.log('Original data:', data);
-  console.log('Transformed data:', transformedData);
+  const handleStatusUpdate = (customerId: string | number, newStatus: string) => {
+    console.log(`Dashboard: Customer ${customerId} status updated to ${newStatus}`);
+    // The table will automatically refresh due to query invalidation in the hook
+  };
 
   const cellRenderers = {
-    fullName: (item: any) => (
+    fullName: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">
         <Image
           src="/images/user-avatar.png"
@@ -63,31 +51,21 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
       </div>
     ),
 
-    type: (item: any) => {
-      // Map backend role values to display values
-      const roleMapping: { [key: string]: string } = {
-        'business_owner': 'Business',
-        'individual': 'Individual',
-        'customer': 'Customer'
-      };
+    type: (item: CustomersData) => (
+      <span className="font-medium">
+        {capitalizeFirstLetter(
+          item?.customerType?.toString() ||
+          item?.type?.toString() ||
+          "customer"
+        )}
+      </span>
+    ),
 
-      const displayType = roleMapping[item?.role] ||
-        roleMapping[item?.type] ||
-        capitalizeFirstLetter(item?.customerType?.toString() || 'customer');
-
-      return (
-        <span className="font-medium">
-          {displayType}
-        </span>
-      );
-    },
-
-    id: (item: any) => (
+    id: (item: CustomersData) => (
       <div className="font-medium flex items-center gap-3">{item?.id}</div>
     ),
 
-    kyc: (item: any) => {
-      // Handle multiple KYC field variations
+    kyc: (item: CustomersData) => {
       const kycStatus = item?.kycStatus || item?.kyc || 'pending';
       const statusLower = kycStatus.toString().toLowerCase();
 
@@ -109,30 +87,46 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
       );
     },
 
-    status: (item: any) => {
-      // Handle status field
-      const customerStatus = item?.status || 'INACTIVE';
-      const statusLower = customerStatus.toString().toLowerCase();
+    // Updated status cell with proper null checking
+    status: (item: CustomersData) => {
+      // Handle case where ID might be undefined
+      if (!item?.id) {
+        const customerStatus = item?.customerStatus || item?.status || 'INACTIVE';
+        return (
+          <Badge
+            variant={
+              customerStatus.toString().toLowerCase() === "active"
+                ? "success"
+                : customerStatus.toString().toLowerCase() === "inactive"
+                  ? "tertiary"
+                  : customerStatus.toString().toLowerCase() === "flagged"
+                    ? "destructive"
+                    : "warning"
+            }
+            className="py-1 px-[26px] font-bold text-[10px]"
+          >
+            {customerStatus.toString().toUpperCase()}
+          </Badge>
+        );
+      }
+
+      const customerStatus = item?.customerStatus || item?.status || 'INACTIVE';
 
       return (
-        <Badge
-          variant={
-            statusLower === "active"
-              ? "success"
-              : statusLower === "inactive"
-                ? "tertiary"
-                : statusLower === "suspended"
-                  ? "destructive"
-                  : "warning"
-          }
-          className="py-1 px-[26px] font-bold text-[10px]"
-        >
-          {customerStatus.toString().toUpperCase()}
-        </Badge>
+        <CustomerStatusDropdown
+          customer={{
+            id: item.id, // We've already checked this exists above
+            status: customerStatus,
+            email: item?.email ? String(item.email) : '',
+            name: (item?.name || item?.fullName) ? String(item?.name || item?.fullName) : ''
+          }}
+          onStatusUpdate={handleStatusUpdate}
+          disabled={false}
+        />
       );
     },
 
-    action: (item: any) => (
+    action: (item: CustomersData) => (
       <div className="flex gap-2.5">
         <Link
           href={`${ROUTES.ADMIN.SIDEBAR.CUSTOMERS}/${item?.id}?tab=general`}
@@ -144,7 +138,7 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
     ),
   };
 
-  const columnOrder: string[] = [
+  const columnOrder: (keyof CustomersData)[] = [
     "fullName",
     "type",
     "id",
@@ -162,30 +156,6 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
     action: "Action",
   };
 
-  // Handle empty data state
-  if (!data || data.length === 0) {
-    return (
-      <Card className="bg-white flex-1">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h6 className="font-semibold text-lg text-[#111827]">
-              Recent Customers
-            </h6>
-            <Link
-              href={ROUTES.ADMIN.SIDEBAR.CUSTOMERS}
-              className="text-sm font-medium text-[#687588] underline border border-[#E9EAEC] rounded-md px-[3.56rem] py-4"
-            >
-              View All
-            </Link>
-          </div>
-          <div className="text-center text-gray-500 p-8">
-            {loading ? "Loading customers..." : "No recent customers found"}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="bg-white flex-1">
       <CardContent className="p-6">
@@ -200,11 +170,11 @@ const CustomersDataTable: React.FC<iProps> = ({ data, loading }) => {
             View All
           </Link>
         </div>
-        <CustomerTableComponent
-          tableData={transformedData || []}
+        <CustomerTableComponent<CustomersData>
+          tableData={data || []}
           currentPage={currentPage}
           onPageChange={onPageChange}
-          totalPages={Math.ceil((transformedData?.length || 0) / pageSize)}
+          totalPages={Math.ceil((data?.length || 0) / pageSize)}
           cellRenderers={cellRenderers}
           columnOrder={columnOrder}
           columnLabels={columnLabels}

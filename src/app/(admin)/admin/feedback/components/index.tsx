@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, Loader2,X } from "lucide-react";
+import { ChevronLeft, Loader2, X } from "lucide-react";
 import { FeedbackBarComponent } from "./feedback-chart";
 import { useFeedback } from "@/services/feedback";
 import { formatFeedbackForCard } from "@/services/feedback";
@@ -84,7 +84,7 @@ const Feedbacks: React.FC = () => {
   useEffect(() => {
     updateFilters('search', searchQuery);
   }, [searchQuery]);
-  
+
 
   const typeOptions = [
     { text: "All Types", value: "all_types" }, // Fixed: Changed from empty string
@@ -230,7 +230,7 @@ const Feedbacks: React.FC = () => {
         <DialogContent className="right-0 p-8 max-w-[40.56rem] h-screen overflow-y-scroll">
           <DialogHeader>
             <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-[18px] items-center justify-between">
-            
+
               <div>
                 <h5 className="font-bold text-2xl text-[#111827] mb-2">
                   Feedback Details
@@ -239,7 +239,7 @@ const Feedbacks: React.FC = () => {
                   Review and manage customer feedback.
                 </p>
               </div>
-                <div onClick={() => setIsOpen(false)} className="cursor-pointer">
+              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
                 <X size={24} />
               </div>
             </DialogTitle>
