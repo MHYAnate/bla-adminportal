@@ -43,8 +43,10 @@ export function BarComponent() {
 
   console.log(data, "stat")
 
+  console.log(feedbackData, "ffbb")
+
   // Handle loading state
-  if (!feedbackData || !feedbackData.summary?.byStatus) {
+  if (!feedbackData || !feedbackData.data.summary?.byStatus) {
     return (
       <div className="flex gap-6 p-6 bg-gray-50 h-fit">
         <div className="flex-[2] bg-white shadow-sm border border-gray-200 rounded-lg p-4">
@@ -58,7 +60,7 @@ export function BarComponent() {
   }
 
   // Get status counts with safe defaults
-  const statusCounts = feedbackData.summary.byStatus
+  const statusCounts = feedbackData.data.summary.byStatus
   const feedbackItems = [
     { label: "New", value: statusCounts.NEW || 0, color: "bg-blue-400" },
     { 
@@ -149,7 +151,7 @@ export function BarComponent() {
             </Select> */}
           </div>
         </CardHeader>
-     <FeedbackBarComponent summary={feedbackData?.summary} />
+     <FeedbackBarComponent summary={feedbackData?.data.summary} />
       </Card>
 
       {/* Right Component - Support Team Workload Overview */}

@@ -34,7 +34,7 @@ const SimpleSupportTable: React.FC<SimpleTableProps> = ({
 	const [selectedRequest, setSelectedRequest] = useState<any>(null);
 
 	// Format data for display and take only the first 3 items
-	const formattedData = data.map(formatSupportRequestForTable).slice(0, 3);
+	const formattedData = data?.map(formatSupportRequestForTable).slice(0, 3);
 
 	//  Handler to open the dialog and set the selected request
 	const handleView = (supportRequest: any) => {

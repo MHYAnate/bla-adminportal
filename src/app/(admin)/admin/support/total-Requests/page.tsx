@@ -206,9 +206,9 @@ export default function SupportManagementPage() {
             </div>
           ) : (
             <DataTable
-              data={supportData?.data || []}
-              pagination={supportData?.pagination}
-              summary={supportData?.summary}
+              data={supportData?.data?.requests|| []}
+              pagination={supportData?.data?.pagination}
+              summary={supportData?.data?.summary}
               filters={filters}
               onPageChange={handlePageChange}
               onRefresh={refetch}

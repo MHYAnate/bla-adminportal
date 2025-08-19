@@ -179,7 +179,7 @@ const Feedbacks: React.FC = () => {
           {!isLoading && feedbackData?.data && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-                {feedbackData.data.map((feedback: any) => {
+                {feedbackData?.data?.feedback?.map((feedback: any) => {
                   const formattedFeedback = formatFeedbackForCard(feedback);
                   return (
                     <FeedbackCard
