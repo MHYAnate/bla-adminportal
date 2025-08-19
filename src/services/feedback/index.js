@@ -418,3 +418,280 @@ export const isValidFeedbackTransition = (currentStatus, newStatus) => {
   
   return transitions[currentStatus]?.includes(newStatus) || false;
 };
+
+
+// =================== SUPPORT ENDPOINTS ===================
+
+/**
+ * Get support summary statistics
+ */
+export const getSupportAnalytics = async (params = {}) => {
+  const endpoint = routes.getSupportAnalytics(params);
+  return await httpService.getData(endpoint);
+};
+
+// =================== REACT QUERY HOOKS ===================
+
+/**
+ * Hook to fetch support analytics
+ */
+export const useSupportAnalytics = (params = {}, options = {}) => {
+  return useQuery({
+    queryKey: ['supportAnalytics', params],
+    queryFn: () => getSupportAnalytics(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    select: (data) => {
+      // Handle response structure
+      if (data?.success && data?.data) {
+        return data.data;
+      }
+      return data || {
+        total: 0,
+        byCategory: {},
+        byStatus: {},
+        byPriority: {}
+      };
+    },
+    ...options
+  });
+};
+
+// =================== UTILITY FUNCTIONS ===================
+
+/**
+ * Get support category display name
+ */
+export const getSupportCategoryDisplayName = (category) => {
+  switch (category?.toUpperCase()) {
+    case 'PRODUCT':
+      return 'Product';
+    case 'ORDER':
+      return 'Order';
+    case 'DELIVERY':
+      return 'Delivery';
+    case 'GENERAL':
+      return 'General';
+    case 'OTHER':
+      return 'Other';
+    default:
+      return category || 'Unknown';
+  }
+};
+
+/**
+ * Get support status display name
+ */
+export const getSupportStatusDisplayName = (status) => {
+  switch (status?.toUpperCase()) {
+    case 'NEW':
+      return 'New';
+    case 'IN_PROGRESS':
+      return 'In Progress';
+    case 'RESOLVED':
+      return 'Resolved';
+    case 'CLOSED':
+      return 'Closed';
+    default:
+      return status || 'Unknown';
+  }
+};
+
+/**
+ * Get support priority display name
+ */
+export const getSupportPriorityDisplayName = (priority) => {
+  switch (priority?.toUpperCase()) {
+    case 'LOW':
+      return 'Low';
+    case 'MEDIUM':
+      return 'Medium';
+    case 'HIGH':
+      return 'High';
+    case 'URGENT':
+      return 'Urgent';
+    default:
+      return priority || 'Unknown';
+  }
+};
+
+/**
+ * Format support summary for display
+ */
+export const formatSupportSummary = (analytics) => {
+  return {
+    total: analytics?.total || 0,
+    byCategory: Object.entries(analytics?.byCategory || {}).map(([category, count]) => ({
+      name: getSupportCategoryDisplayName(category),
+      value: count,
+      id: category
+    })),
+    byStatus: Object.entries(analytics?.byStatus || {}).map(([status, count]) => ({
+      name: getSupportStatusDisplayName(status),
+      value: count,
+      id: status
+    })),
+    byPriority: Object.entries(analytics?.byPriority || {}).map(([priority, count]) => ({
+      name: getSupportPriorityDisplayName(priority),
+      value: count,
+      id: priority
+    }))
+  };
+};
+
+/**
+ * Get support status badge color
+ */
+export const getSupportStatusBadgeColor = (status) => {
+  switch (status?.toUpperCase()) {
+    case 'NEW':
+      return 'bg-blue-100 text-blue-800 border-blue-200';
+    case 'IN_PROGRESS':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'RESOLVED':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'CLOSED':
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
+/**
+ * Get support priority badge color
+ */
+export const getSupportPriorityBadgeColor = (priority) => {
+  switch (priority?.toUpperCase()) {
+    case 'LOW':
+      return 'bg-green-100 text-green-800 border-green-200';
+    case 'MEDIUM':
+      return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'HIGH':
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'URGENT':
+      return 'bg-red-100 text-red-800 border-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 border-gray-200';
+  }
+};
+
+/**
+ * Get support status workflow
+ */
+export const getSupportStatusWorkflow = () => {
+  return [
+    { value: 'NEW', label: 'New', description: 'New support request' },
+    { value: 'IN_PROGRESS', label: 'In Progress', description: 'Request being handled' },
+    { value: 'RESOLVED', label: 'Resolved', description: 'Issue resolved' },
+    { value: 'CLOSED', label: 'Closed', description: 'Request closed' }
+  ];
+};
+
+/**
+ * Validate support status transition
+ */
+export const isValidSupportStatusTransition = (currentStatus, newStatus) => {
+  const transitions = {
+    'NEW': ['IN_PROGRESS', 'RESOLVED', 'CLOSED'],
+    'IN_PROGRESS': ['RESOLVED', 'CLOSED', 'NEW'],
+    'RESOLVED': ['CLOSED', 'IN_PROGRESS'],
+    'CLOSED': ['IN_PROGRESS'] // Reopen closed tickets
+  };
+  
+  return transitions[currentStatus]?.includes(newStatus) || false;
+};
+
+// export const useGetSupportWorkloadStats = () => {
+//   return useQuery({
+//     queryKey: ['supportWorkloadStats'],
+//     queryFn: async () => {
+//       console.log('🔍 Fetching support workload statistics...');
+//       const response = await httpService.getData('/admin/support/workload-stats');
+//       console.log('📊 Workload stats response:', response);
+//       return response;
+//     },
+//     staleTime: 5 * 60 * 1000, // 5 minutes
+//     select: (data) => {
+//       // Handle different response structures
+//       if (data?.data?.data) return data.data.data;
+//       if (data?.data) return data.data;
+//       return data;
+//     },
+//     retry: (failureCount, error) => {
+//       if (error?.response?.status === 401) return false;
+//       return failureCount < 3;
+//     },
+//   });
+// };
+
+
+
+// export const useGetSupportWorkloadStats = () => {
+//   return useQuery({
+//     queryKey: ['supportWorkloadStats'],
+//     queryFn: async () => {
+//       console.log('🔍 Fetching support workload statistics...');
+//       const response = await httpService.getData('/admin/support/workload-stats');
+//       console.log('📊 Workload stats response:', response);
+
+//       // Ensure the return matches: { resolvedWithin24Hours: { count, percentage }, ... }
+//       const stats = response?.data?.data;
+
+//       return {
+//         resolvedWithin24Hours: stats?.resolvedWithin24Hours || { count: 0, percentage: 0 },
+//         resolvedWithin2to3Days: stats?.resolvedWithin2to3Days || { count: 0, percentage: 0 },
+//         resolvedWithinWeek: stats?.resolvedWithinWeek || { count: 0, percentage: 0 },
+//         unresolved: stats?.unresolved || { count: 0, percentage: 0 },
+//         totalRequests: stats?.totalRequests ?? 0,
+//         summary: stats?.summary || { resolvedCount: 0, unresolvedCount: 0, resolutionRate: 0 },
+//         averageResolutionTime: stats?.averageResolutionTime || { hours: 0, days: 0 },
+//         priorityBreakdown: stats?.priorityBreakdown || {},
+//         generatedAt: stats?.generatedAt || null
+//       };
+//     },
+//     staleTime: 5 * 60 * 1000,
+//     retry: (failureCount, error) => {
+//       if (error?.response?.status === 401) return false;
+//       return failureCount < 3;
+//     }
+//   });
+// };
+
+const defaultWorkloadStats = {
+  resolvedWithin24Hours: { count: 0, percentage: 0 },
+  resolvedWithin2to3Days: { count: 0, percentage: 0 },
+  resolvedWithinWeek: { count: 0, percentage: 0 },
+  unresolved: { count: 0, percentage: 0 },
+  totalRequests: 0,
+  summary: { resolvedCount: 0, unresolvedCount: 0, resolutionRate: 0 },
+  averageResolutionTime: { hours: 0, days: 0 },
+  priorityBreakdown: {},
+  generatedAt: null,
+};
+
+export const useGetSupportWorkloadStats = () => {
+  return useQuery({
+    queryKey: ['supportWorkloadStats'],
+    // ✅ 1. queryFn should just fetch and return the raw API response.
+    queryFn: async () => {
+      console.log('🔍 Fetching support workload statistics...');
+      const response = await httpService.getData('/admin/support/workload-stats');
+      console.log('📊 Raw workload stats response:', response);
+      return response;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+
+    // ✅ 2. Use the `select` option to transform the data.
+    select: (response) => {
+      // The actual data is at `response.data`, not `response.data.data`.
+      const stats = response?.data;
+      
+      // If stats exist, return them. Otherwise, return a safe default structure.
+      return stats || defaultWorkloadStats;
+    },
+    
+    retry: (failureCount, error) => {
+      if ((error )?.response?.status === 401) return false;
+      return failureCount < 3;
+    },
+  });
+};
