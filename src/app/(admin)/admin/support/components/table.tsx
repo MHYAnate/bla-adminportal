@@ -43,13 +43,13 @@ const SimpleSupportTable: React.FC<SimpleTableProps> = ({
 	if (!data) return <div className="p-4 text-center">No data available</div>;
 
 	// Format data for display and take only the first 3 items
-<<<<<<< HEAD
+
 	const formattedData = (Array.isArray(data) ? data : [])
 		.map(formatSupportRequestForTable)
 		.slice(0, 3);
-=======
-	const formattedData = data?.map(formatSupportRequestForTable).slice(0, 3);
->>>>>>> 77642574b2a354be88263b6c9a15d6d376343c1d
+	// =======
+	// 	const formattedData = data?.map(formatSupportRequestForTable).slice(0, 3);
+	// >>>>>>> 77642574b2a354be88263b6c9a15d6d376343c1d
 
 	//  Handler to open the dialog and set the selected request
 	const handleView = (supportRequest: any) => {

@@ -265,11 +265,11 @@ export const formatFeedbackForCard = (feedback) => {
     order: feedback.order?.orderNumber || 'N/A',
     title: feedback.title || feedback.subject,
     adminNotes: feedback.adminNotes,
-    dateSubmitted: feedback.createdAt,
-    createdAt: feedback.createdAt,
+    dateSubmitted: feedback. dateSubmitted,
+    createdAt: feedback.dateSubmitted,
     updatedAt: feedback.updatedAt,
-    formattedDate: new Date(feedback.createdAt).toLocaleDateString(),
-    formattedTime: new Date(feedback.createdAt).toLocaleTimeString(),
+    formattedDate: new Date(feedback.dateSubmitted).toLocaleDateString(),
+    formattedTime: new Date(feedback.dateSubmitted).toLocaleTimeString()
   };
 };
 
@@ -297,8 +297,8 @@ export const formatFeedbackForTable = (feedback) => {
     adminNotes: feedback.adminNotes,
     createdAt: feedback.createdAt,
     updatedAt: feedback.updatedAt,
-    formattedDate: new Date(feedback.createdAt).toLocaleDateString(),
-    formattedTime: new Date(feedback.createdAt).toLocaleTimeString(),
+    formattedDate: new Date(feedback.dateSubmitted).toLocaleDateString(),
+    formattedTime: new Date(feedback.dateSubmitted).toLocaleTimeString()
   };
 };
 
