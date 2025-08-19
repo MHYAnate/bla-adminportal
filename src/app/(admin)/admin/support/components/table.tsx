@@ -22,19 +22,30 @@ import { ROUTES } from "@/constant/routes";
 
 interface SimpleTableProps {
 	data: any[];
+	isLoading?: boolean;
+	error?: any;
 	onRefresh?: () => void; //  Added onRefresh for consistency
 }
 
 const SimpleSupportTable: React.FC<SimpleTableProps> = ({
 	data,
-	onRefresh = () => {},
+	isLoading = false,
+	error = null,
+	onRefresh = () => { },
 }) => {
 	//  State for managing the dialog and selected item
 	const [isOpen, setIsOpen] = useState<boolean>(false);
 	const [selectedRequest, setSelectedRequest] = useState<any>(null);
 
+	// Option 3: Add loading and error states
+	if (isLoading) return <div className="p-4 text-center">Loading support requests...</div>;
+	if (error) return <div className="p-4 text-center text-red-500">Error loading support requests</div>;
+	if (!data) return <div className="p-4 text-center">No data available</div>;
+
 	// Format data for display and take only the first 3 items
-	const formattedData = data.map(formatSupportRequestForTable).slice(0, 3);
+	const formattedData = (Array.isArray(data) ? data : [])
+		.map(formatSupportRequestForTable)
+		.slice(0, 3);
 
 	//  Handler to open the dialog and set the selected request
 	const handleView = (supportRequest: any) => {
@@ -46,12 +57,12 @@ const SimpleSupportTable: React.FC<SimpleTableProps> = ({
 		<>
 			<div className="overflow-x-auto">
 				<div className="flex justify-end">
-				<Link
-            href={ROUTES.ADMIN.SIDEBAR.SUPPORTTABLE}
-            className="m-5 text-sm font-medium text-[#687588] underline border border-[#E9EAEC] rounded-md px-[3.56rem] py-4"
-          >
-            View All
-          </Link>
+					<Link
+						href={ROUTES.ADMIN.SIDEBAR.SUPPORTTABLE}
+						className="m-5 text-sm font-medium text-[#687588] underline border border-[#E9EAEC] rounded-md px-[3.56rem] py-4"
+					>
+						View All
+					</Link>
 				</div>
 
 				<table className="w-full border border-gray-200 rounded-lg text-xs">
