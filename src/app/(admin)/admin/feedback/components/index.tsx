@@ -6,7 +6,7 @@ import { InputFilter } from "@/app/(admin)/components/input-filter";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import { Card, CardContent } from "@/components/ui/card";
 import FeedbackCard from "@/components/widgets/feeedback";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ViewFeedback from "./view-feedback";
 import {
   Dialog,
@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft, Loader2,X } from "lucide-react";
 import { FeedbackBarComponent } from "./feedback-chart";
 import { useFeedback } from "@/services/feedback";
 import { formatFeedbackForCard } from "@/services/feedback";
@@ -49,6 +49,7 @@ const Feedbacks: React.FC = () => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
   };
 
+  console.log(feedbackData?.summary, "summary")
   // Handle search query change
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -80,6 +81,10 @@ const Feedbacks: React.FC = () => {
     setSelectedFeedback(feedback);
     setIsOpen(true);
   };
+  useEffect(() => {
+    updateFilters('search', searchQuery);
+  }, [searchQuery]);
+  
 
   const typeOptions = [
     { text: "All Types", value: "all_types" }, // Fixed: Changed from empty string
@@ -134,7 +139,7 @@ const Feedbacks: React.FC = () => {
           </div>
 
           {/* Analytics Chart */}
-          <FeedbackBarComponent summary={feedbackData?.summary} />
+          {/* <FeedbackBarComponent summary={feedbackData?.summary} /> */}
 
           {/* Filters */}
           <div className="flex items-center gap-4 my-6 flex-wrap">
@@ -155,11 +160,11 @@ const Feedbacks: React.FC = () => {
               list={customerTypeOptions}
             />
 
-            <SelectFilter
+            {/* <SelectFilter
               setFilter={handleStatusChange}
               placeholder="Select Status"
               list={statusOptions}
-            />
+            /> */}
           </div>
 
           {/* Loading State */}
@@ -173,7 +178,7 @@ const Feedbacks: React.FC = () => {
           {/* Feedback Cards Grid */}
           {!isLoading && feedbackData?.data && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                 {feedbackData.data.map((feedback: any) => {
                   const formattedFeedback = formatFeedbackForCard(feedback);
                   return (
@@ -224,10 +229,8 @@ const Feedbacks: React.FC = () => {
       <Dialog open={isOpen} onOpenChange={() => setIsOpen(false)}>
         <DialogContent className="right-0 p-8 max-w-[40.56rem] h-screen overflow-y-scroll">
           <DialogHeader>
-            <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-[18px] items-center">
-              <div onClick={() => setIsOpen(false)} className="cursor-pointer">
-                <ChevronLeft size={24} />
-              </div>
+            <DialogTitle className="mb-6 text-2xl font-bold text-[#111827] flex gap-[18px] items-center justify-between">
+            
               <div>
                 <h5 className="font-bold text-2xl text-[#111827] mb-2">
                   Feedback Details
@@ -235,6 +238,9 @@ const Feedbacks: React.FC = () => {
                 <p className="font-medium text-sm text-[#98A2B3]">
                   Review and manage customer feedback.
                 </p>
+              </div>
+                <div onClick={() => setIsOpen(false)} className="cursor-pointer">
+                <X size={24} />
               </div>
             </DialogTitle>
           </DialogHeader>

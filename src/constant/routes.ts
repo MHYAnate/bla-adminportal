@@ -24,6 +24,7 @@ export const ROUTES = {
       SUPPLYMANAGEMENTVENDORS: "/admin/supply-management/vendors",
       FEEDBACK: "/admin/feedback",
       SUPPORT: "/admin/support",
+      SUPPORTTABLE: "/admin/support/total-Requests",
       MANAGE: '/api/admin/manage',
     },
   },

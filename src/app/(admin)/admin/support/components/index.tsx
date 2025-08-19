@@ -6,6 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useSupportRequests } from "@/services/support";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { BarComponent } from "./chart";
+import { FeedbackBarComponent } from "./supportDistribution";
+import { useFeedback } from "@/services/feedback";
+import SimpleSupportTable from "./table";
 
 const Support: React.FC = () => {
   const [filters, setFilters] = useState({
@@ -24,6 +28,14 @@ const Support: React.FC = () => {
     refetch
   } = useSupportRequests(filters);
 
+  console.log(supportData,"sp")
+   const {
+      data: feedbackData,
+     
+     
+    } = useFeedback(filters);
+
+    console.log(feedbackData,"fb")
   if (error) {
     return (
       <Card className="bg-white">
@@ -52,6 +64,8 @@ const Support: React.FC = () => {
               subtext="Manage customer support requests efficiently. Track, assign, and resolve customer issues."
             />
           </div>
+          <BarComponent/>
+        
 
           {isLoading ? (
             <div className="flex justify-center items-center py-8">
@@ -59,13 +73,13 @@ const Support: React.FC = () => {
               <span className="ml-2">Loading support requests...</span>
             </div>
           ) : (
-            <DataTable
+            <SimpleSupportTable
               data={supportData?.data || []}
-              pagination={supportData?.pagination}
-              summary={supportData?.summary}
-              filters={filters}
-              onFiltersChange={setFilters}
-              onRefresh={refetch}
+              // pagination={supportData?.pagination}
+              // summary={supportData?.summary}
+              // filters={filters}
+              // onFiltersChange={setFilters}
+              // onRefresh={refetch}
             />
           )}
         </CardContent>

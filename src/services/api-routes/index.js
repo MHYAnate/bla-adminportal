@@ -279,7 +279,7 @@ export const routes = {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
     return `admin/support/analytics${queryString}`;
   },
-
+  
   // =================== CUSTOMER SERVICE DASHBOARD ROUTES ===================
   getCustomerServiceDashboard: (params) => {
     const queryString = params ? `?${new URLSearchParams(params).toString()}` : "";
