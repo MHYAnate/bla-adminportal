@@ -260,7 +260,7 @@ export const formatSupportRequestForTable = (supportRequest) => {
     status: supportRequest.status,
     priority: supportRequest.priority,
     assignedAdmin: assignedAdmin?.adminProfile?.fullName || assignedAdmin?.name || 'Unassigned',
-    assignedAdminId: supportRequest.assignedAdminId,
+    assignedAdminId: assignedAdmin?.id,
     resolutionChannel: supportRequest.resolutionChannel,
     internalNotes: supportRequest.internalNotes,
     dateSubmitted: supportRequest.dateSubmitted,

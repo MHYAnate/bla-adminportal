@@ -6,11 +6,11 @@ import SupplierManagementCard from "@/components/widgets/supplier-management";
 import { useEffect, useState } from "react";
 import {
     useDeleteManufacturerProduct,
-    useGetManufacturerInfo,
     useGetManufacturerProducts,
     useGetManufacturers,
     useUpdateManufacturerStatus,
-    useDeleteManufacturer
+    useDeleteManufacturer,
+    useGetManufacturer
 } from "@/services/manufacturers";
 import {
     Dialog,
@@ -70,25 +70,42 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         );
     };
 
-    const manufacturer = findManufacturerById(manufacturerId);
 
-    // FIXED: Pass manufacturerId directly to the hooks
-    const {
-        getManufacturerInfoData: manufacturerInfo,
-        getManufacturerInfoIsLoading: manufacturerInfoLoading,
-        getManufacturerInfoError: manufacturerInfoError,
-        refetchManufacturerInfo,
-        setManufacturerInfoFilter,
-    } = useGetManufacturerInfo(manufacturerId); // Pass manufacturerId directly
+    const { data: manufacturer, isLoading, isError, error } = useGetManufacturer(
+        manufacturerId, 
+        {
+          includeProducts: true,
+          includeProductCount: true,
+          productsLimit: 3,
+        }
+      );
 
-    const {
+    console.log(manufacturer,  "manuInfo")
+
+
+    const [filters, setFilters] = useState({
+        page: 1,
+        pageSize: 20,
+        type: "all",
+        search: "",
+        categoryId: null,
+      });
+    
+      const {
+        getManufacturerProductsIsLoading,
         getManufacturerProductsData,
-        getManufacturerProductsIsLoading: productsLoading,
-        getManufacturerProductsError: productsError,
+        getManufacturerProductsError,
         refetchManufacturerProducts,
         setManufacturerProductsFilter,
-    } = useGetManufacturerProducts(manufacturerId); // Pass manufacturerId directly
-
+      } = useGetManufacturerProducts(manufacturerId);
+    
+      // Apply filters
+      const handleFilterChange = (newFilters: { page: number; pageSize: number; type: string; search: string; categoryId: null; }) => {
+        setFilters((prev) => ({ ...prev, ...newFilters }));
+        setManufacturerProductsFilter({ ...filters, ...newFilters });
+      };
+    
+      const { data: products, pagination } = getManufacturerProductsData;
     // Delete product hook
     const {
         deleteProduct,
@@ -121,7 +138,7 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         updateManufacturerStatusIsLoading,
         updateManufacturerStatusPayload,
     } = useUpdateManufacturerStatus(() => {
-        refetchManufacturerInfo();
+        // refetchManufacturerInfo();
         refetchManufacturers();
         toast.success("Manufacturer status updated successfully!");
     });
@@ -169,16 +186,6 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
             payload: buildFilterPayload()
         });
     }, [filter, status, currentPage, pageSize, manufacturerId]);
-
-    useEffect(() => {
-        console.log('📦 Manufacturer Products API Response:', {
-            loading: productsLoading,
-            data: getManufacturerProductsData,
-            error: productsError,
-            hasData: !!getManufacturerProductsData,
-            itemCount: getManufacturerProductsData?.data?.length || 0
-        });
-    }, [productsLoading, getManufacturerProductsData, productsError]);
 
     // Handlers for product actions
     const handleViewProduct = (product: any) => {
@@ -271,7 +278,7 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         }
     };
 
-    if (getManufacturersIsLoading || manufacturerInfoLoading) {
+    if (getManufacturersIsLoading || isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
@@ -282,7 +289,7 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         );
     }
 
-    if (!manufacturer && !manufacturerInfo) {
+    if (!manufacturer ) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
@@ -299,19 +306,20 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
         );
     }
 
+
     return (
         <div className="p-6">
             <Header
-                title={`${manufacturer?.name || manufacturerInfo?.name || 'Manufacturer'} Details`}
+                title={`${manufacturer?.name  || 'Manufacturer'} Details`}
                 subtext="Manage manufacturer information and products"
                 showBack={true}
             />
 
             <div className="mb-6">
                 <SupplierManagementCard
-                    item={manufacturer || manufacturerInfo}
+                    item={manufacturer }
                     handleUpdateManufacturerStatus={async () => {
-                        const newStatus = !(manufacturer?.status || manufacturerInfo?.status);
+                        const newStatus = !(manufacturer?.status );
                         await updateManufacturerStatusPayload({
                             payload: { status: newStatus },
                             id: manufacturerId
@@ -351,11 +359,11 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
                             placeholder="Search by product name, description"
                         />
 
-                        <SelectFilter
+                        {/* <SelectFilter
                             setFilter={setStatus}
                             placeholder="Filters"
                             list={productFilterList}
-                        />
+                        /> */}
                     </div>
 
                     <ManufacturerProductTable
@@ -368,7 +376,7 @@ const ManufacturerDetails: React.FC<ManufacturerDetailsProps> = ({ manufacturerI
                         onPageChange={onPageChange}
                         pageSize={Number(pageSize)}
                         totalPages={getManufacturerProductsData?.pagination?.totalPages || 1}
-                        loading={productsLoading}
+                        loading={getManufacturerProductsIsLoading}
                     />
                 </CardContent>
             </Card>

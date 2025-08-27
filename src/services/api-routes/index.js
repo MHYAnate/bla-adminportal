@@ -156,21 +156,42 @@ export const routes = {
   updateManufacturer: (manufacturerId) => `admin/manufacturers/${manufacturerId}`,
   deleteManufacturer: (manufacturerId) => `admin/manufacturers/${manufacturerId}`,
   getSingleManufacturer: (manufacturerId) => `admin/manufacturers/${manufacturerId}`,
+  // getProductsByManufacturer: (manufacturerId, queryParams = {}) => {
+  //   let url = `admin/manufacturers/${manufacturerId}/products`;
+  //   const params = new URLSearchParams();
+    
+  //   if (queryParams.page) params.append('page', queryParams.page.toString());
+  //   if (queryParams.pageSize) params.append('pageSize', queryParams.pageSize.toString());
+  //   if (queryParams.type && queryParams.type !== 'all') params.append('type', queryParams.type);
+  //   if (queryParams.search && queryParams.search.trim()) params.append('search', queryParams.search.trim());
+    
+  //   const queryString = params.toString();
+  //   if (queryString) {
+  //     url += `?${queryString}`;
+  //   }
+  //   return url;
+  // },
+
   getProductsByManufacturer: (manufacturerId, queryParams = {}) => {
-    let url = `admin/manufacturers/${manufacturerId}/products`;
-    const params = new URLSearchParams();
-    
-    if (queryParams.page) params.append('page', queryParams.page.toString());
-    if (queryParams.pageSize) params.append('pageSize', queryParams.pageSize.toString());
-    if (queryParams.type && queryParams.type !== 'all') params.append('type', queryParams.type);
-    if (queryParams.search && queryParams.search.trim()) params.append('search', queryParams.search.trim());
-    
-    const queryString = params.toString();
-    if (queryString) {
-      url += `?${queryString}`;
+    if (!manufacturerId || isNaN(parseInt(manufacturerId))) {
+      throw new Error("Invalid manufacturer ID format");
     }
+  
+    let url = `admin/manufacturers/${encodeURIComponent(manufacturerId)}/products`;
+    const params = new URLSearchParams();
+  
+    if (queryParams.page) params.append("page", queryParams.page.toString());
+    if (queryParams.pageSize) params.append("pageSize", queryParams.pageSize.toString());
+    if (queryParams.type && queryParams.type !== "all") params.append("type", queryParams.type);
+    if (queryParams.search && queryParams.search.trim()) params.append("search", queryParams.search.trim());
+    if (queryParams.categoryId) params.append("categoryId", queryParams.categoryId.toString());
+  
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+  
     return url;
   },
+
   updateManufacturerStatus: (manufacturerId) => `admin/manufacturers/${manufacturerId}/status`,
 
   // =================== ORDER ROUTES ===================

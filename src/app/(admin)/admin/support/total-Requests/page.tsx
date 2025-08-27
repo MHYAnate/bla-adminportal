@@ -155,6 +155,7 @@ export default function SupportManagementPage() {
     refetch,
   } = useSupportRequests(filters);
 
+  console.log(supportData, "spdata")
   // Memoized filter handlers to prevent unnecessary re-renders
   const handleSearch = useCallback((search: string) => {
     setFilters(prev => ({ ...prev, search, page: 1 }));

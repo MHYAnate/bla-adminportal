@@ -89,24 +89,24 @@ export function BarComponent() {
     {
       label: "Resolved",
       sublabel: "within 24 hours",
-      value: data.resolvedWithin24Hours.percentage
+      value: data?.resolvedWithin24Hours?.percentage
       ,
     },
     {
       label: "Resolved within",
       sublabel: "2-3 days",
-      value: data.resolvedWithin2to3Days.percentage
+      value: data?.resolvedWithin2to3Days?.percentage
       ,
     },
     {
       label: "Resolved within",
       sublabel: "a week",
-      value: data.resolvedWithinWeek.percentage,
+      value: data?.resolvedWithinWeek?.percentage,
     },
     {
       label: "Unresolved",
       sublabel: "",
-      value: data.unresolved.percentage,
+      value: data?.unresolved?.percentage,
     },
   ]
 

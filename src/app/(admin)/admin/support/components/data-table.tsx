@@ -433,6 +433,7 @@ import {
   getPriorityBadgeColor,
   formatSupportRequestForTable,
 } from "@/services/support";
+import { useGetAdmins } from "@/services/admin";
 
 interface DataTableProps {
   data: any[];
@@ -462,6 +463,17 @@ const DataTable: React.FC<DataTableProps> = ({
 
   // Format data for display
   const formattedData = data.map(formatSupportRequestForTable);
+
+  console.log(data, "datacheck")
+  console.log(formattedData, "fordata")
+
+  const { adminsData, isAdminsLoading, refetchAdmins } = useGetAdmins({
+    enabled: true,
+  });
+
+  function getAdminInfo(adminId: string | number): any | undefined {
+    return adminsData.find((admin: any) => admin?.id?.toString() === adminId?.toString());
+  }
 
   return (
     <div>
@@ -578,7 +590,7 @@ const DataTable: React.FC<DataTableProps> = ({
                   </Badge>
                 </td>
                 <td className="p-3 text-sm">
-                  {request.assignedAdmin || "Unassigned"}
+                  {getAdminInfo(request?.assignedAdminId)?.fullName  || getAdminInfo(request?.assignedAdminId)?.adminProfile?.fullName || "unAssigned " }
                 </td>
                 <td className="p-3 text-xs text-gray-500">
                   {request.formattedDate}
