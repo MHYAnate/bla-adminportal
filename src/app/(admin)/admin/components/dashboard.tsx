@@ -106,11 +106,24 @@ const Dashboard: React.FC = () => {
 		return Math.floor(value).toLocaleString(); // comma-separated, no decimals
 	}
 
+	const getGreeting = () => {
+		const hour = new Date().getHours();
+	
+		if (hour >= 5 && hour < 12) {
+			return "Good morning!";
+		} else if (hour >= 12 && hour < 17) {
+			return "Good afternoon!";
+		} else {
+			return "Good evening!";
+		}
+	};
+	
+
 
 	return (
 		<section>
 			<Header
-				title={`Good morning, ${admin?.adminProfile?.fullName || "Admin"}.`}
+				title={getGreeting()}
 				subtext="Welcome to Buylocal Admin. Manage Inventory, Store and Assign Roles."
 			/>
 			<Card className="mt-[26px] mb-6">
