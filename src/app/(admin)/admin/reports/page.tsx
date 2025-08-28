@@ -1,10 +1,10 @@
-import Reports from "./components";
+// import Reports from "./components";
 
-export default function CustomersOverviewPage() {
+// export default function CustomersOverviewPage() {
   
-  return (
-    <section>
-      <Reports />
-    </section>
-  );
-}
+//   return (
+//     <section>
+//       <Reports />
+//     </section>
+//   );
+// }

@@ -1,9 +1,9 @@
-import FinancialReport from "./components";
+// import FinancialReport from "./components";
 
-export default function FinancialReportPage() {
-  return (
-    <>
-      <FinancialReport />
-    </>
-  );
-}
+// export default function FinancialReportPage() {
+//   return (
+//     <>
+//       <FinancialReport />
+//     </>
+//   );
+// }

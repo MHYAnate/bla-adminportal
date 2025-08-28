@@ -128,19 +128,19 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
 
   const filteredAdmins = useMemo(() => {
     if (!adminsData) return [];
-    
+
     return adminsData.filter(admin => {
       // Check if admin has the required roles
-      const hasCustomerService = admin.roles?.some((role: { role: { name: string; }; }) => 
-        role.role.name === "CUSTOMER_SERVICE" || 
+      const hasCustomerService = admin.roles?.some((role: { role: { name: string; }; }) =>
+        role.role.name === "CUSTOMER_SERVICE" ||
         role.role.name === "Customer Relations Manager"
       );
-      
+
       // Also check the top-level role property as fallback
-      const hasTopLevelRole = 
-        admin.role === "CUSTOMER_SERVICE" || 
+      const hasTopLevelRole =
+        admin.role === "CUSTOMER_SERVICE" ||
         admin.role === "Customer Relations Manager";
-      
+
       return hasCustomerService || hasTopLevelRole;
     });
   }, [adminsData]);
@@ -148,7 +148,7 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
   // Fetch detailed support request data
   const { data: detailData, isLoading, refetch } = useSupportRequestDetails
     ? useSupportRequestDetails(supportRequest?.id)
-    : { data: null, isLoading: false, refetch: () => {} };
+    : { data: null, isLoading: false, refetch: () => { } };
 
   // Initialize mutation hooks with fallback error handlers
   const statusMutation = useUpdateSupportStatus
@@ -181,7 +181,7 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
     if (detailData) {
       statusForm.setValue('status', detailData.status);
       statusForm.setValue('resolutionDetails', detailData.resolutionDetails || '');
-      
+
       trackingForm.setValue('assignedAdminId', detailData.assignedAdminId?.toString() || '');
       trackingForm.setValue('resolutionChannel', detailData.resolutionChannel || '');
       trackingForm.setValue('internalNotes', detailData.internalNotes || '');
@@ -411,21 +411,19 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab("details")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "details"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "details"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             Update Status
           </button>
           <button
             onClick={() => setActiveTab("tracking")}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "tracking"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === "tracking"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             Support Tracking
           </button>
@@ -521,7 +519,7 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
               <div>
                 <span className="font-medium">Assigned Admin:</span>
                 <span className="ml-2">
-                  {detailData?.assignedAdmin.adminProfile.fullName || "Unassigned"}
+                  {detailData?.assignedAdmin?.adminProfile?.fullName || "Unassigned"}
                 </span>
               </div>
               <div>
@@ -556,8 +554,8 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
                       <SelectContent>
                         <SelectItem value="Unassigned">Unassigned</SelectItem>
                         {filteredAdmins.map((admin: any) => (
-                          <SelectItem 
-                            key={admin.id} 
+                          <SelectItem
+                            key={admin.id}
                             value={admin.id.toString()}
                           >
                             {admin.profile?.fullName || admin.fullName || `Admin ${admin.id}`}
