@@ -19,6 +19,7 @@ import { ViewIcon } from "../../../../../../public/icons";
 import ViewSupportRequest from "./view-support-request"; //  Import the view component
 import Link from "next/link";
 import { ROUTES } from "@/constant/routes";
+import { useGetAdmins } from "@/services/admin";
 
 interface SimpleTableProps {
 	data: any[];
@@ -56,6 +57,14 @@ const SimpleSupportTable: React.FC<SimpleTableProps> = ({
 		setSelectedRequest(supportRequest);
 		setIsOpen(true);
 	};
+	 const { adminsData, isAdminsLoading, refetchAdmins } = useGetAdmins({
+			enabled: true,
+		});
+
+	function getAdminInfo(adminId: string | number): any | undefined {
+    return adminsData.find((admin: any) => admin?.id?.toString() === adminId?.toString());
+  }
+
 
 	return (
 		<>
@@ -148,7 +157,7 @@ const SimpleSupportTable: React.FC<SimpleTableProps> = ({
 									</Badge>
 								</td>
 								<td className="p-2 text-xs">
-									{request.assignedAdmin || "Unassigned"}
+								{getAdminInfo(request?.assignedAdminId)?.fullName  || getAdminInfo(request?.assignedAdminId)?.adminProfile?.fullName || "unAssigned " }
 								</td>
 								<td className="p-2 text-[10px] text-gray-500">
 									{request.formattedDate}
