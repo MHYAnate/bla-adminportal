@@ -133,13 +133,13 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
       // Check if admin has the required roles
       const hasCustomerService = admin.roles?.some((role: { role: { name: string; }; }) =>
         role.role.name === "CUSTOMER_SERVICE" ||
-        role.role.name === "Customer Relations Manager"
+        role.role.name === "SUPER_ADMIN"
       );
 
       // Also check the top-level role property as fallback
       const hasTopLevelRole =
         admin.role === "CUSTOMER_SERVICE" ||
-        admin.role === "Customer Relations Manager";
+        admin.role === "SUPER_ADMIN";
 
       return hasCustomerService || hasTopLevelRole;
     });
