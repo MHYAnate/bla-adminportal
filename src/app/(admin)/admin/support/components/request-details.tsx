@@ -27,7 +27,7 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
             <p className="whitespace-pre-wrap">
               {supportRequest.description ||
                 supportRequest.message ||
-                'No description provided'}
+                'No description  provided'}
             </p>
           </div>
         </div>
