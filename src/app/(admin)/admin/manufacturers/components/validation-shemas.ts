@@ -26,12 +26,16 @@ const commonFormSchema = {
     phone: z
         .string()
         .optional()
-        .refine((val) => !val || phonePattern.test(val), {
-            message: "Phone number can only contain numbers, spaces, hyphens, parentheses, and + symbol."
-        })
-        .refine((val) => !val || val.length >= 10, {
-            message: "Phone number must be at least 10 characters long."
-        }),
+        .refine((val) => !val || /^\d{11}$/.test(val), {
+            message: "Phone number must be exactly 11 digits with no special characters.",
+          }),
+        
+        // .refine((val) => !val || phonePattern.test(val), {
+        //     message: "Phone number can only contain numbers, spaces, hyphens, parentheses, and + symbol."
+        // })
+        // .refine((val) => !val || val.length >= 10, {
+        //     message: "Phone number must be at least 10 characters long."
+        // }),
     
     country: z.string().min(1, "Country is required."),
 };

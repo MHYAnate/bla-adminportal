@@ -145,7 +145,7 @@ const AddManufacturer: React.FC<IProps> = ({ setClose }) => {
                                 <FormItem>
                                     <FormLabel>Phone Number (Optional)</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="+1 555-123-4567" {...field} disabled={isLoading} />
+                                        <Input placeholder="07012345678" {...field} disabled={isLoading} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
