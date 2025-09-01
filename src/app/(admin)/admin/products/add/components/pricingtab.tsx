@@ -68,7 +68,7 @@ const AddPricing: React.FC<Props> = ({ form, isSubmitting }) => {
     if (option.profitType === 'COMMISSION') {
       const supplierPrice = parseFloat(option.supplierPrice || 0);
       const commissionRate = parseFloat(option.commissionRate || 0);
-      const calculatedPrice = supplierPrice * (1 + commissionRate / 100);
+      const calculatedPrice = parseFloat(option.supplierPrice || 0);
       
       return {
         calculatedPrice: calculatedPrice.toFixed(2),
@@ -540,7 +540,7 @@ const CommissionPricing: React.FC<{ form: any; index: number; metrics: any }> = 
       />
     </div>
 
-    {metrics && (
+    {/* {metrics && (
       <div className="bg-white rounded-lg p-4 border">
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
@@ -557,7 +557,7 @@ const CommissionPricing: React.FC<{ form: any; index: number; metrics: any }> = 
           </div>
         </div>
       </div>
-    )}
+    )} */}
 
     <div className="mt-4 p-3 bg-green-100 rounded-lg">
       <p className="text-sm text-green-800">
