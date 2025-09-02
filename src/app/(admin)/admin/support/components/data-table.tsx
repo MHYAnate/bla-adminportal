@@ -456,6 +456,8 @@ const DataTable: React.FC<DataTableProps> = ({
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
 
+  console.log(pagination, "pag")
+
   const handleView = (supportRequest: any) => {
     setSelectedRequest(supportRequest);
     setIsOpen(true);
@@ -621,7 +623,7 @@ const DataTable: React.FC<DataTableProps> = ({
       </div>
 
       {/* Pagination */}
-      {pagination && pagination.totalPages > 1 && (
+      {/* {(
         <div className="flex items-center justify-between mt-6">
           <p className="text-sm text-gray-700">
             Showing {(pagination.currentPage - 1) * pagination.itemsPerPage + 1}{" "}
@@ -654,7 +656,127 @@ const DataTable: React.FC<DataTableProps> = ({
             </Button>
           </div>
         </div>
-      )}
+      )} */}
+
+      
+
+{/* { (
+  <div className="flex items-center justify-between mt-6 border-t border-gray-200 pt-4">
+    <p className="text-sm text-gray-700">
+      Showing{" "}
+      {(pagination.currentPage - 1) * Math.ceil(pagination.totalCount / pagination.totalPages) + 1}{" "}
+      to{" "}
+      {Math.min(
+        pagination.currentPage * Math.ceil(pagination.totalCount / pagination.totalPages),
+        pagination.totalCount
+      )}{" "}
+      of {pagination.totalCount} results
+    </p>
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="border-gray-300 text-gray-700 hover:bg-gray-100"
+        disabled={!pagination.hasPrevPage || isLoading}
+        onClick={() => onPageChange(pagination.currentPage - 1)}
+      >
+        <ChevronLeft className="h-4 w-4 mr-1" />
+        Previous
+      </Button>
+      <span className="px-3 py-1 text-sm font-medium text-gray-700">
+        Page {pagination.currentPage} of {pagination.totalPages}
+      </span>
+      <Button
+        variant="outline"
+        size="sm"
+        className="border-gray-300 text-gray-700 hover:bg-gray-100"
+        disabled={!pagination.hasNextPage || isLoading}
+        onClick={() => onPageChange(pagination.currentPage + 1)}
+      >
+        Next
+        <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
+      </Button>
+    </div>
+  </div>
+)} */}
+
+
+{/* {(
+  <div className="flex flex-col sm:flex-row items-center justify-between mt-6 border-t border-gray-200 pt-4">
+    <p className="text-sm text-gray-600 mb-2 sm:mb-0">
+      Showing{" "}
+      <span className="font-medium text-gray-800">
+        {(pagination.currentPage - 1) * Math.ceil(pagination.totalCount / pagination.totalPages) + 1}
+      </span>{" "}
+      to{" "}
+      <span className="font-medium text-gray-800">
+        {Math.min(
+          pagination.currentPage * Math.ceil(pagination.totalCount / pagination.totalPages),
+          pagination.totalCount
+        )}
+      </span>{" "}
+      of{" "}
+      <span className="font-medium text-gray-800">{pagination.totalCount}</span> results
+    </p>
+
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!pagination.hasPrevPage || isLoading}
+        onClick={() => onPageChange(pagination.currentPage - 1)}
+      >
+        <ChevronLeft className="h-4 w-4 mr-1" />
+        Previous
+      </Button>
+
+      <span className="px-3 py-1 text-sm font-semibold text-gray-700 bg-gray-50 rounded">
+        Page {pagination.currentPage} of {pagination.totalPages}
+      </span>
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={!pagination.hasNextPage || isLoading}
+        onClick={() => onPageChange(pagination.currentPage + 1)}
+      >
+        Next
+        <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
+      </Button>
+    </div>
+  </div>
+)} */}
+
+<div className="flex items-center gap-2 mt-10">
+  <Button
+    variant="outline"
+    size="sm"
+    className="border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+    disabled={!pagination.hasPrevPage || isLoading}
+    onClick={() => onPageChange(pagination.currentPage - 1)}
+  >
+    <ChevronLeft className="h-4 w-4 mr-1" />
+    Previous
+  </Button>
+
+  {/* Page indicator styled to align neatly */}
+  <div className="flex items-center px-3 py-1 text-sm font-semibold text-gray-700 bg-gray-50 rounded whitespace-nowrap">
+    Page {pagination.currentPage} of {pagination.totalPages}
+  </div>
+
+  <Button
+    variant="outline"
+    size="sm"
+    className="border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+    disabled={!pagination.hasNextPage || isLoading}
+    onClick={() => onPageChange(pagination.currentPage + 1)}
+  >
+    Next
+    <ChevronLeft className="h-4 w-4 ml-1 rotate-180" />
+  </Button>
+</div>
 
       {/* Dialog for View */}
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
