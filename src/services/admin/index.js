@@ -9,6 +9,7 @@ import httpService from "../httpService";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { emitRoleChangeEvent } from '@/context/auth'; // ✅ Enhanced: Import role change event
+import { useQuery } from "@tanstack/react-query";
 
 // =================== UTILITY FUNCTIONS ===================
 

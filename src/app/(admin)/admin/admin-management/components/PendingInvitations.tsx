@@ -1483,6 +1483,11 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import {
+  useGetPendingInvitations,
+  useResendAdminInvite,
+  useCancelInvitation,
+} from "@/services/admin";
 
 // --- Mock Data and Services ---
 
@@ -1558,53 +1563,53 @@ const mockInvitations: PendingInvitation[] = [
     },
 ];
 
-const useGetPendingInvitations = ({ filter }: { enabled: boolean; filter: { page: number; limit: number }}) => {
-    const [isLoading, setIsLoading] = useState(true);
-    const [data, setData] = useState<PendingInvitation[]>([]);
+// const useGetPendingInvitations = ({ filter }: { enabled: boolean; filter: { page: number; limit: number }}) => {
+//     const [isLoading, setIsLoading] = useState(true);
+//     const [data, setData] = useState<PendingInvitation[]>([]);
 
-    useEffect(() => {
-        setIsLoading(true);
-        setTimeout(() => {
-            const start = (filter.page - 1) * filter.limit;
-            const end = start + filter.limit;
-            setData(mockInvitations.slice(start, end));
-            setIsLoading(false);
-        }, 500);
-    }, [filter.page, filter.limit]);
+//     useEffect(() => {
+//         setIsLoading(true);
+//         setTimeout(() => {
+//             const start = (filter.page - 1) * filter.limit;
+//             const end = start + filter.limit;
+//             setData(mockInvitations.slice(start, end));
+//             setIsLoading(false);
+//         }, 500);
+//     }, [filter.page, filter.limit]);
 
-    return {
-        invitationsData: data,
-        totalInvitations: mockInvitations.length,
-        isInvitationsLoading: isLoading,
-        refetchInvitations: () => {
-             // In a real app, this would re-trigger the fetch
-        },
-    };
-};
+//     return {
+//         invitationsData: data,
+//         totalInvitations: mockInvitations.length,
+//         isInvitationsLoading: isLoading,
+//         refetchInvitations: () => {
+//              // In a real app, this would re-trigger the fetch
+//         },
+//     };
+// };
 
-const useResendAdminInvite = (onSuccess: () => void) => {
-    const [isLoading, setIsLoading] = useState(false);
-    const payload = async (id: string) => {
-        setIsLoading(true);
-        console.log(`Resending invite for ${id}`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setIsLoading(false);
-        onSuccess();
-    };
-    return { resendInvitePayload: payload, resendInviteIsLoading: isLoading };
-};
+// const useResendAdminInvite = (onSuccess: () => void) => {
+//     const [isLoading, setIsLoading] = useState(false);
+//     const payload = async (id: string) => {
+//         setIsLoading(true);
+//         console.log(`Resending invite for ${id}`);
+//         await new Promise(resolve => setTimeout(resolve, 500));
+//         setIsLoading(false);
+//         onSuccess();
+//     };
+//     return { resendInvitePayload: payload, resendInviteIsLoading: isLoading };
+// };
 
-const useCancelInvitation = (onSuccess: () => void) => {
-    const [isLoading, setIsLoading] = useState(false);
-    const payload = async (id: string) => {
-        setIsLoading(true);
-        console.log(`Cancelling invite for ${id}`);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setIsLoading(false);
-        onSuccess();
-    };
-    return { cancelInvitationPayload: payload, cancelInvitationIsLoading: isLoading };
-};
+// const useCancelInvitation = (onSuccess: () => void) => {
+//     const [isLoading, setIsLoading] = useState(false);
+//     const payload = async (id: string) => {
+//         setIsLoading(true);
+//         console.log(`Cancelling invite for ${id}`);
+//         await new Promise(resolve => setTimeout(resolve, 500));
+//         setIsLoading(false);
+//         onSuccess();
+//     };
+//     return { cancelInvitationPayload: payload, cancelInvitationIsLoading: isLoading };
+// };
 
 // --- Original Component ---
 
