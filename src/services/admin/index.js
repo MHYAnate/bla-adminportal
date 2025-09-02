@@ -102,25 +102,44 @@ export const useInviteAdmin = (onSuccess) => {
   };
 };
 
+// export const useGetPendingInvitations = ({ enabled = true, filter = {} }) => {
+//   const { data, isLoading, error, refetch } = useFetchItem({
+//     queryKey: ["pending-invitations", filter],
+//     queryFn: (params) => httpService.getData(routes.getPendingInvitations(params)),
+//     enabled,
+//     retry: 2,
+//     initialFilter: filter,
+//     isPaginated: true,
+//   });
+
+//   return {
+//     invitationsData: extractResponseData(data) || [],
+//     totalInvitations: data?.pagination?.total || 0,
+//     isInvitationsLoading: isLoading,
+//     invitationsError: ErrorHandler(error),
+//     refetchInvitations: refetch
+//   };
+// };
+
 export const useGetPendingInvitations = ({ enabled = true, filter = {} }) => {
-  const { data, isLoading, error, refetch } = useFetchItem({
-    queryKey: ["pending-invitations", filter],
-    queryFn: (params) => httpService.getData(routes.getPendingInvitations(params)),
+  // Extract page and limit from filter
+  const { page = 1, limit = 10 } = filter;
+  
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["pending-invitations", page, limit],
+    queryFn: () => httpService.getData(routes.getPendingInvitations({ page, limit })),
     enabled,
     retry: 2,
-    initialFilter: filter,
-    isPaginated: true,
   });
 
   return {
-    invitationsData: extractResponseData(data) || [],
+    invitationsData: data?.data || [],
     totalInvitations: data?.pagination?.total || 0,
     isInvitationsLoading: isLoading,
-    invitationsError: ErrorHandler(error),
+    invitationsError: error,
     refetchInvitations: refetch
   };
 };
-
 export const useResendAdminInvite = (onSuccess) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
