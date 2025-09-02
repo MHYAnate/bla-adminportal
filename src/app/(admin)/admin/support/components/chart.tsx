@@ -35,7 +35,7 @@ const workloadData: Record<string, WorkloadData> = {
 
 export function BarComponent() {
   const [selectedPeriod, setSelectedPeriod] = useState("today")
-  const currentWorkload = workloadData[selectedPeriod]
+  // const currentWorkload = workloadData[selectedPeriod]
   const { data: feedbackData } = useFeedback("")
  
 
@@ -46,7 +46,7 @@ export function BarComponent() {
   console.log(feedbackData, "ffbb")
 
   // Handle loading state
-  if (!feedbackData || !feedbackData.data.summary?.byStatus) {
+  if (!feedbackData || !feedbackData.data.summary?.metrics) {
     return (
       <div className="flex gap-6 p-6 bg-gray-50 h-fit">
         <div className="flex-[2] bg-white shadow-sm border border-gray-200 rounded-lg p-4">
@@ -60,12 +60,12 @@ export function BarComponent() {
   }
 
   // Get status counts with safe defaults
-  const statusCounts = feedbackData.data.summary.byStatus
+  const statusCounts = feedbackData.data.summary.metrics
   const feedbackItems = [
-    { label: "New", value: statusCounts.NEW || 0, color: "bg-blue-400" },
+    { label: "New", value: statusCounts.newCount || 0, color: "bg-blue-400" },
     { 
       label: "In Progress", 
-      value: statusCounts.IN_PROGRESS || 0, 
+      value: statusCounts.inProgressCount || 0, 
       color: "bg-green-400" 
     },
     { 
@@ -75,7 +75,7 @@ export function BarComponent() {
     },
     { 
       label: "Resolved", 
-      value: statusCounts.RESOLVED || 0, 
+      value: statusCounts.resolvedCount || 0, 
       color: "bg-orange-400" 
     },
     { 

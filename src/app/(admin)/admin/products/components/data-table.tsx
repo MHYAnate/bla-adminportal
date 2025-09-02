@@ -155,13 +155,13 @@ const ProductDataTable: React.FC<iProps> = ({
         >
           <EditIcon />
         </div>
-        <div
+        {/* <div
           className="bg-[#E03137] p-2 rounded-lg cursor-pointer hover:bg-[#dc2626] transition-colors"
           onClick={() => handleDelete(item)}
           title="Delete Product"
         >
           <DeleteIcon />
-        </div>
+        </div> */}
       </div>
     ),
   };

@@ -1,0 +1,125 @@
+{
+  "success": true,
+  "message": "Feedback retrieved successfully",
+  "data": {
+      "feedback": [
+          {
+              "id": 1,
+              "feedbackId": "#000001",
+              "customer": {
+                  "id": 3,
+                  "name": "Test Doe",
+                  "email": "jemmyrich69@gmail.com",
+                  "type": "individual"
+              },
+              "type": "RATINGS",
+              "status": "NEW",
+              "title": "Excellent Product",
+              "message": "This product is amazing! Great quality and fast delivery.",
+              "rating": 5,
+              "category": "product",
+              "product": {
+                  "id": 51,
+                  "name": "Test Markup Product"
+              },
+              "dateSubmitted": "2025-08-28T05:05:53.770Z",
+              "lastUpdated": "2025-08-28T05:05:53.770Z",
+              "adminNotes": null
+          },
+          {
+              "id": 2,
+              "feedbackId": "#000002",
+              "customer": {
+                  "id": 3,
+                  "name": "Test Doe",
+                  "email": "jemmyrich69@gmail.com",
+                  "type": "individual"
+              },
+              "type": "COMMENTS",
+              "status": "NEW",
+              "title": "Great Service",
+              "message": "Your customer service team was very helpful today.",
+              "rating": null,
+              "category": "service",
+              "product": null,
+              "dateSubmitted": "2025-08-28T05:06:17.618Z",
+              "lastUpdated": "2025-08-28T05:06:17.618Z",
+              "adminNotes": null
+          },
+          {
+              "id": 3,
+              "feedbackId": "#000003",
+              "customer": {
+                  "id": 3,
+                  "name": "Test Doe",
+                  "email": "jemmyrich69@gmail.com",
+                  "type": "individual"
+              },
+              "type": "SUGGESTIONS",
+              "status": "NEW",
+              "title": "App Improvement Idea",
+              "message": "Please add a dark mode option to your mobile app.",
+              "rating": null,
+              "category": null,
+              "product": null,
+              "dateSubmitted": "2025-08-28T05:06:35.911Z",
+              "lastUpdated": "2025-08-28T05:06:35.911Z",
+              "adminNotes": null
+          },
+          {
+              "id": 4,
+              "feedbackId": "#000004",
+              "customer": {
+                  "id": 3,
+                  "name": "Test Doe",
+                  "email": "jemmyrich69@gmail.com",
+                  "type": "individual"
+              },
+              "type": "COMPLAINTS",
+              "status": "NEW",
+              "title": "Delivery Delay Issue",
+              "message": "My order was delayed by 3 days without any notification.",
+              "rating": null,
+              "category": "delivery",
+              "product": null,
+              "dateSubmitted": "2025-08-28T05:07:02.907Z",
+              "lastUpdated": "2025-08-28T05:07:02.907Z",
+              "adminNotes": null
+          }
+      ],
+      "summary": {
+          "total": 4,
+          "byType": {
+              "RATINGS": 1,
+              "SUGGESTIONS": 1,
+              "COMMENTS": 1,
+              "COMPLAINTS": 1
+          },
+          "byStatus": {
+              "NEW": 4
+          },
+          "averageRating": 5,
+          "totalRatings": 1,
+          "recentCount": 4,
+          "urgentCount": 1,
+          "responseRate": 0,
+          "satisfactionRate": 100,
+          "metrics": {
+              "complaintsCount": 1,
+              "suggestionsCount": 1,
+              "ratingsCount": 1,
+              "commentsCount": 1,
+              "newCount": 4,
+              "inProgressCount": 0,
+              "resolvedCount": 0
+          }
+      },
+      "pagination": {
+          "currentPage": 1,
+          "totalPages": 1,
+          "totalCount": 4,
+          "hasNextPage": false,
+          "hasPrevPage": false
+      }
+  }
+}

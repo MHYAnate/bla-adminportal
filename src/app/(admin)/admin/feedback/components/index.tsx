@@ -44,12 +44,13 @@ const Feedbacks: React.FC = () => {
     refetch
   } = useFeedback(filters);
 
+
   // Update filters when individual states change
   const updateFilters = (key: keyof typeof filters, value: string | number) => {
     setFilters(prev => ({ ...prev, [key]: value, page: 1 }));
   };
 
-  console.log(feedbackData?.summary, "summary")
+  console.log(feedbackData, "summary")
   // Handle search query change
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -199,27 +200,27 @@ const Feedbacks: React.FC = () => {
               )}
 
               {/* Pagination - Fixed with direct function calls */}
-              {feedbackData.pagination && feedbackData.pagination.totalPages > 1 && (
+              {/* {feedbackData.pagination && feedbackData.pagination.totalPages > 1 && ( */}
                 <div className="flex items-center justify-center mt-8 gap-2">
                   <button
-                    disabled={!feedbackData.pagination.hasPreviousPage}
+                    disabled={!feedbackData.data?.pagination?.hasPreviousPage}
                     onClick={() => handlePageChange(filters.page - 1)}
                     className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                   >
                     Previous
                   </button>
                   <span className="px-4 py-2 text-sm font-medium">
-                    Page {feedbackData.pagination.currentPage} of {feedbackData.pagination.totalPages}
+                    Page {feedbackData.data?.pagination?.currentPage} of {feedbackData.data?.pagination?.totalPages}
                   </span>
                   <button
-                    disabled={!feedbackData.pagination.hasNextPage}
+                    disabled={!feedbackData.data?.pagination?.hasNextPage}
                     onClick={() => handlePageChange(filters.page + 1)}
                     className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                   >
                     Next
                   </button>
                 </div>
-              )}
+              {/* )} */}
             </>
           )}
         </CardContent>
