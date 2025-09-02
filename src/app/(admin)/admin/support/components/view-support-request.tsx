@@ -325,14 +325,14 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
               {currentData.status}
             </Badge>
           </div>
-          <div>
+          {/* <div>
             <p className="text-sm font-medium text-gray-600">Priority</p>
             <Badge
               className={`${getPriorityBadgeColor(currentData.priority || "MEDIUM")} mt-1`}
             >
               {currentData.priority || "MEDIUM"}
             </Badge>
-          </div>
+          </div> */}
           <div>
             <p className="text-sm font-medium text-gray-600">Category</p>
             <p className="text-lg font-semibold">
