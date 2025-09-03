@@ -360,6 +360,7 @@ import { useGetAllCategories, useGetCategoriesForSelection } from "@/services/ca
 import { useGetManufacturers } from "@/services/manufacturers";
 import {CategoryFilter} from "./cateFilter";
 import {ManufacturerFilterWithPagination}  from "./manufactFilter";
+import * as XLSX from "xlsx";
 
 // ✅ CORRECT CONSTANTS IMPORT
 import { productFilterList, productTypeList } from "@/constant";
@@ -423,6 +424,7 @@ const getMoreManufacturers = async () => {
     setProductsFilter,
     refetchProducts,
   } = useGetProducts();
+  
 
   const {
     getAllCategoriesIsLoading,
@@ -603,6 +605,54 @@ const getMoreManufacturers = async () => {
     return filteredProducts;
   };
 
+
+  // const formatDataForExcel = (products:any) => {
+  //   return products.map((product:any) => ({
+  //     ID: product.id,
+  //     Name: product.name,
+  //     Description: product.description,
+  //     Category: product.category?.name,
+  //     Manufacturer: product.manufacturer?.name,
+  //     Country: product.manufacturer?.country,
+  //     Price: product.options?.[0]?.price,
+  //     Inventory: product.options?.[0]?.inventory,
+  //     Unit: product.options?.[0]?.unit,
+  //     CreatedAt: product.createdAt,
+  //     UpdatedAt: product.updatedAt,
+  //   }));
+  // };
+
+  const formatDataForExcel = (products: any) => {
+    if (!Array.isArray(products)) {
+      console.warn("Expected an array but got:", products);
+      return [];
+    }
+  
+    return products?.map((product: any) => ({
+      ID: product.id,
+      Name: product.name,
+      Description: product.description,
+      Category: product.category?.name,
+      Manufacturer: product.manufacturer?.name,
+      Country: product.manufacturer?.country,
+      Price: product.options?.[0]?.price,
+      Inventory: product.options?.[0]?.inventory,
+      Unit: product.options?.[0]?.unit,
+      CreatedAt: product.createdAt,
+      UpdatedAt: product.updatedAt,
+    }));
+  };
+
+  const downloadExcel = () => {
+    const formattedData = formatDataForExcel(getProductsData?.data);
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Products");
+  
+    XLSX.writeFile(workbook, "products.xlsx");
+  };
+  console.log(getProductsData, "downP")
+
   // Handlers for product actions
   const handleViewProduct = (product: any) => {
     setSelectedProduct(product);
@@ -727,13 +777,21 @@ const getMoreManufacturers = async () => {
         <Header title="Products" subtext="Manage Products." />
 
         <div className="flex gap-5">
-          <Button
+          {/* <Button
             variant={"outline"}
             className="font-bold text-base w-auto py-4 px-5 flex gap-2 items-center"
             size={"xl"}
           >
             <ExportIcon /> Download
-          </Button>
+          </Button> */}
+          <Button
+  variant="outline"
+  className="font-bold text-base w-auto py-4 px-5 flex gap-2 items-center"
+  size="xl"
+  onClick={downloadExcel}
+>
+  <ExportIcon /> Download
+</Button>
           <Button
             variant={"warning"}
             className="font-bold text-base w-auto py-4 px-6"
