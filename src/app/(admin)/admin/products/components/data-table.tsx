@@ -45,6 +45,8 @@ const ProductDataTable: React.FC<iProps> = ({
   // ✅ Robust data safety check
   const safeData = Array.isArray(data) ? data : [];
 
+  console.log(safeData,"cdata")
+
   if (loading) {
     return (
       <div className="text-center py-8">
@@ -113,7 +115,22 @@ const ProductDataTable: React.FC<iProps> = ({
     ),
 
     productid: (item: any) => (
-      <div className="font-medium">#{item.id}</div>
+      <div>
+         <div className="font-medium">#{item.id}</div>
+         <div className="font-medium">{item.isActive}</div>
+         <Badge
+          variant="outline"
+          className={`inline-flex items-center justify-center text-xs px-4 py-1 font-medium rounded-md ${!item.isActive
+            ? "bg-[#FFEDEC] text-[#E03137]"
+            : "bg-[#E7F7EF] text-[#0CAF60]"
+            }`}
+        >
+          {!item.isActive 
+            ? "inActive"
+            :"Active"}
+        </Badge>
+      </div>
+     
     ),
 
     status: (item: any) => {
