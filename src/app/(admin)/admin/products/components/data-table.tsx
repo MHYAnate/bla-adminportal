@@ -116,18 +116,19 @@ const ProductDataTable: React.FC<iProps> = ({
 
     productid: (item: any) => (
       <div>
-         <div className="font-medium">#{item.id}</div>
-         <div className="font-medium">{item.isActive}</div>
+         {/* <div className="font-medium">#{item.id}</div> */}
          <Badge
           variant="outline"
-          className={`inline-flex items-center justify-center text-xs px-4 py-1 font-medium rounded-md ${!item.isActive
+          className={`flex flex-col items-center justify-center text-xs px-4 py-1 font-medium rounded-md ${!item.isActive
             ? "bg-[#FFEDEC] text-[#E03137]"
             : "bg-[#E7F7EF] text-[#0CAF60]"
             }`}
         >
-          {!item.isActive 
+          <div>#{item.id}</div>
+          <div> {!item.isActive 
             ? "inActive"
-            :"Active"}
+            :"Active"}</div>
+         
         </Badge>
       </div>
      
