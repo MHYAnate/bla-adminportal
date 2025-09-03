@@ -1271,7 +1271,7 @@ const EditProductForm: React.FC<Props> = ({
                       <FormControl>
                         <Switch checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
-                      <FormLabel>Active Product</FormLabel>
+                      <FormLabel>{field.value ? "Deactivate" : "Activate"}</FormLabel>
                     </FormItem>
                   )} />
                 </div>

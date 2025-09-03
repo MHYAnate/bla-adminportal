@@ -36,8 +36,8 @@ const CUSTOMER_STATUSES = {
         description: 'Customer account is active and in good standing'
     },
     INACTIVE: {
-        value: 'INACTIVE',
-        label: 'Inactive',
+        value: 'DEACTIVATE',
+        label: 'Deactivate',
         color: 'tertiary',
         bgColor: 'bg-yellow-100',
         textColor: 'text-yellow-800',
