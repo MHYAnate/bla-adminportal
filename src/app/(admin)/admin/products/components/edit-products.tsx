@@ -1066,7 +1066,13 @@ const EditProductForm: React.FC<Props> = ({
   const {
     getManufacturersData,
     getManufacturersIsLoading,
+    setManufacturersFilter,
   } = useGetManufacturers();
+   useEffect(() => {
+      if (getManufacturersData) {
+        setManufacturersFilter({ page: "1", pageSize: 1000 });
+      }
+    }, []);
 
   const {
     getCategoriesSelectionData,

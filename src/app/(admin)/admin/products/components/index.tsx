@@ -456,7 +456,7 @@ const getMoreManufacturers = async () => {
 
   useEffect(() => {
     if (manufacturerPage > 0) {
-      setManufacturersFilter({ page: manufacturerPage, pageSize: 20 });
+      setManufacturersFilter({ page: manufacturerPage, pageSize: 1000 });
     }
   }, [manufacturerPage]);
 

@@ -25,7 +25,13 @@ const AddProduct: React.FC<Props> = ({ form }) => {
   const {
     getManufacturersData,
     getManufacturersIsLoading,
-  } = useGetManufacturers( );
+    setManufacturersFilter,
+  } = useGetManufacturers();
+   useEffect(() => {
+      if (getManufacturersData) {
+        setManufacturersFilter({ page: "1", pageSize: 1000 });
+      }
+    }, []);
 
   console.log(getManufacturersData,"apm")
 
