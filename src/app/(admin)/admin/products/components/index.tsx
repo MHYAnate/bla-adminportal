@@ -776,13 +776,7 @@ export default function Products() {
 				<Header title="Products" subtext="Manage Products." />
 
 				<div className="flex gap-5">
-					{/* <Button
-            variant={"outline"}
-            className="font-bold text-base w-auto py-4 px-5 flex gap-2 items-center"
-            size={"xl"}
-          >
-            <ExportIcon /> Download
-          </Button> */}
+				
 					<Button
 						variant="outline"
 						className="font-bold text-base w-auto py-4 px-5 flex gap-2 items-center"

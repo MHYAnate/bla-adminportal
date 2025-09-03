@@ -25,7 +25,7 @@ const OrderDetailsCard: React.FC<iProps> = ({ item }) => {
         >
           {item.status}
         </Badge>
-        <HorizontalDots />
+       
       </div>
       <p className="font-medium text-sm text-[#687588] mb-4">X{item.quantity}</p>
       <p className="font-medium text-sm text-[#687588] mb-4">N{item.price}</p>

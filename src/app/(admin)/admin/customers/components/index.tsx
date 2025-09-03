@@ -18,6 +18,7 @@ import { SelectFilter } from "@/app/(admin)/components/select-filter";
 import DeleteContent from "@/app/(admin)/components/delete-content";
 import { RoleData } from "@/types";
 import RoleCard from "./roleCard";
+import * as XLSX from "xlsx";
 
 // ✅ Create a simple interface that matches what RoleCard expects
 interface CustomerRoleCardData {
@@ -81,8 +82,9 @@ const Customers: React.FC = () => {
   const statusList = [
     { text: "All", value: "all" },
     { text: "Active", value: "ACTIVE" },
-    { text: "Inactive", value: "INACTIVE" },
-    { text: "Suspended", value: "SUSPENDED" },
+    { text: "Deactivated", value: "DEACTIVATE" },
+    { text: "Flagged", value: "FLAGGED" },
+    { text: "Under Review", value: "UNDER_REVIEW" },
   ];
 
   const kycList = [
@@ -158,6 +160,38 @@ const Customers: React.FC = () => {
 
   const customerRoleCards = createCustomerRoleCards();
 
+  const formatDataForExcel = (customers: any) => {
+      if (!Array.isArray(customers)) {
+        console.warn("Expected an array but got:", customers);
+        return [];
+      }
+  
+      return customers?.map((customer: any) => ({
+        
+        id: customer.id,
+        name: customer.name,
+        email: customer.email,
+        customerType: customer.customerType,
+        role: customer.role,
+        customerStatus: customer.customerStatus,
+        kycStatus: customer.kycStatus,
+        status: customer.status,
+        kyc: customer.kyc,
+        createdAt: customer.createdAt,
+        joinDate: customer.joinDate
+      }));
+    };
+  
+    const downloadExcel = () => {
+      const formattedData = formatDataForExcel(data?.data);
+      const worksheet = XLSX.utils.json_to_sheet(formattedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Customers");
+  
+      XLSX.writeFile(workbook, "customers.xlsx");
+    };
+    console.log(data, "downP");
+
   return (
     <div>
       <Card className="bg-white">
@@ -168,13 +202,21 @@ const Customers: React.FC = () => {
               subtext="Find all customers and their details."
             />
             <div className="flex gap-5">
-              <Button
+              {/* <Button
                 variant={"outline"}
                 className="font-bold text-base w-auto py-4 px-5 flex gap-2 items-center"
                 size={"xl"}
               >
                 <ExportIcon /> Download
-              </Button>
+              </Button> */}
+              	<Button
+						variant="outline"
+						className="font-bold text-base w-auto py-4 px-5 flex gap-2 items-center"
+						size="xl"
+						onClick={downloadExcel}
+					>
+						<ExportIcon /> Download
+					</Button>
             </div>
           </div>
 
@@ -261,11 +303,11 @@ const Customers: React.FC = () => {
               placeholder="Status"
               list={statusList}
             />
-            <SelectFilter
+            {/* <SelectFilter
               setFilter={setkycStatus}
               list={kycList}
               placeholder="KYC status"
-            />
+            /> */}
           </div>
 
           {/* Data Table */}

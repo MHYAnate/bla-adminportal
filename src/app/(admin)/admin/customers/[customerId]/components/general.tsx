@@ -162,12 +162,12 @@ const General: React.FC<Customer> = ({ data }) => {
             )}
           </div>
           <div className="w-full">
-            <div className="flex justify-between mb-4">
+            {/* <div className="flex justify-between mb-4">
               <p className="text-sm text-[#687588]">Gender</p>
               <p className="text-sm text-[#111827] font-semibold">
                 {data?.personalInfo?.gender || "----"}
               </p>
-            </div>
+            </div> */}
             {data?.customerType === "business" && (
               <>
                 <div className="flex justify-between mb-4">
