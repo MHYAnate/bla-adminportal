@@ -356,11 +356,24 @@ import { capitalizeFirstLetter } from "@/lib/utils";
 
 // ✅ CORRECT SERVICE IMPORTS
 import { useDeleteProduct, useGetProducts } from "@/services/products";
-import { useGetAllCategories } from "@/services/categories";
+import { useGetAllCategories, useGetCategoriesForSelection } from "@/services/categories";
 import { useGetManufacturers } from "@/services/manufacturers";
+import {CategoryFilter} from "./cateFilter";
+import {ManufacturerFilterWithPagination}  from "./manufactFilter";
 
 // ✅ CORRECT CONSTANTS IMPORT
 import { productFilterList, productTypeList } from "@/constant";
+
+// services/manufacturerService.ts
+export const getManufacturersPage = async (page: number) => {
+  const res = await fetch(`/api/manufacturers?page=${page}`);
+  const json = await res.json();
+  return {
+    data: json.data,
+    hasNextPage: json.hasNextPage,
+  };
+};
+
 
 export default function Products() {
   const [filter, setFilter] = useState<string>("");
@@ -374,8 +387,24 @@ export default function Products() {
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
 
   // New state variables for manufacturer and category filters
+  // const [manufacturerFilter, setManufacturerFilter] = useState<string>("all");
+  // const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  const [nextPage, setNextPage] = useState(2);
+
   const [manufacturerFilter, setManufacturerFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
+
+  // ✅ ADD NEW STATE: For accumulating manufacturers and managing pagination
+  const [allManufacturers, setAllManufacturers] = useState<any[]>([]);
+
+  const [manufacturerPage, setManufacturerPage] = useState(1);
+
+const getMoreManufacturers = async () => {
+  const result = await getManufacturersPage(nextPage);
+  setNextPage((prev) => prev + 1);
+  return result;
+};
 
   const onPageChange = (page: number) => {
     setCurrentPage(page);
@@ -402,11 +431,78 @@ export default function Products() {
     setAllCategoriesFilter,
   } = useGetAllCategories();
 
+    const {
+      getCategoriesSelectionData,
+      getCategoriesSelectionIsLoading,
+    } = useGetCategoriesForSelection();
+
+    console.log(getCategoriesSelectionData, "selectcategories")
+    console.log(getManufacturersData, "manufacturer")
+
   const { categories, pagination } = getAllCategoriesData || {
     categories: [],
     pagination: {},
   };
 
+    // ... after other hooks like useGetProducts, etc.
+
+  // ✅ ADD EFFECT 1: Trigger fetching manufacturers when the page number changes.
+  // useEffect(() => {
+  //   setManufacturersFilter({
+  //     page: manufacturerPage,
+  //     pageSize: 20 // A larger page size is good for "load more" functionality
+  //   });
+  // }, [manufacturerPage, setManufacturersFilter]);
+
+  useEffect(() => {
+    if (manufacturerPage > 0) {
+      setManufacturersFilter({ page: manufacturerPage, pageSize: 20 });
+    }
+  }, [manufacturerPage]);
+
+  // ✅ ADD EFFECT 2: Append newly fetched data to the 'allManufacturers' list.
+  // useEffect(() => {
+  //   if (getManufacturersData?.data) {
+  //     // On page 1, we replace the list with fresh data.
+  //     if (getManufacturersData.pagination?.currentPage === 1) {
+  //       setAllManufacturers(getManufacturersData.data);
+  //     } else {
+  //       // On subsequent pages, we append new data, filtering out any potential duplicates.
+  //       setAllManufacturers(prevList => {
+  //         const existingIds = new Set(prevList.map((m:any) => m.id));
+  //         const newItems = getManufacturersData.data.filter((m:any) => !existingIds.has(m.id));
+  //         return [...prevList, ...newItems];
+  //       });
+  //     }
+  //   }
+  // }, [getManufacturersData]); // This effect runs whenever new manufacturer data arrives.
+
+  useEffect(() => {
+    if (!getManufacturersData?.data) return;
+  
+    const newPage = getManufacturersData.pagination?.currentPage;
+  
+    setAllManufacturers(prev => {
+      const existingIds = new Set(prev.map((m:any) => m.id));
+      const newItems = getManufacturersData.data.filter((m:any) => !existingIds.has(m.id));
+  
+      if (newPage === 1) {
+        // only replace if the list actually differs
+        const isSame = prev.length === getManufacturersData.data.length &&
+                       prev.every((m:any, i:number) => m.id === getManufacturersData.data[i].id);
+        return isSame ? prev : getManufacturersData.data;
+      }
+  
+      return newItems.length > 0 ? [...prev, ...newItems] : prev;
+    });
+  }, [getManufacturersData]);
+  
+
+  const fetchMoreManufacturers = async () => {
+    if (getManufacturersData?.pagination?.hasNextPage) {
+      setManufacturerPage(prevPage => prevPage + 1);
+    }
+  };
   const {
     deleteProduct,
     isLoading,
@@ -669,7 +765,7 @@ export default function Products() {
             />
 
             {/* Manufacturer Filter */}
-            <SelectFilter
+            {/* <SelectFilter
               setFilter={setManufacturerFilter}
               placeholder="Filter by Manufacturer"
               list={[
@@ -682,10 +778,27 @@ export default function Products() {
                 ),
               ]}
               value={manufacturerFilter}
-            />
+            /> */}
+
+{/* <ManufacturerFilterWithPagination
+  setFilter={setManufacturerFilter}
+  value={manufacturerFilter}
+  manufacturers={getManufacturersData?.data || []}
+  fetchMore={refetchManufacturers || undefined} // or your pagination fetch function
+  hasNextPage={getManufacturersData?.pagination?.hasNextPage || false}
+/> */}
+
+<ManufacturerFilterWithPagination
+    setFilter={setManufacturerFilter}
+    value={manufacturerFilter}
+    manufacturers={allManufacturers}
+    fetchMore={fetchMoreManufacturers}
+    hasNextPage={getManufacturersData?.pagination?.hasNextPage || false}
+  /> 
+
 
             {/* Category Filter */}
-            <SelectFilter
+            {/* <SelectFilter
               setFilter={setCategoryFilter}
               placeholder="Filter by Category"
               list={[
@@ -698,7 +811,12 @@ export default function Products() {
                 ),
               ]}
               value={categoryFilter}
-            />
+            /> */}
+            <CategoryFilter
+  setFilter={setCategoryFilter}
+  value={categoryFilter}
+  categories={getCategoriesSelectionData || []}
+/>
           </div>
 
           {renderTable()}
