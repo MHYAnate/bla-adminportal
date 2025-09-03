@@ -149,16 +149,16 @@ export const productFilterList = [
     value: "all",
     category: "stock"
   },
-  {
-    text: "In Stock",
-    value: "in_stock",
-    category: "stock"
-  },
-  {
-    text: "Low Stock",
-    value: "low_stock",
-    category: "stock"
-  },
+  // {
+  //   text: "In Stock",
+  //   value: "in_stock",
+  //   category: "stock"
+  // },
+  // {
+  //   text: "Low Stock",
+  //   value: "low_stock",
+  //   category: "stock"
+  // },
   {
     text: "Out of Stock",
     value: "out_of_stock",
@@ -206,11 +206,11 @@ export const productFilterList = [
   },
 
   // Performance Filters
-  {
-    text: "Best Sellers",
-    value: "best_sellers",
-    category: "performance"
-  },
+  // {
+  //   text: "Best Sellers",
+  //   value: "best_sellers",
+  //   category: "performance"
+  // },
   {
     text: "New Products (Last 30 Days)",
     value: "new_products",

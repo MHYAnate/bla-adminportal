@@ -811,7 +811,7 @@ export default function Products() {
 					<div className="flex items-center gap-4 mb-6 flex-wrap">
 						<InputFilter
 							setQuery={setFilter}
-							placeholder="Search by product name, category, manufacturer"
+							placeholder="Search by product name"
 						/>
 
 						<SelectFilter

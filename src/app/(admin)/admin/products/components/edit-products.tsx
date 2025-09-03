@@ -1172,7 +1172,7 @@ const EditProductForm: React.FC<Props> = ({
     if (option.profitType === 'COMMISSION') {
       const supplierPrice = parseFloat(option.supplierPrice || 0);
       const commissionRate = parseFloat(option.commissionRate || 0);
-      const calculatedPrice = supplierPrice * (1 + commissionRate / 100);
+      const calculatedPrice = parseFloat(option.supplierPrice || 0);
       
       return {
         calculatedPrice: calculatedPrice.toFixed(2),
@@ -1680,7 +1680,7 @@ const CommissionConfiguration: React.FC<{ form: any; index: number; metrics: any
       )} />
     </div>
 
-    {metrics && (
+    {/* {metrics && (
       <div className="mt-4 bg-white rounded-lg p-4 border">
         <div className="grid grid-cols-3 gap-4 text-sm">
           <div>
@@ -1697,7 +1697,7 @@ const CommissionConfiguration: React.FC<{ form: any; index: number; metrics: any
           </div>
         </div>
       </div>
-    )}
+    )} */}
   </div>
 );
 
