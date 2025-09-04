@@ -231,7 +231,7 @@ const OrderHistory: React.FC<iProps> = ({ customerId }) => {
 											variant="ghost"
 											size="sm"
 											onClick={() => setExpandedOrderId(null)}
-											className="w-full text-gray-600 hover:text-gray-800 hover:bg-gray-50 font-medium transition-colors duration-200 rounded-xl h-10"
+											className="w-full text-white hover:text-gray-800 hover:bg-gray-50 font-medium transition-colors duration-200 rounded-xl h-10"
 										>
 											<span className="flex items-center gap-2">
 												Hide Details
