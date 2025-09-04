@@ -34,30 +34,157 @@ export default function CreateRoleForm() {
   const [selectedPermissionIds, setSelectedPermissionIds] = useState<Set<number>>(new Set());
   const [groupedPermissions, setGroupedPermissions] = useState<Record<string, Permission[]>>({});
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   // Fetch permissions
   const { permissionsData, isPermissionsLoading } = useGetAdminPermissions({ enabled: true });
 
   // Fetch existing roles for the table
-  const { rolesData, isRolesLoading, refetchRoles } = useGetAdminRoles({ enabled: true });
+  // const { rolesData, isRolesLoading, refetchRoles } = useGetAdminRoles({ enabled: true });
+
+    // 2. Pass pagination state to the data fetching hook
+    const { rolesData, isRolesLoading, refetchRoles } = useGetAdminRoles({
+      enabled: true,
+      page: currentPage,
+      limit: pageSize,
+    });
+
+    console.log(rolesData, "rolecheck")
 
   // Handle the data structure - the API returns {data: Array(10), pagination: {...}}
-  const processedRolesData = React.useMemo(() => {
-    if (!rolesData) {
-      return [];
-    }
+  // const processedRolesData = React.useMemo(() => {
+  //   if (!rolesData) {
+  //     return [];
+  //   }
 
-    // Check different possible data structures
-    let roles = [];
-    if (Array.isArray(rolesData)) {
-      roles = rolesData;
-    } else if (rolesData.data && Array.isArray(rolesData.data)) {
-      roles = rolesData.data;
-    } else if (rolesData.roles && Array.isArray(rolesData.roles)) {
-      roles = rolesData.roles;
-    }
+  //   // Check different possible data structures
+  //   let roles = [];
+  //   if (Array.isArray(rolesData)) {
+  //     roles = rolesData;
+  //   } else if (rolesData.data && Array.isArray(rolesData.data)) {
+  //     roles = rolesData.data;
+  //   } else if (rolesData.roles && Array.isArray(rolesData.roles)) {
+  //     roles = rolesData.roles;
+  //   }
 
-    return roles;
+  //   return roles;
+  // }, [rolesData]);
+
+  // const paginationData = rolesData?.pagination;
+
+  // // Create role hook
+  // const {
+  //   createRole,
+  //   isCreating,
+  // } = useCreateRole();
+
+  // // Process permissions data
+  // useEffect(() => {
+  //   console.log('Permissions data received:', permissionsData);
+
+  //   let permissionsArray: Permission[] = [];
+
+  //   // Handle different possible data structures
+  //   if (Array.isArray(permissionsData)) {
+  //     permissionsArray = permissionsData;
+  //   } else if (permissionsData?.data && Array.isArray(permissionsData.data)) {
+  //     permissionsArray = permissionsData.data;
+  //   } else if (permissionsData?.permissions && Array.isArray(permissionsData.permissions)) {
+  //     permissionsArray = permissionsData.permissions;
+  //   } else if (permissionsData && !isPermissionsLoading) {
+  //     console.warn("Unexpected permissionsData structure:", permissionsData);
+  //     const possibleArrays = Object.values(permissionsData).filter(Array.isArray);
+  //     if (possibleArrays.length > 0) {
+  //       permissionsArray = possibleArrays[0] as Permission[];
+  //     }
+  //   }
+
+  //   console.log('Processed permissions array:', permissionsArray);
+
+  //   if (permissionsArray.length > 0) {
+  //     const grouped = permissionsArray.reduce((acc: Record<string, Permission[]>, permission: Permission) => {
+  //       const category = permission.category || "general";
+  //       if (!acc[category]) {
+  //         acc[category] = [];
+  //       }
+  //       acc[category].push(permission);
+  //       return acc;
+  //     }, {});
+
+  //     console.log('Grouped permissions:', grouped);
+  //     setGroupedPermissions(grouped);
+  //   }
+  // }, [permissionsData, isPermissionsLoading]);
+
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+
+  //   if (!formData.name.trim()) {
+  //     toast.error("Role name is required.");
+  //     return;
+  //   }
+
+  //   if (selectedPermissionIds.size === 0) {
+  //     toast.error("At least one permission must be selected.");
+  //     setActiveTab("permissions"); // Switch to permissions tab
+  //     return;
+  //   }
+
+  //   try {
+  //     const response = await createRole({
+  //       ...formData,
+  //       permissionIds: Array.from(selectedPermissionIds),
+  //     }) as any;
+
+  //     console.log("Role created successfully:", response);
+  //     toast.success(response?.message || "Role created successfully!");
+  //     handleCancel();
+  //     refetchRoles(); // Refresh the roles table
+  //   } catch (error: any) {
+  //     console.error("Error creating role:", error);
+  //     toast.error(error.message || "Failed to create role. Please try again.");
+  //   }
+  // };
+
+  // const handlePermissionChange = (permissionId: number) => {
+  //   setSelectedPermissionIds((prev) => {
+  //     const newSet = new Set(prev);
+  //     if (newSet.has(permissionId)) {
+  //       newSet.delete(permissionId);
+  //     } else {
+  //       newSet.add(permissionId);
+  //     }
+  //     return newSet;
+  //   });
+  // };
+
+  // const handleCancel = () => {
+  //   setFormData({ name: "", description: "" });
+  //   setSelectedPermissionIds(new Set());
+  //   setActiveTab("role");
+  // };
+
+  // const handleNext = () => {
+  //   if (!formData.name.trim()) {
+  //     toast.error("Role name is required.");
+  //     return;
+  //   }
+  //   setActiveTab("permissions");
+  // };
+
+  // const isRoleDetailsComplete = formData.name.trim().length > 0;
+  // const isFormValid = isRoleDetailsComplete && selectedPermissionIds.size > 0;
+
+   // Extract the array of roles and the pagination object from the API response
+   const processedRolesData = React.useMemo(() => {
+    if (!rolesData) return [];
+    if (rolesData.data && Array.isArray(rolesData.data)) return rolesData.data;
+    if (Array.isArray(rolesData)) return rolesData;
+    if (rolesData.roles && Array.isArray(rolesData.roles)) return rolesData.roles;
+    return [];
   }, [rolesData]);
+  
+  const paginationData = rolesData?.pagination;
 
   // Create role hook
   const {
@@ -65,68 +192,47 @@ export default function CreateRoleForm() {
     isCreating,
   } = useCreateRole();
 
-  // Process permissions data
+  // Process permissions data (no changes needed here)
   useEffect(() => {
-    console.log('Permissions data received:', permissionsData);
-
     let permissionsArray: Permission[] = [];
-
-    // Handle different possible data structures
     if (Array.isArray(permissionsData)) {
       permissionsArray = permissionsData;
     } else if (permissionsData?.data && Array.isArray(permissionsData.data)) {
       permissionsArray = permissionsData.data;
     } else if (permissionsData?.permissions && Array.isArray(permissionsData.permissions)) {
       permissionsArray = permissionsData.permissions;
-    } else if (permissionsData && !isPermissionsLoading) {
-      console.warn("Unexpected permissionsData structure:", permissionsData);
-      const possibleArrays = Object.values(permissionsData).filter(Array.isArray);
-      if (possibleArrays.length > 0) {
-        permissionsArray = possibleArrays[0] as Permission[];
-      }
     }
-
-    console.log('Processed permissions array:', permissionsArray);
-
     if (permissionsArray.length > 0) {
       const grouped = permissionsArray.reduce((acc: Record<string, Permission[]>, permission: Permission) => {
         const category = permission.category || "general";
-        if (!acc[category]) {
-          acc[category] = [];
-        }
+        if (!acc[category]) acc[category] = [];
         acc[category].push(permission);
         return acc;
       }, {});
-
-      console.log('Grouped permissions:', grouped);
       setGroupedPermissions(grouped);
     }
   }, [permissionsData, isPermissionsLoading]);
 
+  // handleSubmit and other handlers (no changes needed)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!formData.name.trim()) {
       toast.error("Role name is required.");
       return;
     }
-
     if (selectedPermissionIds.size === 0) {
       toast.error("At least one permission must be selected.");
-      setActiveTab("permissions"); // Switch to permissions tab
+      setActiveTab("permissions");
       return;
     }
-
     try {
       const response = await createRole({
         ...formData,
         permissionIds: Array.from(selectedPermissionIds),
       }) as any;
-
-      console.log("Role created successfully:", response);
       toast.success(response?.message || "Role created successfully!");
       handleCancel();
-      refetchRoles(); // Refresh the roles table
+      refetchRoles();
     } catch (error: any) {
       console.error("Error creating role:", error);
       toast.error(error.message || "Failed to create role. Please try again.");
@@ -136,11 +242,7 @@ export default function CreateRoleForm() {
   const handlePermissionChange = (permissionId: number) => {
     setSelectedPermissionIds((prev) => {
       const newSet = new Set(prev);
-      if (newSet.has(permissionId)) {
-        newSet.delete(permissionId);
-      } else {
-        newSet.add(permissionId);
-      }
+      newSet.has(permissionId) ? newSet.delete(permissionId) : newSet.add(permissionId);
       return newSet;
     });
   };
@@ -303,10 +405,25 @@ export default function CreateRoleForm() {
       </div>
 
       {/* Roles Table Section - Below the form */}
-      <RoleDataTable
+      {/* <RoleDataTable
+        rolesData={processedRolesData}
+        loading={isRolesLoading}
+        refetch={refetchRoles} currentPage={0} totalPages={0} onPageChange={function (page: number): void {
+          throw new Error("Function not implemented.");
+        } } onPageSizeChange={function (size: string): void {
+          throw new Error("Function not implemented.");
+        } }      /> */}
+           <RoleDataTable
         rolesData={processedRolesData}
         loading={isRolesLoading}
         refetch={refetchRoles}
+        currentPage={paginationData?.currentPage || 1}
+        totalPages={paginationData?.totalPages || 1}
+        onPageChange={setCurrentPage}
+        onPageSizeChange={(size) => {
+          setPageSize(Number(size));
+          setCurrentPage(1); // Reset to page 1 when size changes
+        }}
       />
     </div>
   );

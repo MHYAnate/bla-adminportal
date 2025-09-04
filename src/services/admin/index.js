@@ -388,16 +388,81 @@ export const useAdminRegistration = (onSuccess) => {
 
 // =================== ENHANCED ROLE MANAGEMENT WITH EVENT EMISSION ===================
 
-export const useGetAdminRoles = ({ enabled = true } = {}) => {
+// export const useGetAdminRoles = ({ enabled = true } = {}) => {
+//   const { data, isLoading, error, refetch } = useFetchItem({
+//     queryKey: ["admin-roles"],
+//     queryFn: () => httpService.getData(routes.adminRoles()),
+//     enabled,
+//     retry: 2
+//   });
+
+//   return {
+//     rolesData: extractResponseData(data) || [],
+//     isRolesLoading: isLoading,
+//     rolesError: ErrorHandler(error),
+//     refetchRoles: refetch
+//   };
+// };
+
+// export const useGetAdminRoles = ({ enabled = true, page = 1, limit = 10 } = {}) => {
+//   const { data, isLoading, error, refetch } = useFetchItem({
+//     // Include page and limit in the query key for caching and refetching
+//     queryKey: ["admin-roles", page, limit],
+
+//     // Send page and limit as query parameters to the API
+//     queryFn: () => {
+//       const url = new URL(routes.adminRoles());
+//       url.searchParams.append('page', String(page));
+//       url.searchParams.append('limit', String(limit));
+
+//       return httpService.getData(url.toString());
+//     },
+//     enabled,
+//     retry: 2
+//   });
+
+//   return {
+//     rolesData: extractResponseData(data),
+//     isRolesLoading: isLoading,
+//     rolesError: ErrorHandler(error),
+//     refetchRoles: refetch
+//   };
+// };
+
+export const useGetAdminRoles = ({ enabled = true, page = 1, limit = 10 } = {}) => {
   const { data, isLoading, error, refetch } = useFetchItem({
-    queryKey: ["admin-roles"],
-    queryFn: () => httpService.getData(routes.adminRoles()),
+    // 1. DYNAMIC QUERY KEY:
+    // This is crucial. It tells React Query that this query is unique
+    // based on the page and limit. When `page` or `limit` changes,
+    // React Query will automatically trigger a refetch and cache the new page's data separately.
+    queryKey: ["admin-roles", page, limit],
+
+    // 2. DYNAMIC QUERY FUNCTION:
+    // This function constructs the API request URL, appending the current
+    // `page` and `limit` as search parameters. This ensures the backend
+    // receives the pagination info and returns the correct slice of data.
+    queryFn: () => {
+      // Create a URL object to safely append search parameters
+      // routes.adminRoles() should return the base URL, e.g., "/api/v1/admin/roles"
+      const url = new URL(routes.adminRoles(), window.location.origin);
+      url.searchParams.append('page', String(page));
+      url.searchParams.append('limit', String(limit));
+      
+      // Use the full URL path with query parameters for the GET request
+      return httpService.getData(url.pathname + url.search);
+    },
+
+    // 3. QUERY OPTIONS:
+    // Standard React Query options passed through to the underlying fetch hook.
     enabled,
-    retry: 2
+    retry: 2, // Attempt to refetch a failed request 2 times
   });
 
+  // 4. RETURNED STATE:
+  // The hook returns the full API response (which includes both `data` and `pagination` objects),
+  // the loading state, any errors, and the `refetch` function.
   return {
-    rolesData: extractResponseData(data) || [],
+    rolesData: extractResponseData(data), // This should extract the entire { data: [], pagination: {} } object
     isRolesLoading: isLoading,
     rolesError: ErrorHandler(error),
     refetchRoles: refetch

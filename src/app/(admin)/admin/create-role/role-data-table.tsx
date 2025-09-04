@@ -16,11 +16,23 @@ interface RoleData extends AdminData {
     formattedDate?: string;
 }
 
+// interface RoleTableProps {
+//     rolesData: any[];
+//     loading: boolean;
+//     refetch: () => void;
+// }
+
+// 1. Update component props interface
 interface RoleTableProps {
     rolesData: any[];
     loading: boolean;
     refetch: () => void;
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange: (size: string) => void;
 }
+
 
 // Role Details Dialog Component - Right Side Dialog
 const RoleDetailsDialog: React.FC<{
@@ -222,9 +234,13 @@ const RoleDataTable: React.FC<RoleTableProps> = ({
     rolesData,
     loading,
     refetch,
+    currentPage,
+    totalPages,
+    onPageChange,
+    onPageSizeChange,
 }) => {
     const pageSize = 10;
-    const [currentPage, setCurrentPage] = useState(1);
+    // const [currentPage, setCurrentPage] = useState(1);
     const [nameFilter, setNameFilter] = useState<string>("");
     const [statusFilter, setStatusFilter] = useState<string>("");
     const [selectedRole, setSelectedRole] = useState<any>(null);
@@ -407,7 +423,7 @@ const RoleDataTable: React.FC<RoleTableProps> = ({
                             list={statusList}
                         />
                     </div>
-                    <TableComponent<RoleData>
+                    {/* <TableComponent<RoleData>
                         tableData={tableData}
                         currentPage={currentPage}
                         onPageChange={setCurrentPage}
@@ -416,6 +432,17 @@ const RoleDataTable: React.FC<RoleTableProps> = ({
                         columnOrder={columnOrder}
                         columnLabels={columnLabels}
                         isLoading={loading}
+                    /> */}
+                          <TableComponent<RoleData>
+                        tableData={tableData}
+                        currentPage={currentPage}
+                        onPageChange={onPageChange}
+                        totalPages={totalPages}
+                        cellRenderers={cellRenderers}
+                        columnOrder={columnOrder}
+                        columnLabels={columnLabels}
+                        isLoading={loading}
+                        onPageSizeChange={onPageSizeChange}
                     />
                 </CardContent>
             </Card>

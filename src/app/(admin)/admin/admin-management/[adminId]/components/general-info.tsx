@@ -582,7 +582,7 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
               </Button>
             )}
             <Button variant="ghost" size="icon">
-              <HorizontalDots />
+            
             </Button>
           </div>
         </div>

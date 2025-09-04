@@ -18,10 +18,18 @@ import TableSkeleton from "../skeletons/table";
 
 type CellRenderer<T> = (item: T, column: keyof T) => ReactNode;
 
+// export interface EnhancedTableProps<T extends DataItem> extends ITableProps<T> {
+//   cellRenderers?:any;
+//   columnOrder?: (keyof T)[];
+//   columnLabels?: Partial<Record<keyof T, string>>;
+// }
+
+// 1. Add a specific prop for page size changes for clarity
 export interface EnhancedTableProps<T extends DataItem> extends ITableProps<T> {
-  cellRenderers?:any;
+  cellRenderers?: any;
   columnOrder?: (keyof T)[];
   columnLabels?: Partial<Record<keyof T, string>>;
+  onPageSizeChange?: (value: string) => void;
 }
 
 export function TableComponent<T extends AdminData>({
@@ -36,6 +44,7 @@ export function TableComponent<T extends AdminData>({
   setFilter,
   isLoading = true,
   showPagination = true,
+  onPageSizeChange,
 }: EnhancedTableProps<T>) {
   const columns = columnOrder || (Object.keys(tableData[0]) as (keyof T)[]);
   if (isLoading) return <TableSkeleton columns={columns} />;
@@ -78,6 +87,12 @@ export function TableComponent<T extends AdminData>({
       value: "30",
       text: "30",
     },
+  ];
+
+  const pageSizeList = [
+    { value: "10", text: "10" },
+    { value: "20", text: "20" },
+    { value: "30", text: "30" },
   ];
 
   return (
@@ -128,11 +143,18 @@ export function TableComponent<T extends AdminData>({
             onPageChange={safeOnPageChange}
             totalPages={totalPages}
           />
-          <SelectFilter
+          {/* <SelectFilter
             list={list}
             setFilter={setFilter}
             className="h-8 w-[87px]"
             placeholder="Page Size"
+          /> */}
+              {/* 2. Wire the SelectFilter to the onPageSizeChange handler */}
+              <SelectFilter
+            list={pageSizeList}
+            setFilter={onPageSizeChange}
+            className="h-8 w-[87px]"
+            placeholder="10"
           />
         </div>
       )}
