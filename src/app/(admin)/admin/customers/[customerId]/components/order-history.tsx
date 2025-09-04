@@ -160,15 +160,16 @@ const OrderHistory: React.FC<iProps> = ({ customerId }) => {
 
 					return (
 						<Card
-							key={order.id}
-							className="group border-0 bg-white shadow-sm hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden"
-						>
+						key={order.id}
+						className="group border-0 bg-blue-900 text-white shadow-md hover:shadow-lg transition-all duration-300 rounded-2xl overflow-hidden"
+					>
+					
 							<CardContent className="p-0">
 								<div className="p-6 border-b border-gray-100">
 									<div className="flex justify-between items-start mb-4">
 										<div className="space-y-1">
 											<div className="flex items-center gap-3">
-												<h3 className="font-semibold text-lg text-gray-900">
+												<h3 className="font-semibold text-lg text-white">
 													{order.orderReference}
 												</h3>
 												<span
@@ -192,7 +193,7 @@ const OrderHistory: React.FC<iProps> = ({ customerId }) => {
 											</p>
 										</div>
 										<div className="text-right space-y-1">
-											<p className="text-xl font-bold text-gray-900">
+											<p className="text-xl font-bold text-white">
 												₦{orderTotal.toLocaleString()}
 											</p>
 											<p className="text-sm text-gray-500 font-medium">
