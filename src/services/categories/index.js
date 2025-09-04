@@ -9,104 +9,203 @@ import useFetchItem from "../useFetchItem";
 import { toast } from "sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 // Get all categories with pagination and filters
-export const useGetAllCategories = () => {
-  const {
-    isLoading,
-    error,
-    data,
-    refetch,
-    setFilter
-  } = useFetchItem({
-    queryKey: ["fetchAllCategories"],
-    queryFn: (queryParams) => {
+// export const useGetAllCategories = () => {
+//   const {
+//     isLoading,
+//     error,
+//     data,
+//     refetch,
+//     setFilter
+//   } = useFetchItem({
+//     queryKey: ["fetchAllCategories"],
+//     queryFn: (queryParams) => {
+//       return httpService.getData(routes.categories(queryParams));
+//     },
+//     retry: 2,
+//   });
+
+//   // Debug logging to see what data structure we're getting
+//   console.log('🔍 useGetAllCategories - Raw data:', data);
+//   console.log('🔍 useGetAllCategories - data type:', typeof data);
+//   console.log('🔍 useGetAllCategories - is data array:', Array.isArray(data));
+
+//   // Extract data from response structure with comprehensive fallbacks
+//   let categories = [];
+//   let pagination = {
+//     total: 0,
+//     page: 1,
+//     limit: 10,
+//     totalPages: 0,
+//     activeCount: 0,
+//     inactiveCount: 0,
+//   };
+
+//   try {
+//     if (data) {
+//       // Check multiple possible response structures
+//       if (data?.data?.success && data?.data?.data) {
+//         categories = data.data.data.categories || [];
+//         pagination = { ...pagination, ...data.data.data.pagination };
+        
+//         if (data.data.data.stats) {
+//           pagination.activeCount = data.data.data.stats.active || 0;
+//           pagination.inactiveCount = data.data.data.stats.inactive || 0;
+//         }
+//       } else if (data?.data?.categories) {
+//         categories = data.data.categories || [];
+//         pagination = { ...pagination, ...data.data.pagination };
+        
+//         if (data.data.stats) {
+//           pagination.activeCount = data.data.stats.active || 0;
+//           pagination.inactiveCount = data.data.stats.inactive || 0;
+//         }
+//       } 
+//       if (data.success && data.data) {
+//         categories = data.data.categories || [];
+//         pagination = { ...pagination, ...data.data.pagination };
+        
+//         // Calculate active/inactive counts if not provided
+//         if (categories.length > 0) {
+//           pagination.activeCount = categories.filter((cat) => cat.status === 'Active').length;
+//           pagination.inactiveCount = categories.filter((cat) => cat.status === 'Inactive').length;
+//         }
+//       }
+//       // Keep other response structure handlers as fallbacks
+//       else if (data?.data?.success && data?.data?.data) {
+//         categories = data.data.data.categories || [];
+//         pagination = { ...pagination, ...data.data.data.pagination };
+//       }
+      
+//       else if (data?.success && data?.data) {
+//         categories = data.data.categories || [];
+//         pagination = { ...pagination, ...data.data.pagination };
+        
+//         if (data.data.stats) {
+//           pagination.activeCount = data.data.stats.active || 0;
+//           pagination.inactiveCount = data.data.stats.inactive || 0;
+//         }
+//       } else if (data?.categories) {
+//         categories = data.categories || [];
+//         pagination = { ...pagination, ...data.pagination };
+        
+//         if (data.stats) {
+//           pagination.activeCount = data.stats.active || 0;
+//           pagination.inactiveCount = data.stats.inactive || 0;
+//         }
+//       } else if (data?.data && Array.isArray(data.data)) {
+//         categories = data.data;
+//         pagination = { ...pagination, ...data.pagination };
+//       } else if (Array.isArray(data)) {
+//         categories = data;
+//       }
+
+//       // Fallback calculation if stats not provided by API
+//       if (!pagination.activeCount && !pagination.inactiveCount && categories.length > 0) {
+//         pagination.activeCount = categories.filter((cat) => cat.status === 'Active').length;
+//         pagination.inactiveCount = categories.filter((cat) => cat.status === 'Inactive').length;
+//       }
+//     }
+//   }
+//    catch (extractError) {
+//     console.error("Error extracting categories data:", extractError);
+//   }
+
+//   console.log('🔍 useGetAllCategories - Processed categories:', categories);
+//   console.log('🔍 useGetAllCategories - Categories length:', categories.length);
+//   console.log('🔍 useGetAllCategories - Pagination:', pagination);
+
+//   return {
+//     getAllCategoriesIsLoading: isLoading,
+//     getAllCategoriesData: {
+//       categories,
+//       pagination,
+//     },
+//     getAllCategoriesError: ErrorHandler(error),
+//     refetchAllCategories: refetch,
+//     setAllCategoriesFilter: setFilter,
+//   };
+// };
+
+// export const useGetAllCategories = () => {
+//   const {
+//     isLoading,
+//     error,
+//     data,
+//     refetch,
+//     setFilter
+//   } = useFetchItem({
+//     queryKey: ["fetchAllCategories"],
+//     queryFn: (queryParams) => {
+//       return httpService.getData(routes.categories(queryParams));
+//     },
+//     retry: 2,
+//   });
+
+//   // Extract data from response structure
+//   let categories = [];
+//   let pagination = {
+//     total: 0,
+//     page: 1,
+//     limit: 10,
+//     totalPages: 0,
+//     hasNextPage: false,
+//     hasPreviousPage: false,
+//   };
+
+//   if (data?.success && data?.data) {
+//     categories = data.data.categories || [];
+//     pagination = { ...pagination, ...data.data.pagination };
+//   }
+
+//   return {
+//     getAllCategoriesIsLoading: isLoading,
+//     getAllCategoriesData: {
+//       categories,
+//       pagination,
+//     },
+//     getAllCategoriesError: ErrorHandler(error),
+//     refetchAllCategories: refetch,
+//     setAllCategoriesFilter: setFilter,
+//   };
+// };
+
+export const useGetAllCategories = (filter = {}) => {
+  const { page = 1, limit = 10, search, status, includeBulkPricingStats = 'false' } = filter;
+
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ["categories", page, limit, search, status, includeBulkPricingStats],
+    queryFn: () => {
+      const queryParams = new URLSearchParams();
+      queryParams.append('page', page);
+      queryParams.append('limit', limit);
+      queryParams.append('includeBulkPricingStats', includeBulkPricingStats);
+      if (search) queryParams.append('search', search);
+      if (status) queryParams.append('status', status);
+
       return httpService.getData(routes.categories(queryParams));
     },
     retry: 2,
   });
 
-  // Debug logging to see what data structure we're getting
-  console.log('🔍 useGetAllCategories - Raw data:', data);
-  console.log('🔍 useGetAllCategories - data type:', typeof data);
-  console.log('🔍 useGetAllCategories - is data array:', Array.isArray(data));
-
-  // Extract data from response structure with comprehensive fallbacks
-  let categories = [];
-  let pagination = {
+  // Extract data from response
+  const categories = data?.data?.categories || [];
+  const pagination = data?.data?.pagination || {
     total: 0,
     page: 1,
-    limit: 10,
+    limit: parseInt(limit),
     totalPages: 0,
-    activeCount: 0,
-    inactiveCount: 0,
+    hasNextPage: false,
+    hasPreviousPage: false
   };
-
-  try {
-    if (data) {
-      // Check multiple possible response structures
-      if (data?.data?.success && data?.data?.data) {
-        categories = data.data.data.categories || [];
-        pagination = { ...pagination, ...data.data.data.pagination };
-        
-        if (data.data.data.stats) {
-          pagination.activeCount = data.data.data.stats.active || 0;
-          pagination.inactiveCount = data.data.data.stats.inactive || 0;
-        }
-      } else if (data?.data?.categories) {
-        categories = data.data.categories || [];
-        pagination = { ...pagination, ...data.data.pagination };
-        
-        if (data.data.stats) {
-          pagination.activeCount = data.data.stats.active || 0;
-          pagination.inactiveCount = data.data.stats.inactive || 0;
-        }
-      } else if (data?.success && data?.data) {
-        categories = data.data.categories || [];
-        pagination = { ...pagination, ...data.data.pagination };
-        
-        if (data.data.stats) {
-          pagination.activeCount = data.data.stats.active || 0;
-          pagination.inactiveCount = data.data.stats.inactive || 0;
-        }
-      } else if (data?.categories) {
-        categories = data.categories || [];
-        pagination = { ...pagination, ...data.pagination };
-        
-        if (data.stats) {
-          pagination.activeCount = data.stats.active || 0;
-          pagination.inactiveCount = data.stats.inactive || 0;
-        }
-      } else if (data?.data && Array.isArray(data.data)) {
-        categories = data.data;
-        pagination = { ...pagination, ...data.pagination };
-      } else if (Array.isArray(data)) {
-        categories = data;
-      }
-
-      // Fallback calculation if stats not provided by API
-      if (!pagination.activeCount && !pagination.inactiveCount && categories.length > 0) {
-        pagination.activeCount = categories.filter((cat) => cat.status === 'Active').length;
-        pagination.inactiveCount = categories.filter((cat) => cat.status === 'Inactive').length;
-      }
-    }
-  } catch (extractError) {
-    console.error("Error extracting categories data:", extractError);
-  }
-
-  console.log('🔍 useGetAllCategories - Processed categories:', categories);
-  console.log('🔍 useGetAllCategories - Categories length:', categories.length);
-  console.log('🔍 useGetAllCategories - Pagination:', pagination);
 
   return {
     getAllCategoriesIsLoading: isLoading,
-    getAllCategoriesData: {
-      categories,
-      pagination,
-    },
-    getAllCategoriesError: ErrorHandler(error),
+    getAllCategoriesData: { categories, pagination },
+    getAllCategoriesError: error,
     refetchAllCategories: refetch,
-    setAllCategoriesFilter: setFilter,
   };
 };
 
@@ -307,6 +406,23 @@ export const useUpdateCategory = () => {
     updateCategoryError: ErrorHandler(error),
   };
 };
+
+// export const useDeleteCategory = () => {
+//   const mutationFn = async (id) => {
+//     return httpService.deleteData(routes.category(id));
+//   };
+
+//   return useMutation({
+//     mutationFn,
+//     onSuccess: () => {
+//       toast.success('Category deleted successfully');
+//     },
+//     onError: (error) => {
+//       toast.error('Failed to delete category');
+//       console.error('Delete category error:', error);
+//     },
+//   });
+// };
 
 export const useDeleteCategory = () => {
   const [isLoading, setIsLoading] = useState(false);
