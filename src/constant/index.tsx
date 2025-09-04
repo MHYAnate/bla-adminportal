@@ -149,16 +149,16 @@ export const productFilterList = [
     value: "all",
     category: "stock"
   },
-  // {
-  //   text: "In Stock",
-  //   value: "in_stock",
-  //   category: "stock"
-  // },
-  // {
-  //   text: "Low Stock",
-  //   value: "low_stock",
-  //   category: "stock"
-  // },
+  {
+    text: "In Stock",
+    value: "in_stock",
+    category: "stock"
+  },
+  {
+    text: "Low Stock",
+    value: "low_stock",
+    category: "stock"
+  },
   {
     text: "Out of Stock",
     value: "out_of_stock",
@@ -179,63 +179,63 @@ export const productFilterList = [
   },
 
   // Pricing Filters
-  {
-    text: "Has Bulk Pricing",
-    value: "has_bulk_pricing",
-    category: "pricing"
-  },
-  {
-    text: "No Bulk Pricing",
-    value: "no_bulk_pricing",
-    category: "pricing"
-  },
-  {
-    text: "High Value (>₦50,000)",
-    value: "high_value",
-    category: "pricing"
-  },
-  {
-    text: "Mid Value (₦10,000-₦50,000)",
-    value: "mid_value",
-    category: "pricing"
-  },
-  {
-    text: "Low Value (<₦10,000)",
-    value: "low_value",
-    category: "pricing"
-  },
-
-  // Performance Filters
   // {
-  //   text: "Best Sellers",
-  //   value: "best_sellers",
+  //   text: "Has Bulk Pricing",
+  //   value: "has_bulk_pricing",
+  //   category: "pricing"
+  // },
+  // {
+  //   text: "No Bulk Pricing",
+  //   value: "no_bulk_pricing",
+  //   category: "pricing"
+  // },
+  // {
+  //   text: "High Value (>₦50,000)",
+  //   value: "high_value",
+  //   category: "pricing"
+  // },
+  // {
+  //   text: "Mid Value (₦10,000-₦50,000)",
+  //   value: "mid_value",
+  //   category: "pricing"
+  // },
+  // {
+  //   text: "Low Value (<₦10,000)",
+  //   value: "low_value",
+  //   category: "pricing"
+  // },
+
+  // // Performance Filters
+  // // {
+  // //   text: "Best Sellers",
+  // //   value: "best_sellers",
+  // //   category: "performance"
+  // // },
+  // {
+  //   text: "New Products (Last 30 Days)",
+  //   value: "new_products",
   //   category: "performance"
   // },
-  {
-    text: "New Products (Last 30 Days)",
-    value: "new_products",
-    category: "performance"
-  },
-  {
-    text: "Recently Updated",
-    value: "recently_updated",
-    category: "performance"
-  },
+  // {
+  //   text: "Recently Updated",
+  //   value: "recently_updated",
+  //   category: "performance"
+  // },
 
-  // Returns & Delivery
-  {
-    text: "Accepts Returns",
-    value: "accepts_returns",
-    category: "policy"
-  },
-  {
-    text: "Fast Delivery (1-3 Days)",
-    value: "fast_delivery",
-    category: "policy"
-  },
-  {
-    text: "Standard Delivery (4-7 Days)",
-    value: "standard_delivery",
-    category: "policy"
-  }
+  // // Returns & Delivery
+  // {
+  //   text: "Accepts Returns",
+  //   value: "accepts_returns",
+  //   category: "policy"
+  // },
+  // {
+  //   text: "Fast Delivery (1-3 Days)",
+  //   value: "fast_delivery",
+  //   category: "policy"
+  // },
+  // {
+  //   text: "Standard Delivery (4-7 Days)",
+  //   value: "standard_delivery",
+  //   category: "policy"
+  // }
 ];
