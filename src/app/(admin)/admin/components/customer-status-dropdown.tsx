@@ -183,7 +183,8 @@ export const CustomerStatusDropdown: React.FC<CustomerStatusDropdownProps> = ({
 
             {/* Reason Dialog for FLAGGED/UNDER_REVIEW */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg rounded-md">
+
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                             <AlertTriangle className="h-5 w-5 text-amber-500" />
