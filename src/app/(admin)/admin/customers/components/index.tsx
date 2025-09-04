@@ -82,7 +82,7 @@ const Customers: React.FC = () => {
   const statusList = [
     { text: "All", value: "all" },
     { text: "Active", value: "ACTIVE" },
-    { text: "Deactivated", value: "DEACTIVATE" },
+    { text: "Deactivated", value: "INACTIVE" },
     { text: "Flagged", value: "FLAGGED" },
     { text: "Under Review", value: "UNDER_REVIEW" },
   ];
