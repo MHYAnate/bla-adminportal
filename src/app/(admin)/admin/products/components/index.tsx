@@ -429,7 +429,6 @@ export default function Products() {
 		getAllCategoriesIsLoading,
 		getAllCategoriesData,
 		getAllCategoriesError,
-		setAllCategoriesFilter,
 	} = useGetAllCategories();
 
 	const { getCategoriesSelectionData, getCategoriesSelectionIsLoading } =
