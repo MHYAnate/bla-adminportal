@@ -35,13 +35,13 @@ const CUSTOMER_STATUSES = {
         textColor: 'text-green-800',
         description: 'Customer account is active and in good standing'
     },
-    DEACTIVATE: {
+    INACTIVE: {
         value: 'INACTIVE',
         label: 'Deactivate',
         color: 'tertiary',
         bgColor: 'bg-yellow-100',
         textColor: 'text-yellow-800',
-        description: 'Customer account is temporarily DEACTIVATE'
+        description: 'Customer account is temporarily inactive'
     },
     FLAGGED: {
         value: 'FLAGGED',
@@ -85,8 +85,8 @@ export const CustomerStatusDropdown: React.FC<CustomerStatusDropdownProps> = ({
     const { updateCustomerStatus, isUpdating } = useUpdateCustomerStatus();
 
     // Get current status - handle both field names and ensure it's a string
-    const currentStatus = String(customer?.customerStatus || customer?.status || 'DEACTIVATE').toUpperCase();
-    const currentStatusConfig = CUSTOMER_STATUSES[currentStatus as keyof typeof CUSTOMER_STATUSES] || CUSTOMER_STATUSES.DEACTIVATE;
+    const currentStatus = String(customer?.customerStatus || customer?.status || 'INACTIVE').toUpperCase();
+    const currentStatusConfig = CUSTOMER_STATUSES[currentStatus as keyof typeof CUSTOMER_STATUSES] || CUSTOMER_STATUSES.INACTIVE;
 
     // Get available status transitions (exclude current status)
     const availableStatuses = Object.keys(CUSTOMER_STATUSES).filter(
@@ -100,7 +100,7 @@ export const CustomerStatusDropdown: React.FC<CustomerStatusDropdownProps> = ({
         if (['FLAGGED', 'UNDER_REVIEW'].includes(newStatus)) {
             setIsDialogOpen(true);
         } else {
-            // Update immediately for ACTIVE/DEACTIVATE
+            // Update immediately for ACTIVE/INACTIVE
             await handleStatusUpdate(newStatus, '');
         }
     };
