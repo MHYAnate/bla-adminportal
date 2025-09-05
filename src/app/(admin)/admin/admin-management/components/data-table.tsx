@@ -4843,11 +4843,11 @@ const DataTable: React.FC<DataTableProps> = ({
             placeholder="Filter by Role"
             list={roleList}
           />
-          <SelectFilter
+          {/* <SelectFilter
             setFilter={setStatusFilter}
             placeholder="Filter by Status"
             list={statusList}
-          />
+          /> */}
         </div>
 
         <TableComponent<TableRowData>
