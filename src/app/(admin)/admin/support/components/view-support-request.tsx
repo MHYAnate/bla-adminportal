@@ -129,7 +129,7 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
   const filteredAdmins = useMemo(() => {
     if (!adminsData) return [];
 
-    return adminsData.filter(admin => {
+    return adminsData.filter((admin:any) => {
       // Check if admin has the required roles
       const hasCustomerService = admin.roles?.some((role: { role: { name: string; }; }) =>
         role.role.name === "CUSTOMER_SERVICE" ||
