@@ -558,6 +558,12 @@ const GeneralInfo: React.FC<GeneralInfoProps> = ({ adminData, roles }) => {
                 {adminData?.phone || adminData?.adminProfile?.phone || "Not provided"}
               </p>
             </div>
+            <div className="flex justify-between mb-4">
+              <p className="text-sm text-[#687588]">Gender</p>
+              <p className="text-sm text-[#111827] font-semibold">
+                {adminData?.adminProfile?.gender || "Not Available"}
+              </p>
+            </div>
           </div>
         </div>
       </div>

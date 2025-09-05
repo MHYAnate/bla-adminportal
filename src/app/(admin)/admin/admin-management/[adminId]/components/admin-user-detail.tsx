@@ -33,10 +33,26 @@ const AdminUserDetail: React.FC<AdminUserDetailProps> = ({
 	const params = useSearchParams();
 	const tabParam = params.get("tab");
 	const { handlePush } = useHandlePush();
+	const [page, setPage] = useState(1);
+		const [limit, setLimit] = useState(10000);
+		const [filters, setFilters] = useState({});
 
-	const { adminsData, isAdminsLoading, refetchAdmins } = useGetAdmins({
-		enabled: true,
-	});
+	// const { adminsData, isAdminsLoading, refetchAdmins } = useGetAdmins({
+	// 	enabled: true,
+	// });
+
+		const { 
+			adminsData, 
+			isAdminsLoading, 
+			refetchAdmins, 
+			totalAdmins, 
+			totalPages,
+			currentPage,
+			itemsPerPage 
+		} = useGetAdmins({ 
+			enabled: true, 
+			filter: { page, limit, ...filters } 
+		})
 
 	// ✅ FIXED: Find admin with proper type checking
 	const admin = adminsData.find(
