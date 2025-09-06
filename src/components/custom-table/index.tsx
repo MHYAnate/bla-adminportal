@@ -313,12 +313,12 @@ export function TableComponent<T extends AdminData>({
               totalPages={totalPages}
             />
             
-            <SelectFilter
+            {/* <SelectFilter
               list={pageSizeList}
               setFilter={onPageSizeChange}
               className="h-8 w-[87px]"
               placeholder={pageSize.toString()}
-            />
+            /> */}
           </div>
         </div>
       )}

@@ -248,48 +248,48 @@ export const useGetCurrentAdmin = () => {
   return { currentAdmin, isLoading, error, getCurrentAdmin, refetch: getCurrentAdmin };
 };
 
-export const useGetAdmins = ({ enabled = true, filter = {} }) => {
-  const { 
-    isFetched, isLoading, error, data, refetch, isFetching, 
-    setFilter, pageNumber, pageSize, setPageNumber, setPageSize
-  } = useFetchItem({
-    queryKey: ["admins", filter],
-    queryFn: (params) => httpService.getData(routes.admins(params)),
-    enabled,
-    retry: 2,
-    initialFilter: filter,
-    isPaginated: true,
-    initialPage: 1,
-    initialPageSize: 10
-  });
+// export const useGetAdmins = ({ enabled = true, filter = {} }) => {
+//   const { 
+//     isFetched, isLoading, error, data, refetch, isFetching, 
+//     setFilter, pageNumber, pageSize, setPageNumber, setPageSize
+//   } = useFetchItem({
+//     queryKey: ["admins", filter],
+//     queryFn: (params) => httpService.getData(routes.admins(params)),
+//     enabled,
+//     retry: 2,
+//     initialFilter: filter,
+//     isPaginated: true,
+//     initialPage: 1,
+//     initialPageSize: 10
+//   });
 
-  const transformedAdmins = React.useMemo(() => {
-    const extractedData = extractResponseData(data);
-    if (!extractedData || !Array.isArray(extractedData)) return [];
+//   const transformedAdmins = React.useMemo(() => {
+//     const extractedData = extractResponseData(data);
+//     if (!extractedData || !Array.isArray(extractedData)) return [];
     
-    return extractedData.map((admin) => ({
-      ...admin,
-      roleNames: admin.roles?.map(ur => ur.role?.name || ur.name).filter(Boolean) || [],
-      totalPermissions: admin.permissionCount || 0,
-      isRoleBased: true,
-    }));
-  }, [data]);
+//     return extractedData.map((admin) => ({
+//       ...admin,
+//       roleNames: admin.roles?.map(ur => ur.role?.name || ur.name).filter(Boolean) || [],
+//       totalPermissions: admin.permissionCount || 0,
+//       isRoleBased: true,
+//     }));
+//   }, [data]);
 
-  return {
-    isFetchingAdmins: isFetching,
-    isAdminsLoading: isLoading,
-    adminsData: transformedAdmins,
-    totalAdmins: data?.pagination?.total || 0,
-    totalPages: data?.pagination?.totalPages || 0,
-    currentPage: data?.pagination?.currentPage || 1,
-    itemsPerPage: data?.pagination?.itemsPerPage || 10,
-    hasNextPage: data?.pagination?.hasNextPage || false,
-    hasPreviousPage: data?.pagination?.hasPreviousPage || false,
-    adminsError: ErrorHandler(error),
-    refetchAdmins: refetch,
-    pageNumber, pageSize, setPageNumber, setPageSize, setFilter
-  };
-};
+//   return {
+//     isFetchingAdmins: isFetching,
+//     isAdminsLoading: isLoading,
+//     adminsData: transformedAdmins,
+//     totalAdmins: data?.pagination?.total || 0,
+//     totalPages: data?.pagination?.totalPages || 0,
+//     currentPage: data?.pagination?.currentPage || 1,
+//     itemsPerPage: data?.pagination?.itemsPerPage || 10,
+//     hasNextPage: data?.pagination?.hasNextPage || false,
+//     hasPreviousPage: data?.pagination?.hasPreviousPage || false,
+//     adminsError: ErrorHandler(error),
+//     refetchAdmins: refetch,
+//     pageNumber, pageSize, setPageNumber, setPageSize, setFilter
+//   };
+// };
 
 // export const useGetAdmins = ({ enabled = true, filter = {} }) => {
 //   const { 
@@ -1320,3 +1320,149 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
   console.log('- window.adminHooksUtils.testRoleUpdate(adminId, roles)');
   console.log('- window.adminHooksUtils.forceRefreshAllData()');
 }
+
+// export const useGetAdmins = ({ enabled = true, filter = {}, pageSize = 1000 }) => {
+//   const { 
+//     isFetched, isLoading, error, data, refetch, isFetching, 
+//     setFilter, pageNumber, pageSize: currentPageSize, setPageNumber, setPageSize
+//   } = useFetchItem({
+//     queryKey: ["admins", filter],
+//     queryFn: (params) => httpService.getData(routes.admins(params)),
+//     enabled,
+//     retry: 2,
+//     initialFilter: filter,
+//     isPaginated: true,
+//     initialPage: 1,
+//     initialPageSize: pageSize  // Use the pageSize from hook parameters
+//   });
+
+//   const transformedAdmins = React.useMemo(() => {
+//     const extractedData = extractResponseData(data);
+//     if (!extractedData || !Array.isArray(extractedData)) return [];
+    
+//     return extractedData.map((admin) => ({
+//       ...admin,
+//       roleNames: admin.roles?.map(ur => ur.role?.name || ur.name).filter(Boolean) || [],
+//       totalPermissions: admin.permissionCount || 0,
+//       isRoleBased: true,
+//     }));
+//   }, [data]);
+
+//   return {
+//     isFetchingAdmins: isFetching,
+//     isAdminsLoading: isLoading,
+//     adminsData: transformedAdmins,
+//     totalAdmins: data?.pagination?.total || 0,
+//     totalPages: data?.pagination?.totalPages || 0,
+//     currentPage: data?.pagination?.currentPage || 1,
+//     itemsPerPage: data?.pagination?.itemsPerPage || pageSize,
+//     hasNextPage: data?.pagination?.hasNextPage || false,
+//     hasPreviousPage: data?.pagination?.hasPreviousPage || false,
+//     adminsError: ErrorHandler(error),
+//     refetchAdmins: refetch,
+//     pageNumber, 
+//     pageSize: currentPageSize, 
+//     setPageNumber, 
+//     setPageSize, 
+//     setFilter
+//   };
+// };
+
+// export const useGetAdmins = ({ enabled = true, filter = {}, pageSize = 1000 }) => {
+//   const { 
+//     isFetched, isLoading, error, data, refetch, isFetching, 
+//     setFilter, pageNumber, pageSize: currentPageSize, setPageNumber, setPageSize
+//   } = useFetchItem({
+//     queryKey: ["admins", filter],
+//     queryFn: (params) => httpService.getData(routes.admins(params)),
+//     enabled,
+//     retry: 2,
+//     initialFilter: filter,
+//     isPaginated: true,
+//     initialPage: 1,
+//     initialPageSize: pageSize  // Use the pageSize parameter as initial page size
+//   });
+
+//   const transformedAdmins = React.useMemo(() => {
+//     const extractedData = extractResponseData(data);
+//     if (!extractedData || !Array.isArray(extractedData)) return [];
+    
+//     return extractedData.map((admin) => ({
+//       ...admin,
+//       roleNames: admin.roles?.map(ur => ur.role?.name || ur.name).filter(Boolean) || [],
+//       totalPermissions: admin.permissionCount || 0,
+//       isRoleBased: true,
+//     }));
+//   }, [data]);
+
+//   return {
+//     isFetchingAdmins: isFetching,
+//     isAdminsLoading: isLoading,
+//     adminsData: transformedAdmins,
+//     totalAdmins: data?.pagination?.total || 0,
+//     totalPages: data?.pagination?.totalPages || 0,
+//     currentPage: data?.pagination?.currentPage || 1,
+//     itemsPerPage: currentPageSize,  // Use the current page size from state
+//     hasNextPage: data?.pagination?.hasNextPage || false,
+//     hasPreviousPage: data?.pagination?.hasPreviousPage || false,
+//     adminsError: ErrorHandler(error),
+//     refetchAdmins: refetch,
+//     pageNumber, 
+//     pageSize: currentPageSize, 
+//     setPageNumber, 
+//     setPageSize, 
+//     setFilter
+//   };
+// };
+
+export const useGetAdmins = ({ enabled = true, filter = {} }) => {
+  // Add pageSize parameter to force 1000 items per page
+  const modifiedFilter = {
+    ...filter,
+    limit: 1000 // This will be sent as a query parameter to the backend
+  };
+
+  const { 
+    isFetched, isLoading, error, data, refetch, isFetching, 
+    setFilter, pageNumber, pageSize, setPageNumber, setPageSize
+  } = useFetchItem({
+    queryKey: ["admins", modifiedFilter], // Use modified filter
+    queryFn: (params) => httpService.getData(routes.admins({
+      ...params,
+      limit: 1000 // Ensure limit is always 1000
+    })),
+    enabled,
+    retry: 2,
+    initialFilter: modifiedFilter, // Use the modified filter
+    isPaginated: true,
+    initialPage: 1,
+    initialPageSize: 1000  // Set initial page size to 1000
+  });
+
+  const transformedAdmins = React.useMemo(() => {
+    const extractedData = extractResponseData(data);
+    if (!extractedData || !Array.isArray(extractedData)) return [];
+    
+    return extractedData.map((admin) => ({
+      ...admin,
+      roleNames: admin.roles?.map(ur => ur.role?.name || ur.name).filter(Boolean) || [],
+      totalPermissions: admin.permissionCount || 0,
+      isRoleBased: true,
+    }));
+  }, [data]);
+
+  return {
+    isFetchingAdmins: isFetching,
+    isAdminsLoading: isLoading,
+    adminsData: transformedAdmins,
+    totalAdmins: data?.pagination?.total || 0,
+    totalPages: data?.pagination?.totalPages || 0,
+    currentPage: data?.pagination?.currentPage || 1,
+    itemsPerPage: data?.pagination?.itemsPerPage || 1000,  // Default to 1000 if not in response
+    hasNextPage: data?.pagination?.hasNextPage || false,
+    hasPreviousPage: data?.pagination?.hasPreviousPage || false,
+    adminsError: ErrorHandler(error),
+    refetchAdmins: refetch,
+    pageNumber, pageSize, setPageNumber, setPageSize, setFilter
+  };
+};
