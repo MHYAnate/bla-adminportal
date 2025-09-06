@@ -32,14 +32,14 @@ const Navbar: React.FC = () => {
       )}
     >
       <div className={``}>
-        <Input
+        {/* <Input
           placeholder="Search anything…"
           onChange={async (event: ChangeEvent<HTMLInputElement>) =>
             setQuery(event.target.value)
           }
           className="h-12 w-[180%] ps-12"
           type="search"
-        />
+        /> */}
       </div>
       <div className={cn("flex items-center gap-6")}>
         <div className="relative w-6 h-6 flex items-center justify-center">

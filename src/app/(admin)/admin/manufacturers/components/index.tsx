@@ -817,7 +817,7 @@ export default function Manufacturers() {
                   value={searchInput}
                   onChange={handleSearchInputChange}
                   placeholder="Search manufacturers by name..."
-                  className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  className="w-1/2 pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
                 {searchInput && (
                   <button
