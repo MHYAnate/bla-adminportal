@@ -166,15 +166,32 @@ const DataTable: React.FC<DataTableProps> = ({
 
   // const safeAdminData = adminData && Array.isArray(adminData) ? adminData : [];
 
+  // const filteredData: Admin[] = safeAdminData.filter((admin) => {
+  //   if (!admin || typeof admin !== 'object') return false;
+
+  //   const username = admin.username || admin.adminProfile?.username || admin.fullName || "";
+  //   const adminEmail = admin.email || "";
+
+  //   const nameMatch = nameFilter
+  //     ? username.toLowerCase().includes(nameFilter.toLowerCase()) ||
+  //     adminEmail.toLowerCase().includes(nameFilter.toLowerCase())
+  //     : true;
   const filteredData: Admin[] = safeAdminData.filter((admin) => {
     if (!admin || typeof admin !== 'object') return false;
-
-    const username = admin.username || admin.adminProfile?.username || admin.fullName || "";
-    const adminEmail = admin.email || "";
-
+  
+    // Get all possible name fields
+    const nameFields = [
+      admin.username,
+      admin.adminProfile?.username,
+      admin.fullName,
+      admin.adminProfile?.fullName
+    ].filter(Boolean).join(' ').toLowerCase();
+    
+    const adminEmail = admin.email?.toLowerCase() || "";
+  
     const nameMatch = nameFilter
-      ? username.toLowerCase().includes(nameFilter.toLowerCase()) ||
-      adminEmail.toLowerCase().includes(nameFilter.toLowerCase())
+      ? nameFields.includes(nameFilter.toLowerCase()) || 
+        adminEmail.includes(nameFilter.toLowerCase())
       : true;
 
     // Enhanced role matching for role-based system
