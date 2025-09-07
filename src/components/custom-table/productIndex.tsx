@@ -67,16 +67,16 @@ export function ProductTableComponent<T extends ProductData>({
 
   const list = [
     {
-      value: "5000",
-      text: "5000",
+      value: "10",
+      text: "10",
     },
     {
-      value: "10000",
-      text: "10000",
+      value: "20",
+      text: "20",
     },
     {
-      value: "10000000",
-      text: "full",
+      value: "50",
+      text: "50",
     },
   ];
 
