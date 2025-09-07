@@ -10,6 +10,8 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { useGetManufacturers } from "@/services/manufacturers";
 import { useGetCategoriesForSelection } from "@/services/categories";
+import CategoryForm from "../../../categories/components/categoryForm";
+import CategorySuccessModal from "../../../categories/components/categorySuccessModal";
 
 
 
@@ -20,7 +22,12 @@ interface Props {
 }
 
 const AddProduct: React.FC<Props> = ({ form }) => {
+  // const [showCategoryForm, setShowCategoryForm] = useState(false);
+
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [createdCategoryName, setCreatedCategoryName] = useState("");
+
 
   const {
     getManufacturersData,
@@ -39,7 +46,18 @@ const AddProduct: React.FC<Props> = ({ form }) => {
     getCategoriesSelectionData,
     getCategoriesSelectionIsLoading,
     getCategoriesSelectionError,
+    refetchCategoriesSelection
   } = useGetCategoriesForSelection();
+
+  // useEffect(() => {
+  //   if (getManufacturersData?.data?.length > 0 && !form.getValues("manufacturerId")) {
+  //     form.setValue("manufacturerId", getManufacturersData.data[0].id.toString());
+  //   }
+  // }, [getManufacturersData, form]);
+
+  // const handleCreateCategory = () => {
+  //   setShowCategoryForm(true);
+  // };
 
   useEffect(() => {
     if (getManufacturersData?.data?.length > 0 && !form.getValues("manufacturerId")) {
@@ -50,6 +68,39 @@ const AddProduct: React.FC<Props> = ({ form }) => {
   const handleCreateCategory = () => {
     setShowCategoryForm(true);
   };
+
+  const handleCategorySuccess = async (categoryData: any) => {
+    try {
+      setShowCategoryForm(false);
+
+      if (categoryData?.id) {
+        form.setValue('categoryId', categoryData.id.toString());
+      }
+
+      setShowSuccessModal(true);
+      setCreatedCategoryName(categoryData?.name || "New Category");
+
+      setTimeout(async () => {
+        await refetchCategoriesSelection();
+      }, 500);
+
+    } catch (err) {
+      console.error('Error handling new category:', err);
+    }
+  };
+
+  const handleCategoryFormClose = () => {
+    setShowCategoryForm(false);
+    setTimeout(() => {
+      refetchCategoriesSelection();
+    }, 500);
+  };
+
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    setCreatedCategoryName("");
+  };
+
 
   return (
     <div className="space-y-6">
@@ -219,6 +270,19 @@ const AddProduct: React.FC<Props> = ({ form }) => {
           </div>
         </div>
       </div>
+      <CategoryForm
+        isOpen={showCategoryForm}
+        onClose={handleCategoryFormClose}
+        onSuccess={handleCategorySuccess}
+        mode="create"
+      />
+
+      {/* Success Modal */}
+      <CategorySuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        categoryName={createdCategoryName}
+      />
     </div>
   );
 };

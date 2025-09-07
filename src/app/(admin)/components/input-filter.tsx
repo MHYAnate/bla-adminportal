@@ -19,7 +19,7 @@ export function InputFilter({
         setQuery(value);
       }}
       pos={true}
-      className="h-11 w-full"
+      className="h-11 w-1/2"
     />
   );
 }

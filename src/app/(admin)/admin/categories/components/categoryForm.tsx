@@ -126,7 +126,7 @@ const CategoryForm = ({
                                     </label>
                                     <div className="border-2 border-dashed border-gray-200 rounded-lg p-8 text-center bg-gray-50">
                                         <div className="flex flex-col items-center">
-                                            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mb-3">
+                                            <div className="w-12 h-6 bg-gray-200 rounded-full flex items-center justify-center mb-3">
                                                 <svg
                                                     className="w-6 h-6 text-gray-400"
                                                     fill="none"
@@ -168,7 +168,7 @@ const CategoryForm = ({
                                                         placeholder="e.g., Frozen Foods, Electronics"
                                                         {...field}
                                                         disabled={isSubmitting}
-                                                        className="h-12 border-gray-200 focus:border-[#F7931E] focus:ring-[#F7931E]"
+                                                        className="h-6 border-gray-200 focus:border-[#F7931E] focus:ring-[#F7931E]"
                                                     />
                                                 </FormControl>
                                                 <FormMessage />
@@ -205,7 +205,7 @@ const CategoryForm = ({
                                         variant="outline"
                                         onClick={handleClose}
                                         disabled={isSubmitting}
-                                        className="flex-1 h-12 border-gray-200 text-gray-600 hover:bg-gray-50"
+                                        className="flex-1 h-6 border-gray-200 text-gray-600 hover:bg-gray-50"
                                     >
                                         Cancel
                                     </Button>
@@ -254,7 +254,7 @@ const CategoryForm = ({
                                             }
                                         }}
                                         disabled={isSubmitting}
-                                        className="flex-1 h-12 bg-[#F7931E] hover:bg-[#e8851a] text-white font-medium"
+                                        className="flex-1 h-6 bg-[#F7931E] hover:bg-[#e8851a] text-white font-medium"
                                     >
                                         {isSubmitting ? (
                                             <div className="flex items-center gap-2">
