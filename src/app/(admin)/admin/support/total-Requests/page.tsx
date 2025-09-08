@@ -146,6 +146,9 @@ export default function SupportManagementPage() {
     category: "",
     priority: "",
     search: "",
+    dateRange: "",
+    dateFrom: "",
+    dateTo: ""
   });
 
   const {
@@ -170,6 +173,18 @@ export default function SupportManagementPage() {
     setFilters(prev => ({ ...prev, page }));
   }, []);
 
+  const handleDateRangeChange = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, dateRange: value, page: 1 }));
+  }, []);
+
+  const handleDateFromChange = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, dateFrom: value, page: 1 }));
+  }, []);
+
+  const handleDateToChange = useCallback((value: string) => {
+    setFilters(prev => ({ ...prev, dateTo: value, page: 1 }));
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex justify-between items-center">
@@ -184,11 +199,14 @@ export default function SupportManagementPage() {
 
       <Card className="bg-white rounded-lg shadow-sm">
         <CardContent className="p-6">
-          <SupportFilters
-            filters={filters}
-            onSearch={handleSearch}
-            onFilterChange={handleFilterChange}
-          />
+        <SupportFilters
+        filters={filters}
+        onSearch={handleSearch}
+        onFilterChange={handleFilterChange}
+        onDateRangeChange={handleDateRangeChange}
+        onDateFromChange={handleDateFromChange}
+        onDateToChange={handleDateToChange}
+      />
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12">

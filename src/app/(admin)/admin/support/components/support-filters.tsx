@@ -3,17 +3,31 @@
 
 import { Input } from "@/components/ui/input";
 import { SelectFilter } from "@/app/(admin)/components/select-filter";
+import { DateRangeFilter } from "@/app/(admin)/components/date-range-filter";
+
+// interface SupportFiltersProps {
+//   filters: any;
+//   onSearch: (search: string) => void;
+//   onFilterChange: (key: string, value: string) => void;
+// }
+
 
 interface SupportFiltersProps {
   filters: any;
   onSearch: (search: string) => void;
   onFilterChange: (key: string, value: string) => void;
+  onDateRangeChange: (value: string) => void;
+  onDateFromChange: (value: string) => void;
+  onDateToChange: (value: string) => void;
 }
 
 const SupportFilters: React.FC<SupportFiltersProps> = ({
   filters,
   onSearch,
   onFilterChange,
+  onDateRangeChange,
+  onDateFromChange,
+  onDateToChange,
 }) => {
   const statusOptions = [
     { text: "All Statuses", value: "all_statuses" },
@@ -64,6 +78,15 @@ const SupportFilters: React.FC<SupportFiltersProps> = ({
             setFilter={(value: string) => onFilterChange("category", value)}
             placeholder="Filter by Category"
             list={categoryOptions}
+          />
+
+<DateRangeFilter
+            dateRange={filters.dateRange}
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            onDateRangeChange={onDateRangeChange}
+            onDateFromChange={onDateFromChange}
+            onDateToChange={onDateToChange}
           />
 
           {/* <SelectFilter
