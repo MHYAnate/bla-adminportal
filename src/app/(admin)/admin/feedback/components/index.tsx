@@ -22,7 +22,7 @@ import { formatFeedbackForCard } from "@/services/feedback";
 const Feedbacks: React.FC = () => {
   const [filters, setFilters] = useState({
     page: 1,
-    limit: 12, // For card layout
+    limit: 10, // For card layout
     feedbackType: '',
     customerType: '',
     status: '',
