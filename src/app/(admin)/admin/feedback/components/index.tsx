@@ -51,6 +51,7 @@ const Feedbacks: React.FC = () => {
   };
 
   console.log(feedbackData, "summary")
+  
   // Handle search query change
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -203,7 +204,7 @@ const Feedbacks: React.FC = () => {
               {/* {feedbackData.pagination && feedbackData.pagination.totalPages > 1 && ( */}
                 <div className="flex items-center justify-center mt-8 gap-2">
                   <button
-                    disabled={!feedbackData.data?.pagination?.hasPreviousPage}
+                    disabled={!feedbackData.data?.pagination?.hasPrevPage}
                     onClick={() => handlePageChange(filters.page - 1)}
                     className="px-4 py-2 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                   >
