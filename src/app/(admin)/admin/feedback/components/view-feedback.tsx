@@ -450,7 +450,7 @@ const ViewFeedback: React.FC<ViewFeedbackProps> = ({
 
     {/* Email */}
     <div>
-      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Email</p>
+      <p className="text-xs text-gray-500 uppercase tracking-wide mb-1 break-words">Email</p>
       <p className="text-base text-gray-800">
         {currentData.customer?.email || currentData.user?.email || "N/A"}
       </p>

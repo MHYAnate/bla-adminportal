@@ -356,15 +356,17 @@ const ViewSupportRequest: React.FC<ViewSupportRequestProps> = ({
           </div>
           <div>
             <p className="text-sm font-medium text-gray-600">Email</p>
-            <p>
+            <p className="text-sm font-medium text-gray-900 break-words">
               {currentData.user?.email || currentData.customer?.email || "N/A"}
             </p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Business</p>
+            <p className="text-sm font-medium text-gray-600">Phone Number</p>
             <p>
-              {currentData.user?.businessProfile?.businessName ||
+              {/* {currentData.user?.businessProfile?.businessName ||
                 currentData.customer?.businessName ||
+                "N/A"} */}
+                {currentData.user?.profile?.deliveryPhone ||
                 "N/A"}
             </p>
           </div>

@@ -16,6 +16,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { useState } from "react";
+import { useGetSupportWorkloadStats } from "@/services/feedback";
 
 interface FeedbackSummary {
   total: number;
@@ -39,6 +40,11 @@ const chartConfig = {
 export function FeedbackBarComponent({ summary }: FeedbackBarComponentProps) {
   const [filter, setFilter] = useState<string>("all_time");
 
+
+  const { data: workloadStats, isLoading: statsLoading } = useGetSupportWorkloadStats();
+
+  const distribution = workloadStats?.statusBreakdown;
+
   const filterList = [
     { text: "All Time", value: "all_time" },
     { text: "Last 30 Days", value: "30d" },
@@ -47,11 +53,11 @@ export function FeedbackBarComponent({ summary }: FeedbackBarComponentProps) {
 
   const chartData = summary
     ? [
-        { category: "New", count: summary.byStatus?.NEW || 0, fill: chartConfig.new.color },
+        { category: "New", count: distribution?.NEW || 0 || 0, fill: chartConfig.new.color },
         // { category: "Reviewed", count: summary.byStatus?.REVIEWED || 0, fill: chartConfig.reviewed.color },
-        { category: "In Progress", count: summary.byStatus?.IN_PROGRESS || 0, fill: chartConfig.in_progress.color },
-        { category: "Resolved", count: summary.byStatus?.RESOLVED || 0, fill: chartConfig.resolved.color },
-        { category: "Closed", count: summary.byStatus?.CLOSED || 0, fill: chartConfig.closed.color },
+        { category: "In Progress", count: distribution?.IN_PROGRESS || 0, fill: chartConfig.in_progress.color },
+        { category: "Resolved", count: distribution?.RESOLVED || 0, fill: chartConfig.resolved.color },
+        { category: "Closed", count: distribution?.CLOSED || 0, fill: chartConfig.closed.color },
       ]
     : [
         { category: "New", count: 0, fill: chartConfig.new.color },
