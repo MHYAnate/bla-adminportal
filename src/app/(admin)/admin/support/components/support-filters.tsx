@@ -66,11 +66,11 @@ const SupportFilters: React.FC<SupportFiltersProps> = ({
             list={categoryOptions}
           />
 
-          <SelectFilter
+          {/* <SelectFilter
             setFilter={(value: string) => onFilterChange("priority", value)}
             placeholder="Filter by Priority"
             list={priorityOptions}
-          />
+          /> */}
         </div>
       </div>
     </div>
