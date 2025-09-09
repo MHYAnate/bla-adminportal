@@ -749,11 +749,11 @@ const DataTable: React.FC<DataTableProps> = ({
   </div>
 )} */}
 
-<div className="flex items-center gap-2 mt-10">
+<div className="flex items-center justify-center gap-2 mt-10">
   <Button
     variant="outline"
     size="sm"
-    className="border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+    className="w-fit  border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
     disabled={!pagination.hasPrevPage || isLoading}
     onClick={() => onPageChange(pagination.currentPage - 1)}
   >
@@ -769,7 +769,7 @@ const DataTable: React.FC<DataTableProps> = ({
   <Button
     variant="outline"
     size="sm"
-    className="border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+    className="w-fit  border border-gray-300 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
     disabled={!pagination.hasNextPage || isLoading}
     onClick={() => onPageChange(pagination.currentPage + 1)}
   >

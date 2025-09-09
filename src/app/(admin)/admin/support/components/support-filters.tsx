@@ -1,16 +1,115 @@
-// src/app/(admin)/admin/support/components/support-filters.tsx
-"use client";
+// // src/app/(admin)/admin/support/components/support-filters.tsx
+// "use client";
 
-import { Input } from "@/components/ui/input";
-import { SelectFilter } from "@/app/(admin)/components/select-filter";
-import { DateRangeFilter } from "@/app/(admin)/components/date-range-filter";
+// import { Input } from "@/components/ui/input";
+// import { SelectFilter } from "@/app/(admin)/components/select-filter";
+// import { DateRangeFilter } from "@/app/(admin)/components/date-range-filter";
+
+// // interface SupportFiltersProps {
+// //   filters: any;
+// //   onSearch: (search: string) => void;
+// //   onFilterChange: (key: string, value: string) => void;
+// // }
+
 
 // interface SupportFiltersProps {
 //   filters: any;
 //   onSearch: (search: string) => void;
 //   onFilterChange: (key: string, value: string) => void;
+//   onDateRangeChange: (value: string) => void;
+//   onDateFromChange: (value: string) => void;
+//   onDateToChange: (value: string) => void;
 // }
 
+// const SupportFilters: React.FC<SupportFiltersProps> = ({
+//   filters,
+//   onSearch,
+//   onFilterChange,
+//   onDateRangeChange,
+//   onDateFromChange,
+//   onDateToChange,
+// }) => {
+//   const statusOptions = [
+//     { text: "All Statuses", value: "all_statuses" },
+//     { text: "New", value: "NEW" },
+//     { text: "In Progress", value: "IN_PROGRESS" },
+//     { text: "Resolved", value: "RESOLVED" },
+//   ];
+
+//   const categoryOptions = [
+//     { text: "All Categories", value: "all_categories" },
+//     { text: "Product", value: "PRODUCT" },
+//     { text: "Order", value: "ORDER" },
+//     { text: "Delivery", value: "DELIVERY" },
+//     { text: "General", value: "GENERAL" },
+//     { text: "Other", value: "OTHER" },
+//   ];
+
+//   const priorityOptions = [
+//     { text: "All Priorities", value: "all_priorities" },
+//     { text: "Low", value: "LOW" },
+//     { text: "Medium", value: "MEDIUM" },
+//     { text: "High", value: "HIGH" },
+//     { text: "Urgent", value: "URGENT" },
+//   ];
+
+//   return (
+//     <div className="mb-6">
+//       <div className="flex items-center gap-4 mb-6 justify-between">
+//         <h6 className="font-semibold text-lg text-[#111827]">
+//           Support Requests
+//         </h6>
+
+//         <div className="flex items-center gap-4">
+//           <Input
+//             placeholder="Search requests..."
+//             value={filters.search || ""}
+//             onChange={(e) => onSearch(e.target.value)}
+//             className="w-64"
+//           />
+
+//           <SelectFilter
+//             setFilter={(value: string) => onFilterChange("status", value)}
+//             placeholder="Filter by Status"
+//             list={statusOptions}
+//           />
+
+//           <SelectFilter
+//             setFilter={(value: string) => onFilterChange("category", value)}
+//             placeholder="Filter by Category"
+//             list={categoryOptions}
+//           />
+
+// <DateR
+
+// <DateRangeFilter
+//             dateRange={filters.dateRange}
+//             dateFrom={filters.dateFrom}
+//             dateTo={filters.dateTo}
+//             onDateRangeChange={onDateRangeChange}
+//             onDateFromChange={onDateFromChange}
+//             onDateToChange={onDateToChange}
+//           />
+
+//           {/* <SelectFilter
+//             setFilter={(value: string) => onFilterChange("priority", value)}
+//             placeholder="Filter by Priority"
+//             list={priorityOptions}
+//           /> */}
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default SupportFilters;
+
+
+"use client";
+
+import { Input } from "@/components/ui/input";
+import { SelectFilter } from "@/app/(admin)/components/select-filter";
+import { DateRangeFilter } from "@/app/(admin)/components/date-range-filter";
 
 interface SupportFiltersProps {
   filters: any;
@@ -19,6 +118,8 @@ interface SupportFiltersProps {
   onDateRangeChange: (value: string) => void;
   onDateFromChange: (value: string) => void;
   onDateToChange: (value: string) => void;
+  onLimitChange: (limit: string) => void;
+  limitOptions: { text: string; value: string }[];
 }
 
 const SupportFilters: React.FC<SupportFiltersProps> = ({
@@ -28,6 +129,8 @@ const SupportFilters: React.FC<SupportFiltersProps> = ({
   onDateRangeChange,
   onDateFromChange,
   onDateToChange,
+  onLimitChange,
+  limitOptions,
 }) => {
   const statusOptions = [
     { text: "All Statuses", value: "all_statuses" },
@@ -55,12 +158,12 @@ const SupportFilters: React.FC<SupportFiltersProps> = ({
 
   return (
     <div className="mb-6">
-      <div className="flex items-center gap-4 mb-6 justify-between">
+      <div className="flex items-center gap-4 mb-6 justify-between flex-wrap">
         <h6 className="font-semibold text-lg text-[#111827]">
           Support Requests
         </h6>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
           <Input
             placeholder="Search requests..."
             value={filters.search || ""}
@@ -80,7 +183,13 @@ const SupportFilters: React.FC<SupportFiltersProps> = ({
             list={categoryOptions}
           />
 
-<DateRangeFilter
+          <SelectFilter
+            setFilter={(value: string) => onFilterChange("priority", value)}
+            placeholder="Filter by Priority"
+            list={priorityOptions}
+          />
+
+          <DateRangeFilter
             dateRange={filters.dateRange}
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
@@ -89,11 +198,13 @@ const SupportFilters: React.FC<SupportFiltersProps> = ({
             onDateToChange={onDateToChange}
           />
 
-          {/* <SelectFilter
-            setFilter={(value: string) => onFilterChange("priority", value)}
-            placeholder="Filter by Priority"
-            list={priorityOptions}
-          /> */}
+          <SelectFilter
+            setFilter={onLimitChange}
+            placeholder="Items per page"
+            list={limitOptions}
+            value={filters.limit.toString()}
+            className="w-32 bg-gradient-to-r from-purple-100 to-blue-100 border-purple-300"
+          />
         </div>
       </div>
     </div>
