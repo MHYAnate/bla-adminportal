@@ -14,8 +14,7 @@ export default function OrdersPage() {
     // </>
 
     <section>
-    {/* <Reports /> */}
-    working progress
+     <Orders />
   </section>
   );
 }

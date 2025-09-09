@@ -171,7 +171,7 @@ export default function SalesChart() {
           <h1 className="text-3xl font-light text-gray-800">Sales Analytics</h1>
           <div className="flex items-center gap-2">
             {/* ✅ ADDED: Timeframe selector */}
-            <div className="flex gap-1 mr-4">
+            {/* <div className="flex gap-1 mr-4">
               {(['3m', '6m', '12m'] as const).map((tf) => (
                 <Button
                   key={tf}
@@ -183,7 +183,7 @@ export default function SalesChart() {
                   {tf.toUpperCase()}
                 </Button>
               ))}
-            </div>
+            </div> */}
             <Button
               onClick={exportChart}
               variant="ghost"
@@ -193,7 +193,7 @@ export default function SalesChart() {
             >
               <Download className="w-5 h-5" />
             </Button>
-            <Button
+            {/* <Button
               variant="outline"
               onClick={handleRefresh}
               disabled={isSalesLoading || isFetchingSales}
@@ -201,7 +201,7 @@ export default function SalesChart() {
             >
               <RefreshCw className={`w-4 h-4 ${(isSalesLoading || isFetchingSales) ? 'animate-spin' : ''}`} />
               Refresh
-            </Button>
+            </Button> */}
           </div>
         </div>
 
