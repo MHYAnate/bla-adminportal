@@ -34,7 +34,7 @@ const chartConfig = {
   reviewed: { label: "Reviewed", color: "#F59E0B" },
   in_progress: { label: "In Progress", color: "#FB923C" },
   resolved: { label: "Resolved", color: "#10B981" },
-  closed: { label: "Closed", color: "#6B7280" },
+  // closed: { label: "Closed", color: "#6B7280" },
 } satisfies ChartConfig;
 
 export function FeedbackBarComponent({ summary }: FeedbackBarComponentProps) {
@@ -57,14 +57,14 @@ export function FeedbackBarComponent({ summary }: FeedbackBarComponentProps) {
         // { category: "Reviewed", count: summary.byStatus?.REVIEWED || 0, fill: chartConfig.reviewed.color },
         { category: "In Progress", count: distribution?.IN_PROGRESS || 0, fill: chartConfig.in_progress.color },
         { category: "Resolved", count: distribution?.RESOLVED || 0, fill: chartConfig.resolved.color },
-        { category: "Closed", count: distribution?.CLOSED || 0, fill: chartConfig.closed.color },
+        // { category: "Closed", count: distribution?.CLOSED || 0, fill: chartConfig.closed.color },
       ]
     : [
         { category: "New", count: 0, fill: chartConfig.new.color },
         // { category: "Reviewed", count: 0, fill: chartConfig.reviewed.color },
         { category: "In Progress", count: 0, fill: chartConfig.in_progress.color },
         { category: "Resolved", count: 0, fill: chartConfig.resolved.color },
-        { category: "Closed", count: 0, fill: chartConfig.closed.color },
+        // { category: "Closed", count: 0, fill: chartConfig.closed.color },
       ];
 
   return (
