@@ -5420,9 +5420,9 @@ const OrderTrackingModal = React.memo(({
                 <div key={step.id} className="flex flex-col items-center relative z-10 bg-white px-2">
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 border-4 border-white shadow-sm ${step.status === "completed"
-                      ? "bg-green-500 text-white"
+                      ? "bg-green-900 text-white"
                       : step.status === "current"
-                        ? "bg-yellow-500 text-white"
+                        ? "bg-green-500 text-white"
                         : "bg-gray-200 text-gray-400"
                       }`}
                   >
