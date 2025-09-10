@@ -78,11 +78,11 @@ export function BarComponent() {
       value: statusCounts.resolvedCount || 0, 
       color: "bg-orange-400" 
     },
-    { 
-      label: "Closed", 
-      value: statusCounts.CLOSED || 0, 
-      color: "bg-purple-400" 
-    },
+    // { 
+    //   label: "Closed", 
+    //   value: statusCounts.CLOSED || 0, 
+    //   color: "bg-purple-400" 
+    // },
   ]
 
   const workloadItems = [

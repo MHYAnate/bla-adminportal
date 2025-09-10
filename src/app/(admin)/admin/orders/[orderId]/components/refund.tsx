@@ -587,7 +587,7 @@ export const PaymentInfoDisplay: React.FC<{ order: any }> = ({ order }) => {
                                 <span className="text-gray-600">
                                     {transaction.reference || `Transaction ${index + 1}`}
                                 </span>
-                                <div className="flex items-center gap-2">
+                                <div className="flex-col items-start text-center justify-center gap-2truncate max-w-[100px] mx-auto">
                                     <Badge
                                         variant={
                                             transaction.status === 'success' ? 'default' :
