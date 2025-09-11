@@ -45,6 +45,7 @@ import SalesChart from "./orderSales";
 import OrderSummary from "./orderSummarySide";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ROUTES } from "@/constant/routes";
 
 // FIXED: Complete type definitions
 interface OrderSummaryData {
@@ -304,9 +305,17 @@ export default function Orders() {
     year: new Date().getFullYear(),
   }), [filterSales, startDateSales, endDateSales]);
 
+
+
   // Handle page change
   const onPageChange = useCallback((page: number) => {
     setCurrentPage(page);
+
+    const params = new URLSearchParams();
+    params.set('page', currentPage.toString());
+     // Update URL without page reload
+        router.push(`${ROUTES.ADMIN.SIDEBAR.ORDERS}?${params.toString()}`, { scroll: false });
+
   }, []);
 
   // Filter change handlers
