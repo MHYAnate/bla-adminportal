@@ -2805,7 +2805,7 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 													),
 												},
 												{
-													label: "Shipping",
+													label: "Shipped",
 													status:
 														order.status === "SHIPPED"
 															? "current"
