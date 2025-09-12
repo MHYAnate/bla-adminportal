@@ -1263,7 +1263,14 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                 <CardContent className="flex flex-col gap-2 ">
                   <CardTitle> <p className="text-sm text-gray-700 break-words overflow-hidden whitespace-normal mx-auto">{profile?.fullName || profile?.businessName || customer?.email || 'Unknown Customer'}</p></CardTitle>
                   <p className="text-base text-gray-800 break-words whitespace-normal max-w-xs">{customer?.email || "No email"}</p>
+                     <div className="flex items-center">
+                  
+                    <p className="font-medium">
+                      {shippingAddress?.phoneNumber || " not available"}
+                    </p>
+                  </div>
                   <p className="text-sm text-gray-500">{customer?.type || "Customer"}</p>
+                 
                   <div><Badge className="bg-green-100 text-green-800">ACTIVE</Badge></div>
 
 
