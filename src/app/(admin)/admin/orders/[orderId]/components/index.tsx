@@ -1286,6 +1286,12 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
                       {shippingAddress?.fullAddress || profile?.address || "Address not available"}
                     </p>
                   </div>
+                     <div className="flex items-center">
+                    <p className="text-sm text-gray-500 w-[150px]">Shipping address</p>
+                    <p className="font-medium">
+                      {shippingAddress?.addressLine1 || profile?.address || "Address not available"}
+                    </p>
+                  </div>
                   <div className="grid grid-cols-1 gap-3 text-sm">
                     <div className="flex items-center">
                       <p className="text-gray-500 w-[150px]">City:</p>
