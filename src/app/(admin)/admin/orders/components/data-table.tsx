@@ -50,12 +50,14 @@ const DataTable: React.FC<DataTableProps> = ({
 
 
     try {
-      const targetUrl = `/admin/orders/${cleanOrderId}`;
-      console.log('Attempting navigation to:', targetUrl);
+      // const targetUrl = `/admin/orders/${cleanOrderId}`;
+      // console.log('Attempting navigation to:', targetUrl);
 
-      // Use router.push first
+      // // Use router.push first
+      // router.push(targetUrl);
+
+      const targetUrl = `/admin/orders/${cleanOrderId}?page=${currentPage}`;
       router.push(targetUrl);
-
       // Backup navigation method if router fails
       setTimeout(() => {
         if (window.location.pathname === '/admin/orders') {
@@ -68,7 +70,7 @@ const DataTable: React.FC<DataTableProps> = ({
       console.error('Navigation error:', error);
       toast.error('Failed to navigate to order details');
     }
-  }, [router]);
+  }, [router,currentPage ]);
 
   // FIXED: Prevent event bubbling and add better click handling
   const handleActionClick = useCallback((e: React.MouseEvent, orderId: string) => {
