@@ -854,12 +854,12 @@ export default function Orders() {
     {
       value: getOrdersSummaryData?.data?.orderCancel || 0,
       icon: <OrderCancelIcon />,
-      title: "Order Cancel",
+      title: "Cancelled Orders",
     },
     {
       value: getOrdersSummaryData?.data?.orderShipped || 0,
       icon: <OrderShippedIcon />,
-      title: "Order Shipped",
+      title: "Shipped Orders",
     },
     {
       value: getOrdersSummaryData?.data?.inProgress || getOrdersSummaryData?.data?.ongoing || 0,
@@ -874,7 +874,7 @@ export default function Orders() {
     {
       value: getOrdersSummaryData?.data?.pendingPayment || 0,
       icon: <PendingPaymentIcon />,
-      title: "Pending Payment",
+      title: "Pending Payments",
     },
     {
       value: getOrdersSummaryData?.data?.delivered || 0,
