@@ -113,13 +113,13 @@ export default function OrderSummary() {
                   tick={{ fill: "#9ca3af", fontSize: 14 }}
                   domain={[0, "auto"]}
                 />
-                <YAxis
+                {/* <YAxis
                   yAxisId="right"
                   orientation="right"
                 // tickFormatter={(v) => `${v.toFixed(0)}%`}
                 // tick={{ fill: "#9ca3af", fontSize: 14 }}
                 // domain={[0, 100]}
-                />
+                /> */}
                 <Tooltip content={<CustomTooltip />} />
                 <Line
                   type="monotone"
@@ -141,7 +141,7 @@ export default function OrderSummary() {
                   animationDuration={500}
                   yAxisId="left"
                 />
-                <Line
+                {/* <Line
                   type="monotone"
                   dataKey="DeliveryRate"
                   stroke="#0284c7"
@@ -150,7 +150,7 @@ export default function OrderSummary() {
                   dot={false}
                   animationDuration={500}
                   yAxisId="right"
-                />
+                /> */}
               </LineChart>
             </ResponsiveContainer>
           )}
