@@ -1,14 +1,12 @@
-// src/app/(admin)/components/date-range-filter.tsx
 "use client";
 
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
 interface DateRangeFilterProps {
   dateRange: string;
@@ -33,11 +31,6 @@ export function DateRangeFilter({
   const dateRangeOptions = [
     { text: "All Time", value: "all" },
     { text: "Today", value: "today" },
-    // { text: "Yesterday", value: "yesterday" },
-    // { text: "This Week", value: "thisWeek" },
-    // { text: "This Month", value: "thisMonth" },
-    // { text: "Last Week", value: "lastWeek" },
-    // { text: "Last Month", value: "lastMonth" },
     { text: "Last 7 Days", value: "last7days" },
     { text: "Last 30 Days", value: "last30days" },
     { text: "Last 90 Days", value: "last90days" },
@@ -107,4 +100,3 @@ export function DateRangeFilter({
     </div>
   );
 }
-

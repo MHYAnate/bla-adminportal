@@ -10,6 +10,81 @@ import { useQueryClient, useMutation } from '@tanstack/react-query';
 import { toast } from "sonner";
 
 // =================== GET ORDERS ===================
+// export const useGetOrders = ({
+//   enabled = true,
+//   filter = {},
+//   page = 1,
+//   pageSize = 10,
+// } = {}) => {
+//   const {
+//     isFetched,
+//     isLoading,
+//     error,
+//     data,
+//     refetch,
+//     isFetching,
+//     setFilter,
+//     pageNumber,
+//     setPageNumber,
+//     setPageSize: setPageSizeHook,
+//   } = useFetchItem({
+//     queryKey: ['orders'],
+//     queryFn: (params) => {
+//       // ✅ FIX: Map pageNumber to page for backend compatibility
+//       const backendParams = {
+//         // ...params,
+//         // page: params.pageNumber || params.page || 1, // Map pageNumber to page
+//         // pageSize: params.pageSize || 10,
+//         // // Remove pageNumber to avoid confusion
+//         // pageNumber: undefined
+//         page: params.pageNumber || params.page || 1,
+//         limit: params.pageSize || params.limit || 10, // ✅ Map pageSize → limit
+//         pageNumber: undefined,
+//         pageSize: undefined
+      
+//       };
+      
+//       // Clean undefined values
+//       Object.keys(backendParams).forEach(key => {
+//         if (backendParams[key] === undefined) {
+//           delete backendParams[key];
+//         }
+//       });
+      
+//       console.log('🚀 Orders API params sent to backend:', backendParams);
+      
+//       return httpService.getData(routes.orders(backendParams));
+//     },
+//     enabled,
+//     retry: 2,
+//     initialFilter: filter,
+//     isPaginated: true,
+//     initialPage: page,
+//     initialPageSize: pageSize,
+//     staleTime: 2 * 60 * 1000, // 2 minutes
+//   });
+
+//   return {
+//     getOrdersData: data,
+//     getOrdersError: ErrorHandler(error),
+//     getOrdersIsLoading: isLoading,
+//     isFetchingOrders: isFetching,
+//     refetchOrders: refetch,
+//     setOrdersFilter: setFilter,
+//     // Pagination
+//     currentPage: pageNumber,
+//     setCurrentPage: setPageNumber,
+//     pageSize: pageSize,
+//     setPageSize: setPageSizeHook,
+//     // Additional utilities
+//     totalPages: data?.pagination?.totalPages || 0,
+//     totalItems: data?.pagination?.totalItems || 0,
+//     hasNextPage: data?.pagination?.hasNext || false,
+//     hasPrevPage: data?.pagination?.hasPrev || false,
+//   };
+// };
+
+
 export const useGetOrders = ({
   enabled = true,
   filter = {},
@@ -30,28 +105,19 @@ export const useGetOrders = ({
   } = useFetchItem({
     queryKey: ['orders'],
     queryFn: (params) => {
-      // ✅ FIX: Map pageNumber to page for backend compatibility
       const backendParams = {
-        // ...params,
-        // page: params.pageNumber || params.page || 1, // Map pageNumber to page
-        // pageSize: params.pageSize || 10,
-        // // Remove pageNumber to avoid confusion
-        // pageNumber: undefined
         page: params.pageNumber || params.page || 1,
-        limit: params.pageSize || params.limit || 10, // ✅ Map pageSize → limit
+        limit: params.pageSize || params.limit || 10,
+        ...params,
         pageNumber: undefined,
         pageSize: undefined
-      
       };
       
-      // Clean undefined values
       Object.keys(backendParams).forEach(key => {
         if (backendParams[key] === undefined) {
           delete backendParams[key];
         }
       });
-      
-      console.log('🚀 Orders API params sent to backend:', backendParams);
       
       return httpService.getData(routes.orders(backendParams));
     },
@@ -61,7 +127,7 @@ export const useGetOrders = ({
     isPaginated: true,
     initialPage: page,
     initialPageSize: pageSize,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
   });
 
   return {
@@ -71,12 +137,10 @@ export const useGetOrders = ({
     isFetchingOrders: isFetching,
     refetchOrders: refetch,
     setOrdersFilter: setFilter,
-    // Pagination
     currentPage: pageNumber,
     setCurrentPage: setPageNumber,
     pageSize: pageSize,
     setPageSize: setPageSizeHook,
-    // Additional utilities
     totalPages: data?.pagination?.totalPages || 0,
     totalItems: data?.pagination?.totalItems || 0,
     hasNextPage: data?.pagination?.hasNext || false,
