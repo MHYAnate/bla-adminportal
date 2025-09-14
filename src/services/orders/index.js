@@ -32,11 +32,16 @@ export const useGetOrders = ({
     queryFn: (params) => {
       // ✅ FIX: Map pageNumber to page for backend compatibility
       const backendParams = {
-        ...params,
-        page: params.pageNumber || params.page || 1, // Map pageNumber to page
-        pageSize: params.pageSize || 10,
-        // Remove pageNumber to avoid confusion
-        pageNumber: undefined
+        // ...params,
+        // page: params.pageNumber || params.page || 1, // Map pageNumber to page
+        // pageSize: params.pageSize || 10,
+        // // Remove pageNumber to avoid confusion
+        // pageNumber: undefined
+        page: params.pageNumber || params.page || 1,
+        limit: params.pageSize || params.limit || 10, // ✅ Map pageSize → limit
+        pageNumber: undefined,
+        pageSize: undefined
+      
       };
       
       // Clean undefined values

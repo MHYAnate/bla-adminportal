@@ -3140,7 +3140,11 @@ const OrderDetails: React.FC<OrderDetailsProps> = ({
 														.map((word: any) => word[0])
 														.join("")
 														.toUpperCase()
-												: "--"}
+												: profile?.businessName 
+												.split(" ")
+												.map((word: any) => word[0])
+												.join("")
+												.toUpperCase() || "--"}
 										</div>
 									</div>
 
