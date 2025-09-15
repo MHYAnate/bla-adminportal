@@ -2275,7 +2275,7 @@ const DataTable: React.FC<DataTableProps> = ({
               <User className="w-5 h-5 text-gray-400 m-auto mt-2" />
             )}
           </div>
-          <div className="min-w-0 flex-1 max-w-[200px]">
+          {/* <div className="min-w-0 flex-1 max-w-[200px]">
             <p className="font-medium text-gray-900 truncate text-sm leading-5" title={name}>
               {name}
             </p>
@@ -2289,7 +2289,22 @@ const DataTable: React.FC<DataTableProps> = ({
                }}>
               {email}
             </p>
-          </div>
+          </div> */}
+                     <div className="min-w-0 flex-1 max-w-[200px]">
+             <p className="font-medium text-gray-900 truncate text-sm leading-5" title={name}>
+               {name}
+             </p>
+             <p className="font-normal text-xs text-gray-400 break-all leading-4 mt-0.5 max-w-[200px]" 
+               title={email}
+               style={{ 
+                 wordBreak: 'break-all',
+                 overflowWrap: 'break-word',
+                 lineHeight: '1.2',
+                 maxWidth: '180px'
+               }}>
+              {email}
+            </p>
+           </div>
         </div>
       );
     },
