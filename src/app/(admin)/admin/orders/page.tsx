@@ -13,7 +13,7 @@ export default function OrdersPage() {
     //   <Orders />
     // </>
 
-    <section className="p-5">
+    <section>
      <Orders />
   </section>
   );

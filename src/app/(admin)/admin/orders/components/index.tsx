@@ -3876,7 +3876,7 @@ useEffect(() => {
   }, [salesError]);
 
   return (
-    <section className="p-6">
+    <section >
       <Card className="bg-white shadow-sm">
         <CardContent className="p-6">
           <div className="flex justify-between items-center mb-8">
