@@ -196,6 +196,7 @@ import PendingInvitations from "./PendingInvitations";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useGetAdminRoles, useGetAdmins } from "@/services/admin";
 import { useSearchParams, useRouter } from "next/navigation";
+import AdminRolesDashboard from "./card";
 
 // ✅ FIX: Extended Role interface to match RoleData requirements
 interface Role {
@@ -375,11 +376,13 @@ export default function Admins() {
 
         <TabsContent value="admins">
           {/* Role Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 mb-8">
             {safeRolesData.map((role: RoleData) => (
               <RoleCard key={role.id} role={role as any} />
             ))}
-          </div>
+          </div> */}
+
+          <AdminRolesDashboard/>
 
           {/* Admin Data Table with enhanced state management */}
           <DataTable

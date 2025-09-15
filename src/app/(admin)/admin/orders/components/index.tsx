@@ -2991,12 +2991,12 @@ useEffect(() => {
       icon: <DeliveredIcon />,
       title: "Delivered",
     },
-    {
-      value: getOrdersSummaryData?.data?.totalRevenue || 0,
-      icon: <PendingPaymentIcon />,
-      title: "Total Revenue",
-      isRevenue: true,
-    },
+    // {
+    //   value: getOrdersSummaryData?.data?.totalRevenue || 0,
+    //   icon: <PendingPaymentIcon />,
+    //   title: "Total Revenue",
+    //   isRevenue: true,
+    // },
   ], [getOrdersSummaryData?.data]);
 
   const ordersFilter = useMemo((): OrdersFilter => {
