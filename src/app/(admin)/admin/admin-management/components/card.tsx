@@ -92,7 +92,7 @@ const AdminRolesDashboard = () => {
             <div className="flex flex-col h-full justify-center items-center">
               <h3 className="m-0 mb-3 text-lg text-center font-medium">All Admins</h3>
               <div className="text-4xl font-bold my-2">{totalAdmins}</div>
-              <p className="mt-1 text-sm opacity-80 m-0">Total Active Administrators</p>
+              <p className="mt-1 text-sm opacity-80 m-0">Total  Administrators</p>
             </div>
           </div>
 
