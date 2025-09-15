@@ -122,7 +122,7 @@ const AdminRolesDashboard = () => {
     //   </div>
     // </div>
 
-    <div className="p-5 full mx-auto">
+    <div className="p-5 mx-auto">
     <h2 className="mb-5 text-gray-800 text-2xl font-semibold">Admin Roles Overview</h2>
 
     {/* Grid wrapper */}
@@ -149,6 +149,16 @@ const AdminRolesDashboard = () => {
           </div>
         </div>
       ))}
+      <div
+       
+         className="bg-gradient-to-br from-yellow-600 to-purple-600 text-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+        >
+          <div className="flex flex-col h-full justify-center items-center">
+            <h3 className="m-0 mb-3 text-lg text-center font-medium text-gray-800">Super Admin</h3>
+            <div className="text-4xl font-bold my-2 text-gray-900">1</div>
+            
+          </div>
+        </div>
     </div>
   </div>
   )
