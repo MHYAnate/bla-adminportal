@@ -66,7 +66,7 @@ const AdminRolesDashboard = () => {
   }
 
   return (
-    <div className="p-5 w-full">
+    <div className="p-5 max-w-5xl mx-auto">
       <h2 className="mb-5 text-gray-800 text-2xl font-semibold">Admin Roles Overview</h2>
 
       <div className="relative flex items-center">
