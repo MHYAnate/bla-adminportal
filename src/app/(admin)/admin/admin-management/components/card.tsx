@@ -66,7 +66,7 @@ const AdminRolesDashboard = () => {
   }
 
   return (
-    // <div className="p-5 max-w-5xl mx-auto">
+    // <div className="p-5 max-w-2/3 mx-auto">
     //   <h2 className="mb-5 text-gray-800 text-2xl font-semibold">Admin Roles Overview</h2>
 
     //   <div className="relative flex items-center">
@@ -122,36 +122,17 @@ const AdminRolesDashboard = () => {
     //   </div>
     // </div>
 
-    <div className="p-5 w-full max-w-7xl mx-auto">
-  <h2 className="mb-5 text-gray-800 text-2xl font-semibold">
-    Admin Roles Overview
-  </h2>
+    <div className="p-5 full mx-auto">
+    <h2 className="mb-5 text-gray-800 text-2xl font-semibold">Admin Roles Overview</h2>
 
-  <div className="relative flex items-center w-full">
-    {showLeftArrow && (
-      <button
-        className="absolute left-[-14px] top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-md text-xl font-bold cursor-pointer z-10 flex items-center justify-center transition-all duration-200 hover:bg-slate-50 hover:shadow-lg"
-        onClick={() => scroll("left")}
-        aria-label="Scroll left"
-      >
-        &#8249;
-      </button>
-    )}
-
-    <div
-      ref={containerRef}
-      className="flex overflow-x-auto scroll-smooth gap-4 py-2.5 scrollbar-none w-full"
-      style={{
-        scrollbarWidth: "none",
-        msOverflowStyle: "none",
-      }}
-    >
+    {/* Grid wrapper */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {/* First card */}
-      <div className="flex-none w-[85%] sm:w-[45%] md:w-[30%] lg:w-[22%] aspect-[5/4] bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
+      <div className="bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl">
         <div className="flex flex-col h-full justify-center items-center">
           <h3 className="m-0 mb-3 text-lg text-center font-medium">All Admins</h3>
           <div className="text-4xl font-bold my-2">{totalAdmins}</div>
-          <p className="mt-1 text-sm opacity-80 m-0">Total Administrators</p>
+          <p className="mt-1 text-sm opacity-80 m-0">Total Active Administrators</p>
         </div>
       </div>
 
@@ -159,35 +140,17 @@ const AdminRolesDashboard = () => {
       {filteredRoles.map((role) => (
         <div
           key={role.id}
-          className="flex-none w-[85%] sm:w-[45%] md:w-[30%] lg:w-[22%] aspect-[5/4] bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+          className="bg-white rounded-xl shadow-lg p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
         >
           <div className="flex flex-col h-full justify-center items-center">
-            <h3 className="m-0 mb-3 text-lg text-center font-medium text-gray-800">
-              {role.name}
-            </h3>
-            <div className="text-4xl font-bold my-2 text-gray-900">
-              {role._count.users}
-            </div>
-            <p className="mt-1 text-sm opacity-80 m-0 text-gray-600">
-              Active Users
-            </p>
+            <h3 className="m-0 mb-3 text-lg text-center font-medium text-gray-800">{role.name}</h3>
+            <div className="text-4xl font-bold my-2 text-gray-900">{role._count.users}</div>
+            <p className="mt-1 text-sm opacity-80 m-0 text-gray-600">Active Users</p>
           </div>
         </div>
       ))}
     </div>
-
-    {showRightArrow && (
-      <button
-        className="absolute right-[-14px] top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white border border-slate-200 shadow-md text-xl font-bold cursor-pointer z-10 flex items-center justify-center transition-all duration-200 hover:bg-slate-50 hover:shadow-lg"
-        onClick={() => scroll("right")}
-        aria-label="Scroll right"
-      >
-        &#8250;
-      </button>
-    )}
   </div>
-</div>
-
   )
 }
 
